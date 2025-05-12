@@ -7,5 +7,9 @@ public class Student:User{
 
     public int StudentLevelId { get; set; }
     public StudentLevel StudentLevel { get; set; }=null!;
+
+    public ICollection<Application> Application { get; set; }=new List<Application>();
+
+    
     
 }
