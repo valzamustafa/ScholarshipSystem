@@ -36,3 +36,4 @@ obj/
 artifacts/
 ScaffoldingReadMe.txt
 .idea/
+*AssemblyInfo.cs
