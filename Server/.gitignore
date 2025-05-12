@@ -1,0 +1,38 @@
+# Build folders
+bin/
+obj/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+*.psmdcp
+*.nupkg.sha512
+*.nuspec.sha512
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# Build outputs
+*.dll
+*.exe
+*.app
+*.log
+
+# MSBuild
+*.cache
+.Generated.
+.AssemblyInfo.
+*.g.cs
+*.g.i.cs
+
+# Others
+artifacts/
+ScaffoldingReadMe.txt
+.idea/
