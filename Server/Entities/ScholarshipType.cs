@@ -1,7 +1,7 @@
 namespace Server.Entities;
 public class ScholarshipType
 {
-    public int ScholarshipTypeId { get; set; }
+    public int Id { get; set; }
 
     
     public required string Name { get; set; }

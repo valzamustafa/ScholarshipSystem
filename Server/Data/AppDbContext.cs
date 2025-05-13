@@ -20,7 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<Role> Role { get; set; }
     public DbSet<Scholarship> Scholarship { get; set; }
     public DbSet<ScholarshipAward> ScholarshipAward { get; set; }
-    public DbSet<ScholarshipCategory> ScholarshipCategorie { get; set; }
+    public DbSet<ScholarshipCategory> ScholarshipCategory { get; set; }
+
     public DbSet<ScholarshipType> ScholarshipType { get; set; }
     public DbSet<Student> Student { get; set; }
     public DbSet<StudentLevel> StudentLevel { get; set; }
