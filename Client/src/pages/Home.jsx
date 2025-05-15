@@ -6,8 +6,9 @@ function Home() {
     <div className="m-0 p-0 vw-100 overflow-x-hidden">
 
      
-      <section className="text-center py-5 bg-primary text-white m-0">
-        <div className="container p-0">
+      <section className="text-center py-5 text-white m-0"
+      style={{ backgroundColor: '#004D7C', color: 'white' }}>
+     <div className="container p-0">
           <div className="py-5 px-3">
             <h1 className="display-4">Welcome to the Scholarship Platform</h1>
             <p className="lead">Find scholarships from around the world in one place.</p>

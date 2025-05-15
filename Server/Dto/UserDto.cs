@@ -4,4 +4,5 @@ public abstract class UserDto
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
+    public virtual string Role { get; } = string.Empty;  
 }
