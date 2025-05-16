@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Entities;
-namespace Server.Data; 
+namespace Server.Data;
 
 public class AppDbContext : DbContext
 {
@@ -26,8 +26,26 @@ public class AppDbContext : DbContext
     public DbSet<Student> Student { get; set; }
     public DbSet<StudentLevel> StudentLevel { get; set; }
     public DbSet<University> University { get; set; }
-    public DbSet<User> User { get; set; }
+    // public DbSet<User> User { get; set; }
     public DbSet<UserActivityLog> UserActivityLog { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Role>().HasData(
+            new Role { Id = 1, Emri = "Student" },
+            new Role { Id = 2, Emri = "Provider" },
+            new Role { Id = 3, Emri = "Admin" }
+        );
+        modelBuilder.Entity<StudentLevel>().HasData(
+           new StudentLevel { Id = 1, Level = "Bachelor" },
+           new StudentLevel { Id = 2, Level = "Master" },
+           new StudentLevel { Id = 3, Level = "PhD" }
+        );
+
+  
+}
+
 
  
 }

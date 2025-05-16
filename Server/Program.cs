@@ -1,6 +1,10 @@
 using Server.Data;
+using Server.Entities;  
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.Features;
+using Server.Services;
 
 internal class Program
 {
@@ -8,7 +12,6 @@ internal class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
@@ -23,9 +26,27 @@ internal class Program
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+     
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend",
+                policy =>
+                {
+                    policy.WithOrigins("https://localhost:3000")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+        });
+       builder.Services.AddScoped<IPasswordHasher<Student>, PasswordHasher<Student>>();
+        builder.Services.AddScoped<IPasswordHasher<Provider>, PasswordHasher<Provider>>();
+        builder.Services.AddScoped<ITokenService, TokenService>();
+
+
+
         var app = builder.Build();
 
-        
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -36,6 +57,10 @@ internal class Program
         }
 
         app.UseHttpsRedirection();
+
+        // ✅ Aktivizo CORS këtu
+        app.UseCors("AllowFrontend");
+
         app.UseAuthorization();
         app.MapControllers();
         app.Run();

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Data;
 
@@ -10,9 +11,11 @@ using Server.Data;
 namespace Server.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516154918_SeedRolesAndLevels")]
+    partial class SeedRolesAndLevels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
@@ -362,23 +365,6 @@ namespace Server.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("StudentLevel");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Level = "Bachelor"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Level = "Master"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Level = "PhD"
-                        });
                 });
 
             modelBuilder.Entity("Server.Entities.University", b =>
