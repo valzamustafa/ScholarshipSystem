@@ -1,59 +1,65 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
 import { AuthProvider } from "./context/AuthProvider";
 
-
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
 import Footer from './components/Footer';
-import AdminDashboard from './pages/AdminDashboard';
+
+import Home from './pages/Home';
 import LoginForm from './pages/LoginForm';
 import RegisterStudentForm from './pages/RegisterStudentForm';
-import ProtectedRoute from './components/ProtectedRoute';
-import Unauthorized from './pages/Unauthorized';
+import RegisterProviderForm from './pages/RegisterProviderForm';
 
+import AdminDashboard from './pages/AdminDashboard';
+import ProviderDashboard from './pages/ProviderDashboard';
+
+import ProtectedRoute from './components/ProtectedRoute';
+
+import Unauthorized from './pages/Unauthorized';
+import PendingApproval from './pages/PendingApproval';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Navbar />
+
         <Routes>
-          {/* Rrugët publike */}
-          <Route
-            path="*"
-            element={
-              <>
-                <Navbar />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<LoginForm />} />
-                  <Route path="/register" element={<RegisterStudentForm/>} />
-                  <Route path="/unauthorized" element={<Unauthorized />} />
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-                <Footer />
-              </>
-            }
-          />
-          
-          {/* Rrugët e mbrojtura */}
+        
+          <Route path="/home" element={<Home />} />
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterStudentForm />} />
+          <Route path="/register/provider" element={<RegisterProviderForm />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/pending-approval" element={<PendingApproval />} />
+
+       
           <Route
             path="/admin/*"
             element={
               <ProtectedRoute roles={['Admin']}>
-                <Navbar />
-                <Routes>
-                  <Route index element={<AdminDashboard />} />
-                  {/* Shto rrugë të tjera admin këtu */}
-                </Routes>
-                <Footer />
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/provider/*"
+            element={
+              <ProtectedRoute roles={['Provider']}>
+                <ProviderDashboard />
+              </ProtectedRoute>
+            }
+          />
+
           
-          {/* Mund të shtoni rrugë të tjera të mbrojtura këtu për Student dhe Provider */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
+
+        <Footer />
       </BrowserRouter>
     </AuthProvider>
   );

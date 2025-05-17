@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Data;
 
@@ -10,9 +11,11 @@ using Server.Data;
 namespace Server.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250517131621_AddIsApprovedToProvider")]
+    partial class AddIsApprovedToProvider
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
@@ -425,10 +428,8 @@ namespace Server.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PhoneNumber")
@@ -473,17 +474,6 @@ namespace Server.Data.Migrations
                 {
                     b.HasBaseType("Server.Entities.User");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("User", t =>
-                        {
-                            t.Property("RoleId")
-                                .HasColumnName("Admin_RoleId");
-                        });
-
                     b.HasDiscriminator().HasValue("Admin");
                 });
 
@@ -492,6 +482,9 @@ namespace Server.Data.Migrations
                     b.HasBaseType("Server.Entities.User");
 
                     b.Property<int?>("CountryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsApproved")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsLocal")
@@ -691,17 +684,6 @@ namespace Server.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Server.Entities.Admin", b =>
-                {
-                    b.HasOne("Server.Entities.Role", "Role")
-                        .WithMany("Admin")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-                });
-
             modelBuilder.Entity("Server.Entities.Provider", b =>
                 {
                     b.HasOne("Server.Entities.Country", null)
@@ -720,7 +702,7 @@ namespace Server.Data.Migrations
             modelBuilder.Entity("Server.Entities.Student", b =>
                 {
                     b.HasOne("Server.Entities.Role", "Role")
-                        .WithMany("Students")
+                        .WithMany("Student")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -767,11 +749,9 @@ namespace Server.Data.Migrations
 
             modelBuilder.Entity("Server.Entities.Role", b =>
                 {
-                    b.Navigation("Admin");
-
                     b.Navigation("Provider");
 
-                    b.Navigation("Students");
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("Server.Entities.Scholarship", b =>

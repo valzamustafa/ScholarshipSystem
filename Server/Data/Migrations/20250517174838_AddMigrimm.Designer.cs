@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Data;
 
@@ -10,9 +11,11 @@ using Server.Data;
 namespace Server.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250517174838_AddMigrimm")]
+    partial class AddMigrimm
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
@@ -425,9 +428,6 @@ namespace Server.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("PasswordHash")
                         .HasColumnType("TEXT");
 
@@ -473,6 +473,9 @@ namespace Server.Data.Migrations
                 {
                     b.HasBaseType("Server.Entities.User");
 
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("INTEGER");
 
@@ -480,6 +483,9 @@ namespace Server.Data.Migrations
 
                     b.ToTable("User", t =>
                         {
+                            t.Property("IsApproved")
+                                .HasColumnName("Admin_IsApproved");
+
                             t.Property("RoleId")
                                 .HasColumnName("Admin_RoleId");
                         });
@@ -492,6 +498,9 @@ namespace Server.Data.Migrations
                     b.HasBaseType("Server.Entities.User");
 
                     b.Property<int?>("CountryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsApproved")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsLocal")

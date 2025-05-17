@@ -10,6 +10,8 @@ public class Student:User{
 
     public ICollection<Application> Application { get; set; }=new List<Application>();
 
-    
+     public int RoleId { get; set; }
+    public Role Role { get; set; }=null!;
+
     
 }

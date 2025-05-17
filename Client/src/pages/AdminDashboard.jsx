@@ -1,15 +1,66 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FiUser, FiBriefcase, FiBookOpen, FiBarChart2, FiMail, FiBell, FiCalendar, FiDollarSign, FiTrendingUp } from "react-icons/fi";
 
 function AdminDashboard() {
+  const [requests, setRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      setLoadingRequests(true);
+      setError(null);
+      try {
+     
+        const res = await fetch('https://localhost:7255/api/admin/provider-requests');
+        if (!res.ok) throw new Error('Failed to fetch provider requests');
+        const data = await res.json();
+        setRequests(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoadingRequests(false);
+      }
+    };
+
+    fetchRequests();
+  }, []);
+
+  const approveRequest = async (id) => {
+    try {
+      const res = await fetch(`https://localhost:7255/api/admin/provider-requests/${id}/approve`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Failed to approve request');
+      setRequests(prev => prev.filter(r => r.id !== id));
+      alert('Provider approved successfully');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const rejectRequest = async (id) => {
+    try {
+      const res = await fetch(`https://localhost:7255/api/admin/provider-requests/${id}/reject`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Failed to reject request');
+      setRequests(prev => prev.filter(r => r.id !== id));
+      alert('Provider rejected');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
       <div className="row g-0">
-       
-       <div
-  className="col-md-2  text-white p-3 min-vh-100"
-  style={{ backgroundColor: '#004D7C', color: 'white' }}
->
+
+        {/* Sidebar */}
+        <div
+          className="col-md-2  text-white p-3 min-vh-100"
+          style={{ backgroundColor: '#004D7C', color: 'white' }}
+        >
           <h4 className="text-center mb-4">Acme</h4>
 
           <ul className="nav flex-column">
@@ -33,7 +84,8 @@ function AdminDashboard() {
 
       
         <div className="col-md-10 p-4">
-          
+
+
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3>Dashboard</h3>
             <div className="d-flex align-items-center">
@@ -42,7 +94,7 @@ function AdminDashboard() {
             </div>
           </div>
 
-         
+      
           <div className="row mb-4">
             <div className="col-md-3 mb-3">
               <div className="card border-start-primary h-100">
@@ -82,107 +134,34 @@ function AdminDashboard() {
           </div>
 
         
-          <div className="row">
-          
-            <div className="col-md-8">
-            
-              <div className="card mb-4">
-                <div className="card-header">
-                  <h5 className="mb-0">Market Overview</h5>
-                </div>
-                <div className="card-body">
-                  <div className="d-flex justify-content-between mb-3">
-                    <span>Activity</span>
-                    <span>Goal</span>
-                  </div>
-                
-                  <div className="bg-light" style={{height: "200px"}}></div>
-                </div>
-              </div>
-
-              
-              <div className="card">
-                <div className="card-header">
-                  <h5 className="mb-0">Sales Analytics</h5>
-                </div>
-                <div className="card-body">
-                  <div className="d-flex justify-content-between">
-                    <span>M</span>
-                    <span>T</span>
-                    <span>W</span>
-                    <span>T</span>
-                    <span>F</span>
-                  </div>
-                  
-                  <div className="bg-light mt-3" style={{height: "150px"}}></div>
-                </div>
-              </div>
+          <div className="card mb-4">
+            <div className="card-header">
+              <h5 className="mb-0">Pending Provider Requests</h5>
             </div>
-
-            
-            <div className="col-md-4">
-             
-              <div className="card mb-4">
-                <div className="card-header">
-                  <h5 className="mb-0">Sales Overview</h5>
-                </div>
-                <div className="card-body">
-                  <div className="mb-3">
-                    <span>Today</span>
-                    <div className="progress mt-1">
-                      <div className="progress-bar" style={{width: "65%"}}></div>
+            <div className="card-body">
+              {loadingRequests && <p>Loading requests...</p>}
+              {error && <p className="text-danger">{error}</p>}
+              {!loadingRequests && requests.length === 0 && <p>No pending requests.</p>}
+              <ul className="list-group">
+                {requests.map(req => (
+                  <li key={req.id} className="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>{req.fullName}</strong> <br />
+                      {req.email} <br />
+                      {req.organizationName}
                     </div>
-                  </div>
-                  <div className="mb-3">
-                    <span>System status</span>
-                    <div className="progress mt-1">
-                      <div className="progress-bar bg-success" style={{width: "85%"}}></div>
+                    <div>
+                      <button className="btn btn-success btn-sm me-2" onClick={() => approveRequest(req.id)}>Approve</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => rejectRequest(req.id)}>Reject</button>
                     </div>
-                  </div>
-                  <div>
-                    <span>OPTIMUM</span>
-                    <div className="progress mt-1">
-                      <div className="progress-bar bg-warning" style={{width: "45%"}}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            
-              <div className="card mb-4">
-                <div className="card-header">
-                  <h5 className="mb-0">Accounts</h5>
-                </div>
-                <div className="card-body text-center py-4">
-                  <h1 className="display-4">15,893</h1>
-                  <p className="text-muted">Operations</p>
-                </div>
-              </div>
-
-              
-              <div className="card">
-                <div className="card-header">
-                  <h5 className="mb-0">Today 22nd Jan, 2021</h5>
-                </div>
-                <div className="card-body">
-                  <ul className="list-unstyled">
-                    <li className="mb-3">
-                      <strong>Incoming Transfer</strong>
-                      <div>Bitcoin</div>
-                    </li>
-                    <li className="mb-3">
-                      <strong>Sales Report</strong>
-                      <div>Ethereum</div>
-                    </li>
-                    <li className="mb-3">
-                      <strong>Incoming Transfer</strong>
-                      <div>Binance</div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
+
+        
+
         </div>
       </div>
     </div>

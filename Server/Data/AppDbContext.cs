@@ -31,21 +31,28 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+       
+
+
 
         modelBuilder.Entity<Role>().HasData(
             new Role { Id = 1, Emri = "Student" },
             new Role { Id = 2, Emri = "Provider" },
             new Role { Id = 3, Emri = "Admin" }
         );
-        modelBuilder.Entity<StudentLevel>().HasData(
-           new StudentLevel { Id = 1, Level = "Bachelor" },
-           new StudentLevel { Id = 2, Level = "Master" },
-           new StudentLevel { Id = 3, Level = "PhD" }
-        );
+      modelBuilder.Entity<StudentLevel>().HasData(
+   new StudentLevel { Id = 1, Level = "Bachelor" },
+   new StudentLevel { Id = 2, Level = "Master" },
+   new StudentLevel { Id = 3, Level = "PhD" },
+   new StudentLevel { Id = 4, Level = "High School Graduate" }, 
+   new StudentLevel { Id = 5, Level = "Training Participant" }  
+);
+
 
   
 }
 
 
- 
+
+
 }

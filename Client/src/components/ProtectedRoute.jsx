@@ -1,5 +1,6 @@
-import { useAuth } from '../context/useAuth'; // vetëm një import i useAuth
-import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
+
+import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -14,6 +15,10 @@ const ProtectedRoute = ({ children, roles }) => {
 
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (user.role === "Provider" && !user.approved) {
+    return <Navigate to="/pending-approval" replace />;
   }
 
   return children;

@@ -6,5 +6,6 @@ namespace Server.Services
     {
         string GenerateToken(Student student);
         string GenerateToken(Provider provider);
+        string GenerateToken(Admin admin);
     }
 }

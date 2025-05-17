@@ -27,6 +27,11 @@ namespace Server.Services
             return GenerateTokenInternal(provider.Id, provider.Email, provider.FullName, provider.Role?.Emri ?? "Provider");
         }
 
+        public string GenerateToken(Admin admin)
+        {
+            return GenerateTokenInternal(admin.Id, admin.Email, admin.FullName, admin.Role?.Emri ?? "Admin");
+        }
+
         private string GenerateTokenInternal(int id, string email, string fullName, string roleName)
         {
             var jwtKey = _configuration["Jwt:Key"];

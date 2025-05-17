@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-export default function RegisterStudentForm() {
+
+export default function RegisterProviderForm() {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    schoolOrUniversityName: '',
-    studyField: '',
-    studentLevelId: ''
+    organizationName: '',
+    description: ''
   });
 
   const [error, setError] = useState('');
@@ -23,83 +22,66 @@ export default function RegisterStudentForm() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
+  if (formData.password.length < 6) {
+    setError('Password must be at least 6 characters');
+    return;
+  }
+
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match');
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const response = await fetch('https://localhost:7255/api/auth/register/provider', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        FullName: formData.fullName,
+        Email: formData.email,
+        PhoneNumber: formData.phoneNumber,
+        Password: formData.password,
+        OrganizationName: formData.organizationName,
+        Description: formData.description
+      })
+    });
+
+    const contentType = response.headers.get('content-type');
+    const data = contentType && contentType.includes('application/json')
+      ? await response.json()
+      : { message: await response.text() };
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed');
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+   
 
-    if (!formData.studentLevelId || isNaN(parseInt(formData.studentLevelId))) {
-      setError('Please select a valid student level');
-      return;
-    }
 
-    try {
-      setLoading(true);
+    alert('Your request has been sent. Please wait for admin approval.');
 
-      const response = await fetch('https://localhost:7255/api/auth/register/student', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          FullName: formData.fullName,
-          Email: formData.email,
-          PhoneNumber: formData.phoneNumber,
-          Password: formData.password,
-          SchoolOrUniversityName: formData.schoolOrUniversityName,
-          StudyField: formData.studyField,
-          StudentLevelId: parseInt(formData.studentLevelId)
-        })
-      });
+   
+    navigate('/login');
 
-      const contentType = response.headers.get('content-type');
-      const data = contentType && contentType.includes('application/json')
-        ? await response.json()
-        : { message: await response.text() };
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-     
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-     
-const role = data.user?.role;
-
-if (!role) {
-  throw new Error('User role is undefined or missing');
-}
-
-if (role === 'Student') {
-  navigate('/student/home');
-} else if (role === 'Admin') {
-  navigate('/admin');
-} else {
-  navigate('/');
-}
-
-    } catch (err) {
-      setError(err.message || 'An error occurred during registration');
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    setError(err.message || 'An error occurred during registration');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="container mt-5 d-flex justify-content-center">
       <div className="card p-4 shadow" style={{ maxWidth: '500px', width: '100%' }}>
-        <h3 className="text-center">Register as Student</h3>
+        <h3 className="text-center">Register as Provider</h3>
         <p className="text-center text-muted">Fill in the details to join ScholarshipHub</p>
 
         {error && <div className="alert alert-danger">{error}</div>}
@@ -168,45 +150,27 @@ if (role === 'Student') {
           </div>
 
           <div className="mb-3">
-            <label className="form-label">School or University Name</label>
+            <label className="form-label">Organization Name</label>
             <input
               type="text"
-              name="schoolOrUniversityName"
+              name="organizationName"
               className="form-control"
-              value={formData.schoolOrUniversityName}
+              value={formData.organizationName}
               onChange={handleChange}
               required
             />
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Field of Study</label>
-            <input
-              type="text"
-              name="studyField"
+            <label className="form-label">Description</label>
+            <textarea
+              name="description"
               className="form-control"
-              value={formData.studyField}
+              value={formData.description}
               onChange={handleChange}
+              rows="3"
               required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Student Level</label>
-            <select
-              name="studentLevelId"
-              className="form-select"
-              value={formData.studentLevelId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select level</option>
-              <option value="1">Bachelor</option>
-              <option value="2">Master</option>
-              <option value="3">PhD</option>
-              <option value="4">High School Graduate</option>
-              <option value="5">Training Participant</option>
-            </select>
+            ></textarea>
           </div>
 
           <div className="d-grid">
@@ -217,8 +181,8 @@ if (role === 'Student') {
         </form>
 
         <p className="text-center mt-3 text-muted">
-  Already have an account? <Link to="/login" className="text-decoration-none">Login</Link>
-</p>
+          Already have an account? <a href="/login" className="text-decoration-none">Login</a>
+        </p>
       </div>
     </div>
   );

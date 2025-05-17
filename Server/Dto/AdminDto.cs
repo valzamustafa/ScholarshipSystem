@@ -1,6 +1,6 @@
 public class AdminDto : UserDto
 {
-    public override string Role => "admin";
+    public override string Role => "Admin";
 
    
 }
