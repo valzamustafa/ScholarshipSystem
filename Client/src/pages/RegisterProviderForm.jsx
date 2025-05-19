@@ -77,112 +77,123 @@ export default function RegisterProviderForm() {
     setLoading(false);
   }
 };
-
-  return (
-    <div className="container mt-5 d-flex justify-content-center">
-      <div className="card p-4 shadow" style={{ maxWidth: '500px', width: '100%' }}>
-        <h3 className="text-center">Register as Provider</h3>
-        <p className="text-center text-muted">Fill in the details to join ScholarshipHub</p>
-
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              className="form-control"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-            />
+return (
+    <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light m-0 p-0 vw-100 overflow-x-hidden mt-5">
+      <div className="row shadow-lg" style={{ maxWidth: '900px', width: '100%', borderRadius: '15px', overflow: 'hidden' }}>
+        
+      
+        <div className="col-md-6 text-white d-flex flex-column justify-content-center align-items-center p-4" style={{ backgroundColor: '#004D7C' }}>
+          <div className="text-center">
+            <h2 className="fw-bold mb-3">Welcome!</h2>
+            <p>Already have an account? Login to continue.</p>
+            <button className="btn btn-outline-light mt-3" onClick={() => navigate('/login')}>SIGN IN</button>
           </div>
+        </div>
 
-          <div className="mb-3">
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              name="email"
-              className="form-control"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        
+        <div className="col-md-6 bg-white p-5">
+          <h3 className="text-center fw-bold" style={{ color: '#004D7C' }}>Register as Provider</h3>
+          <p className="text-center text-muted mb-4">Fill in the details to join ScholarshipHub</p>
 
-          <div className="mb-3">
-            <label className="form-label">Phone Number (Optional)</label>
-            <input
-              type="tel"
-              name="phoneNumber"
-              className="form-control"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="+383 44 123 456"
-            />
-          </div>
+          {error && <div className="alert alert-danger">{error}</div>}
 
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              name="password"
-              className="form-control"
-              value={formData.password}
-              onChange={handleChange}
-              minLength="6"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <input
+                type="text"
+                name="fullName"
+                className="form-control rounded-pill"
+                placeholder="Full Name"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <div className="mb-3">
-            <label className="form-label">Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              className="form-control"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              minLength="6"
-              required
-            />
-          </div>
+            <div className="mb-3">
+              <input
+                type="email"
+                name="email"
+                className="form-control rounded-pill"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <div className="mb-3">
-            <label className="form-label">Organization Name</label>
-            <input
-              type="text"
-              name="organizationName"
-              className="form-control"
-              value={formData.organizationName}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <div className="mb-3">
+              <input
+                type="tel"
+                name="phoneNumber"
+                className="form-control rounded-pill"
+                placeholder="Phone Number (Optional)"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+              />
+            </div>
 
-          <div className="mb-3">
-            <label className="form-label">Description</label>
-            <textarea
-              name="description"
-              className="form-control"
-              value={formData.description}
-              onChange={handleChange}
-              rows="3"
-              required
-            ></textarea>
-          </div>
+            <div className="mb-3">
+              <input
+                type="password"
+                name="password"
+                className="form-control rounded-pill"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                minLength="6"
+                required
+              />
+            </div>
 
-          <div className="d-grid">
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Registering...' : 'Register'}
-            </button>
-          </div>
-        </form>
+            <div className="mb-3">
+              <input
+                type="password"
+                name="confirmPassword"
+                className="form-control rounded-pill"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                minLength="6"
+                required
+              />
+            </div>
 
-        <p className="text-center mt-3 text-muted">
-          Already have an account? <a href="/login" className="text-decoration-none">Login</a>
-        </p>
+            <div className="mb-3">
+              <input
+                type="text"
+                name="organizationName"
+                className="form-control rounded-pill"
+                placeholder="Organization Name"
+                value={formData.organizationName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <textarea
+                name="description"
+                className="form-control"
+                placeholder="Description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="3"
+                required
+              ></textarea>
+            </div>
+
+            <div className="d-grid mt-3">
+              <button className="btn rounded-pill" type="submit"  disabled={loading}
+                 style={{ backgroundColor: '#004D7C', color: 'white' }}
+                 >
+
+                
+                {loading ? 'Registering...' : 'Register'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

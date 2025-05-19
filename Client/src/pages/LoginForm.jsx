@@ -90,90 +90,105 @@ export default function LoginForm() {
       setLoading(false);
     }
   };
+ return (
+  <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light m-0 p-0 vw-100 overflow-x-hidden pt-5">
+    <div className="row shadow-lg" style={{ maxWidth: '900px', width: '100%', borderRadius: '15px', overflow: 'hidden' }}>
+      
+ 
+      <div
+        className="col-md-6 d-flex flex-column justify-content-center align-items-center p-4"
+        style={{ backgroundColor: '#004D7C', color: 'white' }}
+      >
+        <div className="text-center">
+          <h2 className="fw-bold mb-3">Welcome Back!</h2>
+          <p>To stay connected with us, please login with your personal info</p>
+          <button
+            className="btn btn-outline-light mt-3 rounded-pill px-4"
+            onClick={() => navigate('/')}
+          >
+            SIGN IN
+          </button>
+        </div>
+      </div>
 
-  return (
-    <div className="container mt-5 d-flex justify-content-center overflow-x-hidden">
-      <div className="card p-4 shadow" style={{ maxWidth: '400px', width: '100%' }}>
-        <h3 className="text-center">Welcome Back</h3>
-        <p className="text-center text-muted">Choose your role to continue to ScholarshipHub</p>
+     
+      <div className="col-md-6 bg-white p-5">
+        <h3 className="text-center fw-bold" style={{ color: '#004D7C' }}>Welcome</h3>
+        <p className="text-center text-muted mb-4">Login to your account to continue</p>
 
-        {/* Role buttons */}
+    
         <div className="d-flex justify-content-center mb-3">
-          <button
-            type="button"
-            className={`btn me-2 ${formData.role === 'Student' ? 'btn-primary' : 'btn-outline-secondary'}`}
-            onClick={() => handleRoleChange('Student')}
-          >
-            Student
-          </button>
-          <button
-            type="button"
-            className={`btn me-2 ${formData.role === 'Provider' ? 'btn-primary' : 'btn-outline-secondary'}`}
-            onClick={() => handleRoleChange('Provider')}
-          >
-            Provider
-          </button>
-          <button
-            type="button"
-            className={`btn ${formData.role === 'Admin' ? 'btn-primary' : 'btn-outline-secondary'}`}
-            onClick={() => handleRoleChange('Admin')}
-          >
-            Admin
-          </button>
+          {['Student', 'Provider', 'Admin'].map((role) => (
+            <button
+              key={role}
+              type="button"
+              className={`btn mx-1 rounded-pill px-3 fw-semibold ${
+                formData.role === role ? 'btn-primary text-white' : 'btn-outline-secondary'
+              }`}
+              style={formData.role === role ? { backgroundColor: '#004D7C', borderColor: '#004D7C' } : {}}
+              onClick={() => handleRoleChange(role)}
+            >
+              {role}
+            </button>
+          ))}
         </div>
 
         {error && <div className="alert alert-danger">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label htmlFor="email" className="form-label">Email</label>
             <input
-              id="email"
               type="email"
+              className="form-control rounded-pill"
+              placeholder="Email..."
               name="email"
-              className="form-control"
               value={formData.email}
               onChange={handleChange}
-              placeholder="m@example.com"
               required
             />
           </div>
 
           <div className="mb-3">
-            <label htmlFor="password" className="form-label d-flex justify-content-between">
-              <span>Password</span>
-              <a href="#" className="text-decoration-none small">Forgot your password?</a>
-            </label>
             <input
-              id="password"
               type="password"
+              className="form-control rounded-pill"
+              placeholder="Password..."
               name="password"
-              className="form-control"
               value={formData.password}
               onChange={handleChange}
               required
             />
+            <div className="text-end small mt-1">
+              <a href="#" className="text-decoration-none text-secondary">Forgot your password?</a>
+            </div>
           </div>
 
           <div className="d-grid mt-3">
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button
+              className="btn rounded-pill fw-semibold text-white"
+              type="submit"
+              disabled={loading}
+              style={{ backgroundColor: '#004D7C' }}
+            >
               {loading ? 'Logging in...' : `Login as ${formData.role}`}
             </button>
           </div>
         </form>
 
-        <p className="text-center mt-3 text-muted">
+        <p className="text-center mt-4 text-muted">
           Don't have an account?{' '}
           <Link
             to={formData.role === 'Provider' ? '/register/provider' : '/register'}
-            className="text-decoration-none"
+            className="fw-semibold"
+            style={{ color: '#004D7C', textDecoration: 'none' }}
           >
             Sign up
           </Link>
           <br />
-          <small>Current role: {formData.role}</small>
+          <small className="text-secondary">Current role: {formData.role}</small>
         </p>
       </div>
     </div>
-  );
+  </div>
+);
 }

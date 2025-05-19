@@ -20,6 +20,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import Unauthorized from './pages/Unauthorized';
 import PendingApproval from './pages/PendingApproval';
+import MyProfile from './pages/MyProfile';
+
 
 function App() {
   return (
@@ -35,6 +37,9 @@ function App() {
           <Route path="/register/provider" element={<RegisterProviderForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/pending-approval" element={<PendingApproval />} />
+         
+                    <Route path="/profile" element={<MyProfile />} />
+         
 
        
           <Route
@@ -46,16 +51,23 @@ function App() {
             }
           />
 
-          <Route
-            path="/provider/*"
-            element={
-              <ProtectedRoute roles={['Provider']}>
-                <ProviderDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          
+       <Route
+    path="/provider/*"
+    element={
+      <ProtectedRoute roles={['Provider']}>
+        <ProviderDashboard />
+      </ProtectedRoute>
+    }
+  />
+ <Route
+  path="/profile"
+  element={
+    <ProtectedRoute roles={['Student']}>
+      <MyProfile />
+    </ProtectedRoute>
+  }
+/>
+    
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
 

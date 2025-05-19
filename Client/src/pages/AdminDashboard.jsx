@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FiUser, FiBriefcase, FiBookOpen, FiBarChart2, FiMail, FiBell, FiCalendar, FiDollarSign, FiTrendingUp } from "react-icons/fi";
+import { FiUser, FiBarChart2, FiBell, FiCalendar, FiTrendingUp } from "react-icons/fi";
 
 function AdminDashboard() {
   const [requests, setRequests] = useState([]);
@@ -11,8 +11,9 @@ function AdminDashboard() {
       setLoadingRequests(true);
       setError(null);
       try {
-     
-        const res = await fetch('https://localhost:7255/api/admin/provider-requests');
+        
+       const res = await fetch('https://localhost:7255/api/provider/unapproved');
+
         if (!res.ok) throw new Error('Failed to fetch provider requests');
         const data = await res.json();
         setRequests(data);
@@ -28,8 +29,9 @@ function AdminDashboard() {
 
   const approveRequest = async (id) => {
     try {
-      const res = await fetch(`https://localhost:7255/api/admin/provider-requests/${id}/approve`, {
-        method: 'POST',
+     
+      const res = await fetch(`https://localhost:7255/api/provider/approve/${id}`, {
+        method: 'PUT',
       });
       if (!res.ok) throw new Error('Failed to approve request');
       setRequests(prev => prev.filter(r => r.id !== id));
@@ -41,8 +43,9 @@ function AdminDashboard() {
 
   const rejectRequest = async (id) => {
     try {
-      const res = await fetch(`https://localhost:7255/api/admin/provider-requests/${id}/reject`, {
-        method: 'POST',
+     
+      const res = await fetch(`https://localhost:7255/api/provider/${id}`, {
+        method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to reject request');
       setRequests(prev => prev.filter(r => r.id !== id));
@@ -56,9 +59,9 @@ function AdminDashboard() {
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
       <div className="row g-0">
 
-        {/* Sidebar */}
+     
         <div
-          className="col-md-2  text-white p-3 min-vh-100"
+          className="col-md-2 text-white p-3 min-vh-100"
           style={{ backgroundColor: '#004D7C', color: 'white' }}
         >
           <h4 className="text-center mb-4">Acme</h4>
@@ -82,10 +85,8 @@ function AdminDashboard() {
           </ul>
         </div>
 
-      
+       
         <div className="col-md-10 p-4">
-
-
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3>Dashboard</h3>
             <div className="d-flex align-items-center">
@@ -94,7 +95,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-      
           <div className="row mb-4">
             <div className="col-md-3 mb-3">
               <div className="card border-start-primary h-100">
@@ -133,7 +133,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-        
           <div className="card mb-4">
             <div className="card-header">
               <h5 className="mb-0">Pending Provider Requests</h5>
@@ -159,8 +158,6 @@ function AdminDashboard() {
               </ul>
             </div>
           </div>
-
-        
 
         </div>
       </div>

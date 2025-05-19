@@ -16,7 +16,7 @@ namespace Server.Controllers
             _context = context;
         }
 
-
+     
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Provider>>> GetProviders()
         {
@@ -39,17 +39,20 @@ namespace Server.Controllers
             return provider;
         }
 
-        
+      
         [HttpPost]
         public async Task<ActionResult<Provider>> CreateProvider(Provider provider)
         {
+            
+            provider.IsApproved = false; 
+
             _context.Provider.Add(provider);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetProvider), new { id = provider.Id }, provider);
         }
 
-        
+       
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProvider(int id, Provider provider)
         {
@@ -73,7 +76,6 @@ namespace Server.Controllers
             return NoContent();
         }
 
-        
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProvider(int id)
         {
@@ -83,6 +85,44 @@ namespace Server.Controllers
 
             _context.Provider.Remove(provider);
             await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+    
+        [HttpGet("unapproved")]
+        public async Task<ActionResult<IEnumerable<Provider>>> GetUnapprovedProviders()
+        {
+            var unapprovedProviders = await _context.Provider
+                .Where(p => !p.IsApproved)
+                .ToListAsync();
+
+            return Ok(unapprovedProviders);
+        }
+
+      
+        [HttpPut("approve/{id}")]
+        public async Task<IActionResult> ApproveProvider(int id)
+        {
+            var provider = await _context.Provider.FindAsync(id);
+
+            if (provider == null)
+                return NotFound();
+
+            provider.IsApproved = true;
+            _context.Entry(provider).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProviderExists(id))
+                    return NotFound();
+                else
+                    throw;
+            }
 
             return NoContent();
         }

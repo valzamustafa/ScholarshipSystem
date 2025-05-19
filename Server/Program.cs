@@ -4,7 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Identity;
 using Server.Services;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.FileProviders;
 
 
 internal class Program
@@ -16,7 +19,7 @@ internal class Program
        
         builder.Services.AddControllers();
 
-  
+      
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -25,9 +28,33 @@ internal class Program
                 Title = "Scholarship API",
                 Version = "v1"
             });
+
+          
+            var jwtSecurityScheme = new OpenApiSecurityScheme
+            {
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Description = "Vendosni tokenin JWT në fushën më poshtë",
+
+                Reference = new OpenApiReference
+                {
+                    Id = JwtBearerDefaults.AuthenticationScheme,
+                    Type = ReferenceType.SecurityScheme
+                }
+            };
+
+            c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                { jwtSecurityScheme, Array.Empty<string>() }
+            });
         });
 
-       
+      
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -35,41 +62,59 @@ internal class Program
         builder.Services.AddScoped<IPasswordHasher<Student>, PasswordHasher<Student>>();
         builder.Services.AddScoped<IPasswordHasher<Provider>, PasswordHasher<Provider>>();
         builder.Services.AddScoped<IPasswordHasher<Admin>, PasswordHasher<Admin>>();
-        builder.Services.AddScoped<AuthService>();
 
-      
+        builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
 
-      
+       
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            };
+        });
+
+       
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowFrontend",
-                policy =>
-                {
-                    policy.WithOrigins("https://localhost:3000")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
-                });
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins("https://localhost:3000")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
         });
 
         var app = builder.Build();
 
-    
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
-            
-          
             var context = services.GetRequiredService<AppDbContext>();
+
             await context.Database.MigrateAsync();
 
-           
             var adminPasswordHasher = services.GetRequiredService<IPasswordHasher<Admin>>();
             await DbInitializer.SeedAdminAsync(context, adminPasswordHasher);
         }
 
         
+
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -80,8 +125,20 @@ internal class Program
         }
 
         app.UseHttpsRedirection();
+
+        app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "Uploads")),
+    RequestPath = "/Uploads"
+});
+
+
         app.UseCors("AllowFrontend");
+
+        app.UseAuthentication();
         app.UseAuthorization();
+
         app.MapControllers();
 
         await app.RunAsync();

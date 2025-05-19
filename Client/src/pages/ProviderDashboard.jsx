@@ -30,10 +30,10 @@ function ProviderDashboard() {
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
       <div className="row g-0">
 
-        {/* Sidebar */}
+       
         <div
           className="col-md-2 text-white p-3 min-vh-100"
-          style={{ backgroundColor: '#007BFF', color: 'white' }}
+           style={{ backgroundColor: '#004D7C', color: 'white' }}
         >
           <h4 className="text-center mb-4">Provider Panel</h4>
 
