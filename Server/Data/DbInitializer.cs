@@ -21,8 +21,9 @@ namespace Server.Data
             }
 
 
-            var adminUser = await context.Admin
-                .FirstOrDefaultAsync(u => u.Email == "e");
+           var adminUser = await context.Admin
+    .FirstOrDefaultAsync(u => u.Email == "krasniqiana27@gmail.com");
+
 
             if (adminUser == null)
             {

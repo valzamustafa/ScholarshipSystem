@@ -39,43 +39,78 @@ namespace Server.Controllers
             return provider;
         }
 
-      
-        [HttpPost]
-        public async Task<ActionResult<Provider>> CreateProvider(Provider provider)
-        {
-            
-            provider.IsApproved = false; 
+ [HttpPost]
+public async Task<ActionResult<Provider>> CreateProvider([FromBody] CreateProviderDto providerDto)
+{
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(ModelState);
+    }
 
-            _context.Provider.Add(provider);
-            await _context.SaveChangesAsync();
+    var roleExists = await _context.Role.AnyAsync(r => r.Id == providerDto.RoleId);
+    if (!roleExists)
+    {
+        return BadRequest("Invalid role specified");
+    }
 
-            return CreatedAtAction(nameof(GetProvider), new { id = provider.Id }, provider);
-        }
+    var passwordHash = BCrypt.Net.BCrypt.HashPassword(providerDto.Password);
 
+    var provider = new Provider
+    {
+        FullName = providerDto.FullName,
+        Email = providerDto.Email,
+        OrganizationName = providerDto.OrganizationName,
+        PhoneNumber = providerDto.PhoneNumber,
+        PasswordHash = passwordHash,
+        IsLocal = providerDto.IsLocal,
+        IsApproved = true,
+        RoleId = providerDto.RoleId 
+    };
+
+    _context.Provider.Add(provider);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(GetProvider), new { id = provider.Id }, provider);
+}
        
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProvider(int id, Provider provider)
+       [HttpPut("{id}")]
+public async Task<IActionResult> UpdateProvider(int id, [FromBody] UpdateProviderDto providerDto)
+{
+    if (id != providerDto.Id)
+    {
+        return BadRequest();
+    }
+
+    var provider = await _context.Provider.FindAsync(id);
+    if (provider == null)
+    {
+        return NotFound();
+    }
+
+    provider.FullName = providerDto.FullName;
+    provider.Email = providerDto.Email;
+    provider.OrganizationName = providerDto.OrganizationName;
+    provider.PhoneNumber = providerDto.PhoneNumber;
+    provider.IsLocal = providerDto.IsLocal;
+
+    try
+    {
+        await _context.SaveChangesAsync();
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        if (!ProviderExists(id))
         {
-            if (id != provider.Id)
-                return BadRequest();
-
-            _context.Entry(provider).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProviderExists(id))
-                    return NotFound();
-                else
-                    throw;
-            }
-
-            return NoContent();
+            return NotFound();
         }
+        else
+        {
+            throw;
+        }
+    }
 
+    return NoContent();
+}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProvider(int id)
         {

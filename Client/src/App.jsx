@@ -22,7 +22,6 @@ import Unauthorized from './pages/Unauthorized';
 import PendingApproval from './pages/PendingApproval';
 import MyProfile from './pages/MyProfile';
 
-
 function App() {
   return (
     <AuthProvider>
@@ -30,18 +29,13 @@ function App() {
         <Navbar />
 
         <Routes>
-        
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/register" element={<RegisterStudentForm />} />
           <Route path="/register/provider" element={<RegisterProviderForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/pending-approval" element={<PendingApproval />} />
-         
-                    <Route path="/profile" element={<MyProfile />} />
-         
 
-       
           <Route
             path="/admin/*"
             element={
@@ -51,23 +45,24 @@ function App() {
             }
           />
 
-       <Route
-    path="/provider/*"
-    element={
-      <ProtectedRoute roles={['Provider']}>
-        <ProviderDashboard />
-      </ProtectedRoute>
-    }
-  />
- <Route
-  path="/profile"
-  element={
-    <ProtectedRoute roles={['Student']}>
-      <MyProfile />
-    </ProtectedRoute>
-  }
-/>
-    
+          <Route
+            path="/provider/*"
+            element={
+              <ProtectedRoute roles={['Provider']}>
+                <ProviderDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute roles={['Student']}>
+                <MyProfile />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
 

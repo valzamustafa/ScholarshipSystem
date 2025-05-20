@@ -8,4 +8,5 @@ public class StudentDto : UserDto
     public string? ImageUrl { get; set; }
     public string StudentLevelName { get; set; } = string.Empty;  
     public ICollection<ApplicationDto> Applications { get; set; } = new List<ApplicationDto>();
+    public int RoleId { get; internal set; }
 }

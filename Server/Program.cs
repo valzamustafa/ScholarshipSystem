@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.FileProviders;
-
+using Microsoft.AspNetCore.Authorization;
 
 internal class Program
 {
@@ -16,10 +16,10 @@ internal class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-       
+        
         builder.Services.AddControllers();
 
-      
+       
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -29,7 +29,6 @@ internal class Program
                 Version = "v1"
             });
 
-          
             var jwtSecurityScheme = new OpenApiSecurityScheme
             {
                 Scheme = "bearer",
@@ -54,7 +53,7 @@ internal class Program
             });
         });
 
-      
+  
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -66,7 +65,7 @@ internal class Program
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
 
-       
+
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -89,6 +88,13 @@ internal class Program
         });
 
        
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("StudentOnly", policy => policy.RequireRole("Student"));
+            options.AddPolicy("ProviderOnly", policy => policy.RequireRole("Provider"));
+        });
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend", policy =>
@@ -102,6 +108,7 @@ internal class Program
 
         var app = builder.Build();
 
+      
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
@@ -113,8 +120,7 @@ internal class Program
             await DbInitializer.SeedAdminAsync(context, adminPasswordHasher);
         }
 
-        
-
+       
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -126,19 +132,22 @@ internal class Program
 
         app.UseHttpsRedirection();
 
+       
         app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.WebRootPath, "Uploads")),
-    RequestPath = "/Uploads"
-});
+        {
+            FileProvider = new PhysicalFileProvider(
+                Path.Combine(builder.Environment.WebRootPath, "Uploads")),
+            RequestPath = "/Uploads"
+        });
 
-
+ 
         app.UseCors("AllowFrontend");
 
+   
         app.UseAuthentication();
         app.UseAuthorization();
 
+ 
         app.MapControllers();
 
         await app.RunAsync();
