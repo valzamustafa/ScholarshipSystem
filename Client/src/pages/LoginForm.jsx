@@ -53,36 +53,37 @@ export default function LoginForm() {
       localStorage.setItem('user', JSON.stringify(data.user));
 
       const roleRaw = data.user?.Role || data.user?.role || null;
-      const approved = data.user?.approved ?? true;
+const approved = data.user?.approved ?? true;
 
       if (!roleRaw) {
         throw new Error('User role is undefined or missing');
       }
 
-      let role = '';
-      if (typeof roleRaw === 'string') {
-        role = roleRaw.trim();
-      } else if (typeof roleRaw === 'object' && roleRaw.emri) {
-        role = roleRaw.emri.trim();
-      } else {
-        throw new Error('User role is not a string or valid object');
-      }
+    let role = '';
+if (typeof roleRaw === 'string') {
+  role = roleRaw.charAt(0).toUpperCase() + roleRaw.slice(1).toLowerCase();
+} else if (typeof roleRaw === 'object' && roleRaw.emri) {
+  role = roleRaw.emri.charAt(0).toUpperCase() + roleRaw.emri.slice(1).toLowerCase();
+} else {
+  throw new Error('User role is not a string or valid object');
+}
 
+localStorage.setItem("user", JSON.stringify({
+  ...data.user,
+  role, // stored in lowercase
+  approved
+}));
       console.log('User role:', role, 'Approved:', approved);
 
       if (role === 'Admin') {
-        navigate('/admin');
-      } else if (role === 'Provider') {
-        if (!approved) {
-          navigate('/pending-approval');
-        } else {
-          navigate('/provider');
-        }
-      } else if (role === 'Student') {
-        navigate('/home');
-      } else {
-        throw new Error('Unknown user role');
-      }
+  navigate('/admin');
+} else if (role === 'Provider') {
+  navigate(approved ? '/provider' : '/pending-approval'); 
+} else if (role === 'Student') {
+  navigate('/home');
+} else {
+  throw new Error('Unknown user role');
+}
 
     } catch (err) {
       setError(err.message || 'Login error');

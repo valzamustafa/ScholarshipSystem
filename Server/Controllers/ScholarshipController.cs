@@ -17,15 +17,31 @@ namespace Server.Controllers
         }
 
         
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Scholarship>>> GetAll()
+    [HttpGet]
+public async Task<IActionResult> GetAllScholarships()
+{
+    var scholarships = await _context.Scholarship
+        .Include(s => s.Provider)
+        .Include(s => s.ScholarshipCategory)
+        .Include(s => s.ScholarshipType)
+        .Select(s => new ScholarshipDto
         {
-            return await _context.Scholarship
-                .Include(s => s.Provider)
-                .Include(s => s.ScholarshipCategory)
-                .Include(s => s.ScholarshipType)
-                .ToListAsync();
-        }
+            Id = s.Id,
+            Title = s.Title,
+            Description = s.Description,
+            ApplyLink = s.ApplyLink,
+            IsAvailable = s.IsAvailable,
+            ProviderId = s.ProviderId,
+            ProviderName = s.Provider.FullName,
+            ScholarshipCategoryId = s.ScholarshipCategoryId,
+            ScholarshipCategoryName = s.ScholarshipCategory.Name,
+            ScholarshipTypeId = s.ScholarshipTypeId,
+            ScholarshipTypeName = s.ScholarshipType.Name
+        })
+        .ToListAsync();
+
+    return Ok(scholarships);
+}
 
         
         [HttpGet("{id}")]
@@ -57,59 +73,64 @@ namespace Server.Controllers
 
         
         [HttpPost]
-        public async Task<ActionResult<Scholarship>> Create(Scholarship scholarship)
-        {
-            
-            if (!await _context.Provider.AnyAsync(p => p.Id == scholarship.ProviderId))
-                return BadRequest("ProviderId nuk ekziston.");
+public async Task<ActionResult<Scholarship>> Create(CreateScholarshipDto dto)
+{
+    if (!await _context.Provider.AnyAsync(p => p.Id == dto.ProviderId))
+        return BadRequest("ProviderId nuk ekziston.");
 
-            if (!await _context.ScholarshipCategory.AnyAsync(c => c.Id == scholarship.ScholarshipCategoryId))
-                return BadRequest("ScholarshipCategoryId nuk ekziston.");
+    if (!await _context.ScholarshipCategory.AnyAsync(c => c.Id == dto.ScholarshipCategoryId))
+        return BadRequest("ScholarshipCategoryId nuk ekziston.");
 
-            if (!await _context.ScholarshipType.AnyAsync(t => t.Id == scholarship.ScholarshipTypeId))
-                return BadRequest("ScholarshipTypeId nuk ekziston.");
+    if (!await _context.ScholarshipType.AnyAsync(t => t.Id == dto.ScholarshipTypeId))
+        return BadRequest("ScholarshipTypeId nuk ekziston.");
 
-            _context.Scholarship.Add(scholarship);
-            await _context.SaveChangesAsync();
+    var scholarship = new Scholarship
+    {
+        Title = dto.Title,
+        Description = dto.Description,
+        ApplyLink = dto.ApplyLink,
+        IsAvailable = dto.IsAvailable,
+        ProviderId = dto.ProviderId,
+        ScholarshipCategoryId = dto.ScholarshipCategoryId,
+        ScholarshipTypeId = dto.ScholarshipTypeId
+    };
 
-            return CreatedAtAction(nameof(GetById), new { id = scholarship.Id }, scholarship);
-        }
+    _context.Scholarship.Add(scholarship);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(GetById), new { id = scholarship.Id }, scholarship);
+}
+
 
         
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Scholarship updatedScholarship)
-        {
-            if (id != updatedScholarship.Id)
-                return BadRequest("ID nuk përputhet.");
+public async Task<IActionResult> Update(int id, CreateScholarshipDto dto)
+{
+    var existing = await _context.Scholarship.FindAsync(id);
+    if (existing == null)
+        return NotFound();
 
-            var existing = await _context.Scholarship.FindAsync(id);
-            if (existing == null)
-                return NotFound();
+    if (!await _context.Provider.AnyAsync(p => p.Id == dto.ProviderId))
+        return BadRequest("ProviderId nuk ekziston.");
 
-            // Validime për foreign keys
-            if (!await _context.Provider.AnyAsync(p => p.Id == updatedScholarship.ProviderId))
-                return BadRequest("ProviderId nuk ekziston.");
+    if (!await _context.ScholarshipCategory.AnyAsync(c => c.Id == dto.ScholarshipCategoryId))
+        return BadRequest("ScholarshipCategoryId nuk ekziston.");
 
-            if (!await _context.ScholarshipCategory.AnyAsync(c => c.Id == updatedScholarship.ScholarshipCategoryId))
-                return BadRequest("ScholarshipCategoryId nuk ekziston.");
+    if (!await _context.ScholarshipType.AnyAsync(t => t.Id == dto.ScholarshipTypeId))
+        return BadRequest("ScholarshipTypeId nuk ekziston.");
 
-            if (!await _context.ScholarshipType.AnyAsync(t => t.Id == updatedScholarship.ScholarshipTypeId))
-                return BadRequest("ScholarshipTypeId nuk ekziston.");
+    existing.Title = dto.Title;
+    existing.Description = dto.Description;
+    existing.ApplyLink = dto.ApplyLink;
+    existing.IsAvailable = dto.IsAvailable;
+    existing.ProviderId = dto.ProviderId;
+    existing.ScholarshipCategoryId = dto.ScholarshipCategoryId;
+    existing.ScholarshipTypeId = dto.ScholarshipTypeId;
 
-            
-            existing.Title = updatedScholarship.Title;
-            existing.Description = updatedScholarship.Description;
-            existing.ApplyLink = updatedScholarship.ApplyLink;
-            existing.IsAvailable = updatedScholarship.IsAvailable;
-            existing.ProviderId = updatedScholarship.ProviderId;
-            existing.ScholarshipCategoryId = updatedScholarship.ScholarshipCategoryId;
-            existing.ScholarshipTypeId = updatedScholarship.ScholarshipTypeId;
+    await _context.SaveChangesAsync();
 
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
+    return NoContent();
+}
         
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)

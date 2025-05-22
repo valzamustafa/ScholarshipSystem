@@ -21,6 +21,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Unauthorized from './pages/Unauthorized';
 import PendingApproval from './pages/PendingApproval';
 import MyProfile from './pages/MyProfile';
+import ScholarshipsPage from './pages/ScholarshipsPage';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/register/provider" element={<RegisterProviderForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/pending-approval" element={<PendingApproval />} />
+           <Route path="/scholarships" element={<ScholarshipsPage />} />
 
           <Route
             path="/admin/*"

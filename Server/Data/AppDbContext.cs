@@ -47,10 +47,38 @@ public class AppDbContext : DbContext
    new StudentLevel { Id = 4, Level = "High School Graduate" }, 
    new StudentLevel { Id = 5, Level = "Training Participant" }  
 );
+// In AppDbContext.cs
+modelBuilder.Entity<ScholarshipCategory>().HasData(
+    new ScholarshipCategory 
+    { 
+        Id = 1,
+        Name = "University Students", 
+        Description = "For students already enrolled in university" 
+    },
+    new ScholarshipCategory 
+    { 
+        Id = 2,
+        Name = "High School Graduates", 
+        Description = "For students graduating high school and entering university" 
+    },
+    new ScholarshipCategory 
+    { 
+        Id = 3,
+        Name = "Training Programs", 
+        Description = "For vocational and professional training programs" 
+    }
+);
 
+modelBuilder.Entity<ScholarshipType>().HasData(
+    new ScholarshipType { Id = 1, Name = "Full", Description = "100% coverage" },
+    new ScholarshipType { Id = 2, Name = "Partial 75%", Description = "75% coverage" },
+    new ScholarshipType { Id = 3, Name = "Partial 50%", Description = "50% coverage" },
+    new ScholarshipType { Id = 4, Name = "Partial 25%", Description = "25% coverage" }
+);
 
   
 }
+
 
 
 

@@ -4,7 +4,7 @@ function Footer() {
   return (
     <footer style={{ backgroundColor: '#002B45', color: 'white' }} className="pt-3 pb-2">
 
-      <div className="container">
+      <div className="container ">
 
         <div className="row text-center pt-3 mb-4">
           <h5 className="fw-bold mb-3">Core Values Behind Our Scholarship Platform</h5>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Logoo from '../assets/logoo.png';
+import LogoutButton from './LogoutButton';
 
 function Navbar() {
   return (
@@ -30,7 +31,7 @@ function Navbar() {
         </button>
 
       
-        <div className="collapse navbar-collapse justify-content-center" id="navbarNav">
+        <div className="collapse navbar-collapse justify-content-centear" id="navbarNav">
           <ul className="navbar-nav gap-4 mb-2 mb-lg-0">
             <li className="nav-item">
               <Link className="nav-link" aria-current="page" to="/home" style={{ color: 'white' }}>
@@ -115,11 +116,10 @@ function Navbar() {
               <li>
                 <hr className="dropdown-divider" />
               </li>
-              <li>
-                <Link className="dropdown-item" to="/logout">
-                  Logout
-                </Link>
-              </li>
+             <li>
+  <LogoutButton />
+</li>
+
             </ul>
           </div>
         </div>

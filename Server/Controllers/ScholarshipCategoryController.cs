@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Server.Controllers
 {
@@ -16,22 +18,20 @@ namespace Server.Controllers
             _context = context;
         }
 
-        
+    
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ScholarshipCategory>>> GetAll()
         {
-            return await _context.ScholarshipCategory
-                .Include(c => c.Scholarship)
-                .ToListAsync();
+           
+            return await _context.ScholarshipCategory.ToListAsync();
         }
 
-        
+
         [HttpGet("{id}")]
         public async Task<ActionResult<ScholarshipCategory>> GetById(int id)
         {
-            var category = await _context.ScholarshipCategory
-                .Include(c => c.Scholarship)
-                .FirstOrDefaultAsync(c => c.Id == id);
+     
+            var category = await _context.ScholarshipCategory.FindAsync(id);
 
             if (category == null)
                 return NotFound();
@@ -39,24 +39,22 @@ namespace Server.Controllers
             return category;
         }
 
-        
-          [HttpPost]
-public IActionResult Create([FromBody] ScholarshipCategory category)
-{
-    try
-    {
-        _context.ScholarshipCategory.Add(category);
-        _context.SaveChanges();
-        return Ok(category);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new { error = ex.Message });
-    }
-}
 
+        [HttpPost]
+        public IActionResult Create([FromBody] ScholarshipCategory category)
+        {
+            try
+            {
+                _context.ScholarshipCategory.Add(category);
+                _context.SaveChanges();
+                return Ok(category);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
 
-        
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ScholarshipCategory updatedCategory)
         {
@@ -75,7 +73,7 @@ public IActionResult Create([FromBody] ScholarshipCategory category)
             return NoContent();
         }
 
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
