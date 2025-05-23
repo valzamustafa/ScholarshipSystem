@@ -132,22 +132,28 @@ function AdminDashboard() {
     }
   }
 
-  async function fetchScholarships() {
+ async function fetchScholarships() {
   try {
     const token = localStorage.getItem("token");
-    console.log("Token në fetchScholarships:", token);
+    console.log("Token in fetchScholarships:", token);
     if (!token) throw new Error("No authentication token found");
 
-    const res = await fetch("https://localhost:7255/api/scholarships", {
-      headers: { Authorization: `Bearer ${token}` },
+    const res = await fetch("https://localhost:7255/api/scholarship", {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+      },
     });
 
-    if (!res.ok) throw new Error("Failed to fetch scholarships");
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "Failed to fetch scholarships");
+    }
+
     const data = await res.json();
     setScholarships(data);
   } catch (error) {
     console.error("Fetch scholarships error:", error);
-   
+    alert(`Error fetching scholarships: ${error.message}`);
   }
 }
 

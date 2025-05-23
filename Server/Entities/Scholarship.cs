@@ -7,6 +7,7 @@ public class Scholarship
     public required string Description { get; set; }
     public required  string ApplyLink { get; set; }
     public bool IsAvailable { get; set; }
+     public  string? ImageFile { get; set; }
     
     public int ProviderId { get; set; }
     public Provider Provider { get; set; }=null!;

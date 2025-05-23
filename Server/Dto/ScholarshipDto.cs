@@ -5,6 +5,7 @@ public class ScholarshipDto
     public string Description { get; set; } = string.Empty;
     public string ApplyLink { get; set; } = string.Empty;
     public bool IsAvailable { get; set; }
+     public string? ImageFile { get; set; } 
     public int ProviderId { get; set; }
     public string ProviderName { get; set; } = string.Empty;  // Mund të shtohet për të dhënë emrin e ofruesit
     public int ScholarshipCategoryId { get; set; }
