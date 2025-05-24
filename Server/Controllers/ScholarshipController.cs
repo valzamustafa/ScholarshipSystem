@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Entities;
-using Microsoft.AspNetCore.Hosting; // për IWebHostEnvironment
+using Microsoft.AspNetCore.Hosting; 
 using Microsoft.AspNetCore.Http;
 
 namespace Server.Controllers
@@ -19,8 +19,29 @@ namespace Server.Controllers
             _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
+        
+ [HttpGet("byprovider/{providerId}")]
+public async Task<IActionResult> GetByProvider(int providerId)
+{
+    var scholarships = await _context.Scholarship
+        .Where(s => s.ProviderId == providerId)
+        .Include(s => s.ScholarshipCategory)
+        .Include(s => s.ScholarshipType)
+        .Select(s => new {
+            s.Id,
+            s.Title,
+            s.Description,
+            s.ApplyLink,
+            s.Deadline, 
+            s.IsAvailable,
+            s.ImageFile,
+            ScholarshipCategory = s.ScholarshipCategory != null ? new { s.ScholarshipCategory.Id, s.ScholarshipCategory.Name } : null,
+            ScholarshipType = s.ScholarshipType != null ? new { s.ScholarshipType.Id, s.ScholarshipType.Name } : null
+        })
+        .ToListAsync();
 
-
+    return Ok(scholarships);
+}
         [HttpGet]
         public async Task<IActionResult> GetAllScholarships()
         {
@@ -115,7 +136,7 @@ namespace Server.Controllers
                     await dto.ImageFile.CopyToAsync(stream);
                 }
 
-                scholarship.ImageFile = "/Uploads/" + uniqueFileName;
+               scholarship.ImageFile = "/Uploads/" + uniqueFileName;  
             }
 
             _context.Scholarship.Add(scholarship);

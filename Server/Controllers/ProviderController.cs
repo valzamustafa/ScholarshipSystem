@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Entities;
-using Server.Data; 
+using Server.Data;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 
 namespace Server.Controllers
 {
@@ -24,7 +27,22 @@ namespace Server.Controllers
                 .Include(p => p.Scholarship)
                 .ToListAsync();
         }
+[HttpGet("current")]
+[Authorize]
+public async Task<ActionResult<Provider>> GetCurrentProvider()
+{
+    var email = User.FindFirstValue(ClaimTypes.Email);
+    if (string.IsNullOrEmpty(email))
+        return Unauthorized();
 
+    var provider = await _context.Provider
+        .FirstOrDefaultAsync(p => p.Email == email);
+
+    if (provider == null)
+        return NotFound();
+
+    return provider;
+}
         
         [HttpGet("{id}")]
         public async Task<ActionResult<Provider>> GetProvider(int id)

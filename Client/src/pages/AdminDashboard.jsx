@@ -270,12 +270,14 @@ function AdminDashboard() {
   }
 
   function startEditProvider(provider) {
-    setEditingProviderId(provider.id);
-    setProviderEditData({
-      fullName: provider.fullName,
-      email: provider.email,
-    });
-  }
+  setEditingProviderId(provider.id);
+  setProviderEditData({
+    fullName: provider.fullName,
+    email: provider.email,
+    organizationName: provider.organizationName || "",
+    phoneNumber: provider.phoneNumber || ""
+  });
+}
 
   function cancelEditProvider() {
     setEditingProviderId(null);

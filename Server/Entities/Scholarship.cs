@@ -3,6 +3,7 @@ namespace Server.Entities;
 public class Scholarship
 {
     public int Id { get; set; }
+     public DateTime? Deadline { get; set; }
     public required string Title { get; set; }
     public required string Description { get; set; }
     public required  string ApplyLink { get; set; }

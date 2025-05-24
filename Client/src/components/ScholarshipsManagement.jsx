@@ -53,7 +53,7 @@ function ScholarshipsManagement() {
   }
 }
 
-// Similarly update other fetch functions:
+
 async function fetchCategories() {
   try {
     const token = localStorage.getItem("token");
@@ -114,8 +114,7 @@ async function fetchTypes() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-      
-      // Create preview for the image
+    
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
@@ -176,7 +175,7 @@ async function fetchTypes() {
       let errorMessage = "Failed to save scholarship";
       
       try {
-        // First try to parse as JSON
+  
         const errorData = await response.json();
         
         if (errorData.errors) {
@@ -188,9 +187,9 @@ async function fetchTypes() {
         } else if (errorData.message) {
           errorMessage = errorData.message;
         }
-      // eslint-disable-next-line no-unused-vars
+      
       } catch (jsonError) {
-        // If JSON parsing fails, try to get the text response
+   
         try {
           const textResponse = await response.text();
           errorMessage = textResponse || errorMessage;
@@ -236,7 +235,7 @@ async function fetchTypes() {
       scholarshipTypeId: scholarship.scholarshipTypeId,
     });
     
-    // Set preview image if exists
+
     if (scholarship.imageUrl) {
       setPreviewImage(scholarship.imageUrl);
     } else {
@@ -403,8 +402,6 @@ async function fetchTypes() {
                   ))}
                 </select>
               </div>
-
-              {/* Improved file input with preview */}
               <div className="mb-3">
                 <label className="form-label">Image (optional)</label>
                 <input
@@ -485,14 +482,15 @@ async function fetchTypes() {
               <td>
                 {scholarship.imageFile ? (
     <img
-      src={`data:image/jpeg;base64,${scholarship.imageFile}`}
-      alt={scholarship.title}
-      style={{ width: "100px", height: "auto" }}
-      className="img-thumbnail"
-    />
-  ) : (
-    "No image"
-  )}
+    src={`https://localhost:7255/${scholarship.imageFile.replace(/^\.?\/?/, '')}`}
+    alt={scholarship.title}
+    style={{ width: "100px", height: "auto", objectFit: "cover" }}
+    className="img-thumbnail"
+  />
+) : (
+  "No image"
+)}
+
               </td>
               <td>
                 <button

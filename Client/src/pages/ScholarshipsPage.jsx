@@ -3,6 +3,8 @@ import { Button, Modal, Form, Alert, Spinner } from "react-bootstrap";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import ScholarshipManager from "../components/ScholarshipManager";
+
 
 function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
@@ -35,7 +37,7 @@ function ScholarshipsPage() {
   useEffect(() => {
     AOS.init({ duration: 1000 });
     fetchInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const fetchInitialData = async () => {
@@ -55,7 +57,6 @@ function ScholarshipsPage() {
       const res = await fetch("https://localhost:7255/api/scholarship", {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
-
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
       setScholarships(data);
@@ -99,23 +100,18 @@ function ScholarshipsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-
     const requiredFields = ['title', 'description', 'applyLink', 'scholarshipCategoryId', 'scholarshipTypeId'];
     const missingFields = requiredFields.filter(field => !formData[field]);
-
     if (missingFields.length > 0) {
       setError(`Please fill all required fields: ${missingFields.join(', ')}`);
       return;
     }
-
     try {
       setLoading(prev => ({ ...prev, submitting: true }));
-
       const url = editingId
         ? `https://localhost:7255/api/scholarship/${editingId}`
         : "https://localhost:7255/api/scholarship";
       const method = editingId ? "PUT" : "POST";
-
       const formPayload = new FormData();
       formPayload.append("title", formData.title);
       formPayload.append("description", formData.description);
@@ -126,20 +122,15 @@ function ScholarshipsPage() {
       if (formData.imageFile) {
         formPayload.append("imageFile", formData.imageFile);
       }
-
       const response = await fetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formPayload
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to save scholarship");
       }
-
       await fetchScholarships();
       resetForm();
     } catch (error) {
@@ -181,20 +172,13 @@ function ScholarshipsPage() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this scholarship?")) return;
-
     try {
       setLoading(prev => ({ ...prev, submitting: true }));
       const response = await fetch(`https://localhost:7255/api/scholarship/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete scholarship");
-      }
-
+      if (!response.ok) throw new Error("Failed to delete scholarship");
       await fetchScholarships();
     } catch (error) {
       console.error("Error deleting scholarship:", error);
@@ -204,15 +188,8 @@ function ScholarshipsPage() {
     }
   };
 
-  const getCategoryName = (id) => {
-    const category = categories.find(c => c.id === id);
-    return category ? category.name : "N/A";
-  };
-
-  const getTypeName = (id) => {
-    const type = types.find(t => t.id === id);
-    return type ? type.name : "N/A";
-  };
+  const getCategoryName = (id) => categories.find(c => c.id === id)?.name || "N/A";
+  const getTypeName = (id) => types.find(t => t.id === id)?.name || "N/A";
 
   const filteredScholarships = filter === "all"
     ? scholarships
@@ -267,18 +244,20 @@ function ScholarshipsPage() {
           filteredScholarships.map((scholarship) => (
             <div className="col-md-6 col-lg-4 d-flex" key={scholarship.id} data-aos="zoom-in">
               <div className="card border-0 shadow rounded-4 w-100 transition-hover">
-                {scholarship.imageUrl && (
-                  <img 
-                    src={scholarship.imageUrl.startsWith("http") 
-                      ? scholarship.imageUrl 
-                      : `https://localhost:7255${scholarship.imageUrl.replace('./', '/')}`}
-                    alt={scholarship.title}
-                    className="card-img-top"
-                    style={{ height: "150px", objectFit: "cover" }}
-                    onError={(e) => e.target.style.display = "none"}
-                  />
-                )}
                 <div className="card-body d-flex flex-column">
+                  <div className="text-center mb-3">
+                   {scholarship.imageFile ? (
+  <img
+    src={`https://localhost:7255/${scholarship.imageFile.replace(/^\.?\/?/, '')}`}
+    alt={scholarship.title}
+    style={{ maxHeight: "150px", maxWidth: "100%", objectFit: "contain", borderRadius: "12px" }}
+    className="img-fluid"
+    onError={(e) => (e.target.style.display = "none")}
+  />
+) : (
+  <div className="text-muted small">No image available</div>
+)}d
+                  </div>
                   <div className="d-flex justify-content-between align-items-start">
                     <h5 className="text-primary fw-bold">{scholarship.title}</h5>
                     {(role === "admin" || role === "provider") && (

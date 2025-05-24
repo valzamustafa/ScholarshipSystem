@@ -43,7 +43,7 @@ namespace Server.Controllers
         [HttpPost]
         public async Task<ActionResult<ApplicationDocument>> Create(ApplicationDocument document)
         {
-            // Optional: kontrollo nëse Application ekziston
+           
             var applicationExists = await _context.Application.AnyAsync(a => a.Id == document.ApplicationId);
             if (!applicationExists)
                 return BadRequest("ApplicationId nuk ekziston.");
