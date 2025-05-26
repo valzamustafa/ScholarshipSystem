@@ -15,7 +15,6 @@ namespace Server.Controllers
         {
             _context = context;
         }
-
        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Application>>> GetApplications()
@@ -46,6 +45,35 @@ namespace Server.Controllers
 
             return application;
         }
+      [HttpGet("admin")]
+public async Task<IActionResult> GetApplicationsForAdmin()
+{
+    var applications = await _context.Application
+        .Include(a => a.Student)
+            .ThenInclude(s => s.StudentLevel)
+        .Include(a => a.Scholarship)
+            .ThenInclude(s => s.Provider)
+        .Include(a => a.ApplicationStatus)
+        .Include(a => a.ApplicationDocument)
+        .Select(a => new
+        {
+            a.Id,
+             Student = a.Student,
+            StudentName = a.Student.FullName,
+            SchoolOrUniversityName = a.Student.SchoolOrUniversityName,
+            StudyField = a.Student.StudyField,
+            StudentLevelName = a.Student.StudentLevel.Level,
+            ScholarshipTitle = a.Scholarship.Title,
+            ProviderName = a.Scholarship.Provider.FullName,
+            a.ApplicationDate,
+            a.ApplicationStatusId,
+            ApplicationDocument = a.ApplicationDocument.Select(d => d.FilePath).ToList()
+        })
+        .ToListAsync();
+
+    return Ok(applications);
+}
+
         [HttpGet("byprovider/{providerId}")]
         public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetByProvider(int providerId)
         {
@@ -156,7 +184,6 @@ public async Task<IActionResult> UpdateApplicationStatus(int id, [FromBody] Upda
         return NotFound();
     }
 
-    
     var statusExists = await _context.ApplicationStatus.AnyAsync(s => s.Id == statusDto.StatusId);
     if (!statusExists)
     {

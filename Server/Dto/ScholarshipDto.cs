@@ -6,7 +6,7 @@ public class ScholarshipDto
     public string ApplyLink { get; set; } = string.Empty;
     public bool IsAvailable { get; set; }
      public string? ImageFile { get; set; } 
-      public string? Deadline { get; set; } 
+      public DateTime? Deadline { get; set; } 
     public int ProviderId { get; set; }
     public string ProviderName { get; set; } = string.Empty;  
     public int ScholarshipCategoryId { get; set; }

@@ -114,13 +114,13 @@ const handleSubmit = (e) => {
 
           <div className="mb-3">
             <label className="form-label">Deadline</label>
-            <input
-              type="date"
-              className="form-control"
-              name="deadline"
-              value={formData.deadline}
-              onChange={handleChange}
-            />
+           <input 
+  type="date"
+  name="deadline"
+  value={formData.deadline || ''}
+  onChange={handleChange}
+/>
+
           </div>
           
           <div className="mb-3">

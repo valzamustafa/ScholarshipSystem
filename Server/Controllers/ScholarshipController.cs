@@ -56,6 +56,7 @@ public async Task<IActionResult> GetByProvider(int providerId)
                     Description = s.Description,
                     ApplyLink = s.ApplyLink,
                     IsAvailable = s.IsAvailable,
+                    Deadline=s.Deadline,
                     ImageFile = s.ImageFile,
                     ProviderId = s.ProviderId,
                     ProviderName = s.Provider.FullName,
@@ -116,6 +117,8 @@ public async Task<IActionResult> GetByProvider(int providerId)
                 Description = dto.Description,
                 ApplyLink = dto.ApplyLink,
                 IsAvailable = dto.IsAvailable,
+                Deadline = dto.Deadline,
+
                 ProviderId = dto.ProviderId,
                 ScholarshipCategoryId = dto.ScholarshipCategoryId,
                 ScholarshipTypeId = dto.ScholarshipTypeId
@@ -168,6 +171,8 @@ public async Task<IActionResult> GetByProvider(int providerId)
             existing.Description = dto.Description;
             existing.ApplyLink = dto.ApplyLink;
             existing.IsAvailable = dto.IsAvailable;
+            existing.Deadline = dto.Deadline;
+           
             existing.ProviderId = dto.ProviderId;
             existing.ScholarshipCategoryId = dto.ScholarshipCategoryId;
             existing.ScholarshipTypeId = dto.ScholarshipTypeId;

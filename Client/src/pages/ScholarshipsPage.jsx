@@ -28,9 +28,11 @@ function ScholarshipsPage() {
     description: "",
     applyLink: "",
     isAvailable: true,
+    deadline:"",
     scholarshipCategoryId: "",
     scholarshipTypeId: "",
     imageFile: null
+
   });
 
   const role = localStorage.getItem("role");
@@ -119,6 +121,7 @@ function ScholarshipsPage() {
       formPayload.append("description", formData.description);
       formPayload.append("applyLink", formData.applyLink);
       formPayload.append("isAvailable", formData.isAvailable);
+      formPayload.append("deadline", formData.deadline); 
       formPayload.append("scholarshipCategoryId", formData.scholarshipCategoryId);
       formPayload.append("scholarshipTypeId", formData.scholarshipTypeId);
       if (formData.imageFile) {
@@ -157,20 +160,20 @@ function ScholarshipsPage() {
     setShowModal(false);
     setError(null);
   };
-
-  const handleEdit = (scholarship) => {
-    setFormData({
-      title: scholarship.title,
-      description: scholarship.description,
-      applyLink: scholarship.applyLink,
-      isAvailable: scholarship.isAvailable,
-      scholarshipCategoryId: scholarship.scholarshipCategoryId.toString(),
-      scholarshipTypeId: scholarship.scholarshipTypeId.toString(),
-      imageFile: null
-    });
-    setEditingId(scholarship.id);
-    setShowModal(true);
-  };
+const handleEdit = (scholarship) => {
+  setFormData({
+    title: scholarship.title,
+    description: scholarship.description,
+    applyLink: scholarship.applyLink,
+    isAvailable: scholarship.isAvailable,
+    scholarshipCategoryId: scholarship.scholarshipCategoryId.toString(),
+    scholarshipTypeId: scholarship.scholarshipTypeId.toString(),
+    imageFile: null,
+    deadline: scholarship.deadline ? new Date(scholarship.deadline).toISOString().split('T')[0] : ""
+  });
+  setEditingId(scholarship.id);
+  setShowModal(true);
+};
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this scholarship?")) return;
@@ -288,11 +291,13 @@ function ScholarshipsPage() {
                   <p className="text-muted">{scholarship.description}</p>
                   <p><strong>Category:</strong> {getCategoryName(scholarship.scholarshipCategoryId)}</p>
                   <p><strong>Type:</strong> {getTypeName(scholarship.scholarshipTypeId)}</p>
-                  <p><strong>Status:</strong> 
-                    <span className={`badge bg-${scholarship.isAvailable ? "success" : "secondary"}`}>
-                      {scholarship.isAvailable ? "Available" : "Unavailable"}
-                    </span>
-                  </p>
+            <p><strong>Status:</strong> 
+  <span className={`badge bg-${scholarship.isAvailable && new Date(scholarship.deadline) > new Date() ? "success" : "danger"}`}>
+    {scholarship.isAvailable && new Date(scholarship.deadline) > new Date() ? "Available" : "Not Available"} 
+  </span>
+</p>
+
+                  <p><strong>Deadline:</strong> {new Date(scholarship.deadline).toLocaleDateString()}</p>
                   <Button
                     variant="outline-primary"
                     className="rounded-pill mt-auto"
@@ -385,6 +390,16 @@ function ScholarshipsPage() {
                 onChange={handleInputChange} 
               />
             </Form.Group>
+            <Form.Group controlId="deadline" className="mb-3">
+  <Form.Label>Deadline *</Form.Label>
+  <Form.Control 
+    type="date" 
+    name="deadline" 
+    value={formData.deadline} 
+    onChange={handleInputChange} 
+    required 
+  />
+</Form.Group>
             <Form.Group controlId="imageFile" className="mb-3">
               <Form.Label>Upload Image</Form.Label>
               <Form.Control 
