@@ -31,7 +31,7 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-       
+
 
 
 
@@ -40,43 +40,49 @@ public class AppDbContext : DbContext
             new Role { Id = 2, Emri = "Provider" },
             new Role { Id = 3, Emri = "Admin" }
         );
-      modelBuilder.Entity<StudentLevel>().HasData(
-   new StudentLevel { Id = 1, Level = "Bachelor" },
-   new StudentLevel { Id = 2, Level = "Master" },
-   new StudentLevel { Id = 3, Level = "PhD" },
-   new StudentLevel { Id = 4, Level = "High School Graduate" }, 
-   new StudentLevel { Id = 5, Level = "Training Participant" }  
-);
-// In AppDbContext.cs
-modelBuilder.Entity<ScholarshipCategory>().HasData(
-    new ScholarshipCategory 
-    { 
-        Id = 1,
-        Name = "University Students", 
-        Description = "For students already enrolled in university" 
-    },
-    new ScholarshipCategory 
-    { 
-        Id = 2,
-        Name = "High School Graduates", 
-        Description = "For students graduating high school and entering university" 
-    },
-    new ScholarshipCategory 
-    { 
-        Id = 3,
-        Name = "Training Programs", 
-        Description = "For vocational and professional training programs" 
-    }
-);
+        modelBuilder.Entity<StudentLevel>().HasData(
+     new StudentLevel { Id = 1, Level = "Bachelor" },
+     new StudentLevel { Id = 2, Level = "Master" },
+     new StudentLevel { Id = 3, Level = "PhD" },
+     new StudentLevel { Id = 4, Level = "High School Graduate" },
+     new StudentLevel { Id = 5, Level = "Training Participant" }
+  );
+       
+        modelBuilder.Entity<ScholarshipCategory>().HasData(
+            new ScholarshipCategory
+            {
+                Id = 1,
+                Name = "University Students",
+                Description = "For students already enrolled in university"
+            },
+            new ScholarshipCategory
+            {
+                Id = 2,
+                Name = "High School Graduates",
+                Description = "For students graduating high school and entering university"
+            },
+            new ScholarshipCategory
+            {
+                Id = 3,
+                Name = "Training Programs",
+                Description = "For vocational and professional training programs"
+            }
+        );
 
-modelBuilder.Entity<ScholarshipType>().HasData(
-    new ScholarshipType { Id = 1, Name = "Full", Description = "100% coverage" },
-    new ScholarshipType { Id = 2, Name = "Partial 75%", Description = "75% coverage" },
-    new ScholarshipType { Id = 3, Name = "Partial 50%", Description = "50% coverage" },
-    new ScholarshipType { Id = 4, Name = "Partial 25%", Description = "25% coverage" }
-);
+        modelBuilder.Entity<ScholarshipType>().HasData(
+            new ScholarshipType { Id = 1, Name = "Full", Description = "100% coverage" },
+            new ScholarshipType { Id = 2, Name = "Partial 75%", Description = "75% coverage" },
+            new ScholarshipType { Id = 3, Name = "Partial 50%", Description = "50% coverage" },
+            new ScholarshipType { Id = 4, Name = "Partial 25%", Description = "25% coverage" }
+        );
 
   
+  
+         modelBuilder.Entity<ApplicationStatus>().HasData(
+    new ApplicationStatus { Id = 1, StatusName = "Pending" },
+    new ApplicationStatus { Id = 2, StatusName = "Declined" },
+    new ApplicationStatus { Id = 3, StatusName = "Approved" }
+);
 }
 
 

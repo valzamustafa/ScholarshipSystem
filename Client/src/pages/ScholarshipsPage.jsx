@@ -4,15 +4,17 @@ import { FiEdit, FiTrash2 } from "react-icons/fi";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import ScholarshipManager from "../components/ScholarshipManager";
-
+import ScholarshipApply from './ScholarshipApplyForm';
 
 function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
   const [filter, setFilter] = useState("all");
   const [editingId, setEditingId] = useState(null);
+  const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState({
     scholarships: false,
@@ -37,7 +39,7 @@ function ScholarshipsPage() {
   useEffect(() => {
     AOS.init({ duration: 1000 });
     fetchInitialData();
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchInitialData = async () => {
@@ -246,17 +248,17 @@ function ScholarshipsPage() {
               <div className="card border-0 shadow rounded-4 w-100 transition-hover">
                 <div className="card-body d-flex flex-column">
                   <div className="text-center mb-3">
-                   {scholarship.imageFile ? (
-  <img
-    src={`https://localhost:7255/${scholarship.imageFile.replace(/^\.?\/?/, '')}`}
-    alt={scholarship.title}
-    style={{ maxHeight: "150px", maxWidth: "100%", objectFit: "contain", borderRadius: "12px" }}
-    className="img-fluid"
-    onError={(e) => (e.target.style.display = "none")}
-  />
-) : (
-  <div className="text-muted small">No image available</div>
-)}d
+                    {scholarship.imageFile ? (
+                      <img
+                        src={`https://localhost:7255/${scholarship.imageFile.replace(/^\.?\/?/, '')}`}
+                        alt={scholarship.title}
+                        style={{ maxHeight: "150px", maxWidth: "100%", objectFit: "contain", borderRadius: "12px" }}
+                        className="img-fluid"
+                        onError={(e) => (e.target.style.display = "none")}
+                      />
+                    ) : (
+                      <div className="text-muted small">No image available</div>
+                    )}
                   </div>
                   <div className="d-flex justify-content-between align-items-start">
                     <h5 className="text-primary fw-bold">{scholarship.title}</h5>
@@ -291,14 +293,16 @@ function ScholarshipsPage() {
                       {scholarship.isAvailable ? "Available" : "Unavailable"}
                     </span>
                   </p>
-                  <a 
-                    href={scholarship.applyLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="btn btn-outline-primary rounded-pill mt-auto"
+                  <Button
+                    variant="outline-primary"
+                    className="rounded-pill mt-auto"
+                    onClick={() => {
+                      setSelectedScholarshipId(scholarship.id);
+                      setShowApplyModal(true);
+                    }}
                   >
                     Apply Now
-                  </a>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -404,6 +408,24 @@ function ScholarshipsPage() {
             {loading.submitting ? <Spinner animation="border" size="sm" /> : editingId ? "Update" : "Save"}
           </Button>
         </Modal.Footer>
+      </Modal>
+
+     
+      <Modal 
+        show={showApplyModal} 
+        onHide={() => setShowApplyModal(false)} 
+        size="lg"
+        centered
+        scrollable
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Apply for Scholarship</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedScholarshipId && (
+            <ScholarshipApply scholarshipId={selectedScholarshipId} />
+          )}
+        </Modal.Body>
       </Modal>
     </div>
   );

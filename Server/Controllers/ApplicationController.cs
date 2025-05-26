@@ -46,16 +46,60 @@ namespace Server.Controllers
 
             return application;
         }
+        [HttpGet("byprovider/{providerId}")]
+        public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetByProvider(int providerId)
+        {
+            var applications = await _context.Application
+                .Include(a => a.Scholarship)  
+                .Include(a => a.Student)
+                .Include(a => a.ApplicationStatus)
+                .Where(a => a.Scholarship.ProviderId == providerId)  
+                .Select(a => new ApplicationDto
+                {
+                    Id = a.Id,
+                    ApplicationDate = a.ApplicationDate,
+                    ApplicationStatusId = a.ApplicationStatusId,
+                    ApplicationStatusName = a.ApplicationStatus.StatusName,
+                    StudentId = a.StudentId,
+                    StudentName = a.Student.FullName,
+                    ScholarshipId = a.ScholarshipId,
+                    ScholarshipTitle = a.Scholarship.Title
+                })
+                .ToListAsync();
+
+            return Ok(applications);
+        }
 
         
-        [HttpPost]
-        public async Task<ActionResult<Application>> PostApplication(Application application)
-        {
-            _context.Application.Add(application);
-            await _context.SaveChangesAsync();
+     [HttpPost]
+public async Task<ActionResult<Application>> PostApplication([FromBody] CreateApplicationDto dto)
+{
+    var application = new Application
+    {
+        StudentId = dto.StudentId,
+        ScholarshipId = dto.ScholarshipId,
+        ApplicationStatusId = dto.ApplicationStatusId,
+        ApplicationDate = DateTime.UtcNow,
+        MotivationLetter = dto.MotivationLetter,
+        Gpa = dto.Gpa,
+        StudyYear = dto.StudyYear,
+        StudyField = dto.StudyField,
+        Portfolio = dto.Portfolio,
+        CvLink = dto.CvLink,
+      ApplicationDocument = dto.ApplicationDocument.Select(doc => new ApplicationDocument
+{
+    FilePath = doc,
+    FileName = System.IO.Path.GetFileName(doc)  
+}).ToList()
 
-            return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
-        }
+    };
+
+    _context.Application.Add(application);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
+}
+
 
         
         [HttpPut("{id}")]
@@ -103,6 +147,32 @@ namespace Server.Controllers
             return NoContent();
         }
 
+[HttpPut("{id}/status")]
+public async Task<IActionResult> UpdateApplicationStatus(int id, [FromBody] UpdateStatusDto statusDto)
+{
+    var application = await _context.Application.FindAsync(id);
+    if (application == null)
+    {
+        return NotFound();
+    }
+
+    
+    var statusExists = await _context.ApplicationStatus.AnyAsync(s => s.Id == statusDto.StatusId);
+    if (!statusExists)
+    {
+        return BadRequest("Invalid status ID");
+    }
+
+    application.ApplicationStatusId = statusDto.StatusId;
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
+
+public class UpdateStatusDto
+{
+    public int StatusId { get; set; }
+}
         private bool ApplicationExists(int id)
         {
             return _context.Application.Any(e => e.Id == id);

@@ -12,7 +12,7 @@ import Home from './pages/Home';
 import LoginForm from './pages/LoginForm';
 import RegisterStudentForm from './pages/RegisterStudentForm';
 import RegisterProviderForm from './pages/RegisterProviderForm';
-
+import ScholarshipApplyForm from './pages/ScholarshipApplyForm';
 import AdminDashboard from './pages/AdminDashboard';
 import ProviderDashboard from './pages/ProviderDashboard';
 
@@ -37,7 +37,8 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/pending-approval" element={<PendingApproval />} />
            <Route path="/scholarships" element={<ScholarshipsPage />} />
-
+           <Route path="/apply/:id" element={<ScholarshipApplyForm />} />
+           
           <Route
             path="/admin/*"
             element={

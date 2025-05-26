@@ -22,75 +22,90 @@ export default function LoginForm() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    try {
-      setLoading(true);
-      const response = await fetch('https://localhost:7255/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          Email: formData.email,
-          Password: formData.password,
-          Role: formData.role
+  try {
+    setLoading(true);
+    const response = await fetch('https://localhost:7255/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        Email: formData.email,
+        Password: formData.password,
+        Role: formData.role
+      })
+    });
 
-        })
-      });
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(text || 'Login failed');
+    }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(text || 'Login failed');
-      }
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || `Login failed with status: ${response.status}`);
+    }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || `Login failed with status: ${response.status}`);
-      }
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+    const roleRaw = data.user?.Role || data.user?.role || null;
+    const approved = data.user?.approved ?? true;
 
-      const roleRaw = data.user?.Role || data.user?.role || null;
-const approved = data.user?.approved ?? true;
-
-      if (!roleRaw) {
-        throw new Error('User role is undefined or missing');
-      }
+    if (!roleRaw) {
+      throw new Error('User role is undefined or missing');
+    }
 
     let role = '';
-if (typeof roleRaw === 'string') {
-  role = roleRaw.charAt(0).toUpperCase() + roleRaw.slice(1).toLowerCase();
-} else if (typeof roleRaw === 'object' && roleRaw.emri) {
-  role = roleRaw.emri.charAt(0).toUpperCase() + roleRaw.emri.slice(1).toLowerCase();
-} else {
-  throw new Error('User role is not a string or valid object');
-}
-
-localStorage.setItem("user", JSON.stringify({
-  ...data.user,
-  role, // stored in lowercase
-  approved
-}));
-      console.log('User role:', role, 'Approved:', approved);
-
-      if (role === 'Admin') {
-  navigate('/admin');
-} else if (role === 'Provider') {
-  navigate(approved ? '/provider' : '/pending-approval'); 
-} else if (role === 'Student') {
-  navigate('/home');
-} else {
-  throw new Error('Unknown user role');
-}
-
-    } catch (err) {
-      setError(err.message || 'Login error');
-    } finally {
-      setLoading(false);
+    if (typeof roleRaw === 'string') {
+      role = roleRaw.charAt(0).toUpperCase() + roleRaw.slice(1).toLowerCase();
+    } else if (typeof roleRaw === 'object' && roleRaw.emri) {
+      role = roleRaw.emri.charAt(0).toUpperCase() + roleRaw.emri.slice(1).toLowerCase();
+    } else {
+      throw new Error('User role is not a string or valid object');
     }
-  };
+
+    localStorage.setItem("user", JSON.stringify({
+      ...data.user,
+      role,
+      approved
+    }));
+
+    console.log('User role:', role, 'Approved:', approved);
+
+    if (role === 'Admin') {
+      navigate('/admin');
+    } else if (role === 'Provider') {
+      navigate(approved ? '/provider' : '/pending-approval');
+ } else if (role === 'Student') {
+  let studentId =
+    data.user?.id ||
+    data.user?.studentId ||
+    data.user?.student?.id ||
+    data.user?.StudentId ||
+    data.user?.Student?.id;
+
+  if (studentId) {
+    localStorage.setItem("studentId", studentId);
+  } else {
+    console.warn("Nuk u gjet studentId në objektin e userit:", data.user);
+  }
+
+  navigate('/home');
+}
+ else {
+      throw new Error('Unknown user role');
+    }
+
+  } catch (err) {
+    setError(err.message || 'Login error');
+  } finally {
+    setLoading(false);
+  }
+};
+
  return (
   <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light m-0 p-0 vw-100 overflow-x-hidden pt-5">
     <div className="row shadow-lg" style={{ maxWidth: '900px', width: '100%', borderRadius: '15px', overflow: 'hidden' }}>

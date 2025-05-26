@@ -1,22 +1,22 @@
-import fs from 'fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'fs'
+import path from 'path'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     https: {
-      key: fs.readFileSync('./certs/key.pem'),
-      cert: fs.readFileSync('./certs/cert.pem'),
+      key: fs.readFileSync(path.resolve('./certs/key.pem')),
+      cert: fs.readFileSync(path.resolve('./certs/cert.pem')),
     },
     port: 3000,
-    strictPort: true,
+    strictPort: true, 
     proxy: {
       '/api': {
-        target: 'https://localhost:7255', // kjo është backend-i yt .NET
+        target: 'https://localhost:7255',
         changeOrigin: true,
-        secure: false, // duhet të jetë false sepse ke certifikatë vetanake
+        secure: false,
       }
     }
   }

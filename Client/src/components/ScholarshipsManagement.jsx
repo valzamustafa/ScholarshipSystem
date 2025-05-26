@@ -188,6 +188,7 @@ async function fetchTypes() {
           errorMessage = errorData.message;
         }
       
+      // eslint-disable-next-line no-unused-vars
       } catch (jsonError) {
    
         try {
