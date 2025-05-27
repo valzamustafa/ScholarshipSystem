@@ -16,67 +16,87 @@ namespace Server.Controllers
             _context = context;
         }
 
-    
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Feedback>>> GetFeedbacks()
+        public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetFeedbacks()
         {
             return await _context.Feedback
                 .Include(f => f.User)
                 .Include(f => f.Scholarship)
+                .Select(f => new FeedbackDto
+                {
+                    Id = f.Id,
+                    Comment = f.Comment,
+                    Rating = f.Rating,
+                    UserId = f.UserId,
+                    UserFullName = f.User.FullName,
+                    ScholarshipId = f.ScholarshipId,
+                    ScholarshipTitle = f.Scholarship.Title,
+                    CreatedAt = f.CreatedAt
+                })
+                .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
         }
 
-        
         [HttpGet("{id}")]
-        public async Task<ActionResult<Feedback>> GetFeedback(int id)
+        public async Task<ActionResult<FeedbackDto>> GetFeedback(int id)
         {
             var feedback = await _context.Feedback
                 .Include(f => f.User)
                 .Include(f => f.Scholarship)
-                .FirstOrDefaultAsync(f => f.Id == id);
+                .Where(f => f.Id == id)
+                .Select(f => new FeedbackDto
+                {
+                    Id = f.Id,
+                    Comment = f.Comment,
+                    Rating = f.Rating,
+                    UserId = f.UserId,
+                    UserFullName = f.User.FullName,
+                    ScholarshipId = f.ScholarshipId,
+                    ScholarshipTitle = f.Scholarship.Title,
+                    CreatedAt = f.CreatedAt
+                })
+                .FirstOrDefaultAsync();
 
             if (feedback == null)
                 return NotFound();
 
             return feedback;
         }
-
-        
-        [HttpPost]
-        public async Task<ActionResult<Feedback>> CreateFeedback(Feedback feedback)
+        public async Task<ActionResult<Feedback>> CreateFeedback(CreateFeedbackDto createFeedbackDto)
         {
-            _context.Feedback.Add(feedback);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetFeedback), new { id = feedback.Id }, feedback);
-        }
-
-    
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateFeedback(int id, Feedback feedback)
-        {
-            if (id != feedback.Id)
-                return BadRequest();
-
-            _context.Entry(feedback).State = EntityState.Modified;
-
             try
             {
+               var student = await _context.Student
+    .FirstOrDefaultAsync(s => s.Id == createFeedbackDto.UserId);
+
+                if (student == null)
+                    return BadRequest(new { message = "Only students can submit feedback" });
+
+                var scholarship = await _context.Scholarship.FindAsync(createFeedbackDto.ScholarshipId);
+                if (scholarship == null)
+                    return BadRequest(new { message = "Scholarship not found" });
+
+                var feedback = new Feedback
+                {
+                    Comment = createFeedbackDto.Comment,
+                    Rating = createFeedbackDto.Rating,
+                    UserId = createFeedbackDto.UserId,
+                    ScholarshipId = createFeedbackDto.ScholarshipId,
+                    CreatedAt = DateTime.UtcNow
+                    
+                };
+
+                _context.Feedback.Add(feedback);
                 await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetFeedback), new { id = feedback.Id }, feedback);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!FeedbackExists(id))
-                    return NotFound();
-                else
-                    throw;
+                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
             }
-
-            return NoContent();
         }
-
-        
-        [HttpDelete("{id}")]
+     [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFeedback(int id)
         {
             var feedback = await _context.Feedback.FindAsync(id);

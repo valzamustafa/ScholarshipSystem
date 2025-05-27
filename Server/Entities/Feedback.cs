@@ -9,5 +9,6 @@ public class Feedback
     public  User User { get; set; } = null!;
 
     public int ScholarshipId { get; set; } 
-    public Scholarship Scholarship { get; set; } =null!;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Scholarship Scholarship { get; set; } = null!;
 }

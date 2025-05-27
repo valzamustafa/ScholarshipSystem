@@ -1,9 +1,46 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../context/useAuth";
+import FeedbackForm from "../components/FeedbackForm";
 
 function Home() {
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [scholarships, setScholarships] = useState([]);
+  const { user } = useAuth();
+
+
+  useEffect(() => {
+    fetch("https://localhost:7255/api/scholarship/available")
+      .then(res => res.json())
+      .then(data => setScholarships(data))
+      .catch(error => console.error("Error fetching scholarships:", error));
+  }, []);
+
+  const handleSubmitFeedback = async (feedbackData) => {
+    try {
+      const response = await fetch("https://localhost:7255/api/feedback", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          comment: feedbackData.comment,
+          rating: feedbackData.rating,
+          userId: user?.id,
+          scholarshipId: feedbackData.scholarshipId
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit feedback");
+      alert("Feedback submitted successfully!");
+      setShowFeedbackForm(false);
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      alert(error.message);
+    }
+  };
   return (
     <div className="m-0 p-0 vw-100 overflow-x-hidden">
-     
       <section
         className="text-center py-5"
         style={{ backgroundColor: '#004D7C', color: 'white' }}
@@ -16,6 +53,28 @@ function Home() {
           </button>
         </div>
       </section>
+      
+      <div className="position-fixed bottom-0 end-0 p-3">
+        <button 
+          className="btn btn-primary rounded-pill shadow-lg"
+          onClick={() => setShowFeedbackForm(true)}
+          style={{
+            backgroundColor: '#004D7C',
+            padding: '12px 24px',
+            fontSize: '1.1rem'
+          }}
+        >
+          Give Feedback
+        </button>
+      </div>
+
+      {showFeedbackForm && (
+        <FeedbackForm 
+          onClose={() => setShowFeedbackForm(false)}
+          onSubmit={handleSubmitFeedback}
+          scholarships={scholarships}  
+        />
+      )}
 
     
       <section className="container my-5">
@@ -81,7 +140,6 @@ function Home() {
         </div>
       </section>
 
-   
       <section className="container my-5 px-3">
         <h2 className="text-center mb-4 fw-bold" style={{ color: '#004D7C' }}>
           What our users say

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import AuthContext from "./AuthContext";
+import { AuthContext } from "./AuthContext";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -7,31 +7,36 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const storedToken = localStorage.getItem("token");
+    
+    if (storedUser && storedToken) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser({
           ...parsedUser,
           role: parsedUser.role?.toLowerCase(),
           approved: Boolean(parsedUser.approved),
+          token: storedToken
         });
       } catch (err) {
         console.error("Error parsing user data:", err);
-        setUser(null);
+        logout();
       }
     }
     setLoading(false);
   }, []);
 
-const updateUser = (userData) => {
-  const normalizedUser = {
-    ...userData,
-    role: userData.role?.toLowerCase(), 
-    approved: Boolean(userData.approved) 
+  const login = (userData, token) => {
+    const normalizedUser = {
+      ...userData,
+      role: userData.role?.toLowerCase(),
+      approved: Boolean(userData.approved),
+      token
+    };
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
+    localStorage.setItem("token", token);
+    setUser(normalizedUser);
   };
-  localStorage.setItem("user", JSON.stringify(normalizedUser));
-  setUser(normalizedUser);
-};
 
   const logout = () => {
     localStorage.removeItem("user");
@@ -41,9 +46,14 @@ const updateUser = (userData) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, setUser: updateUser, logout }}
+      value={{ 
+        user, 
+        loading, 
+        login,
+        logout 
+      }}
     >
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

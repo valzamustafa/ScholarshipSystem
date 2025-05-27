@@ -7,7 +7,8 @@ import {
   FiUsers,
   FiAward,
   FiFileText,
-FiMail 
+  FiMail,
+  FiMessageSquare
 } from "react-icons/fi";
 import { Bar } from "react-chartjs-2";
 import {
@@ -18,7 +19,6 @@ import {
   Title,
   Tooltip,
   Legend,
-
 } from "chart.js";
 import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
 import StudentManager from "../components/StudentManager";
@@ -33,17 +33,14 @@ function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [students, setStudents] = useState([]);
   const [contactMessage, setContactMessage] = useState([]);
-
+  const [feedbacks, setFeedbacks] = useState([]);
   const [_loadingApplications, setLoadingApplications] = useState(false);
-const [_errorApplications, setErrorApplications] = useState(null);
+  const [_errorApplications, setErrorApplications] = useState(null);
   const [providers, setProviders] = useState([]);
-  
-
-const [selectedApplicationsTab, setSelectedApplicationsTab] = useState('all');
+  const [selectedApplicationsTab, setSelectedApplicationsTab] = useState('all');
   const [scholarships, setScholarships] = useState([]);
   const [applications, setApplications] = useState([]);
-const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
-  
+  const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
   const [newStudent, setNewStudent] = useState({
     fullName: "",
     email: "",
@@ -81,22 +78,53 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
     if (activePage === "scholarships") {
       fetchScholarships();
     }
-    
+    if (activePage === "feedback") {
+      fetchFeedbacks();
+    }
   }, [activePage]);
+
   useEffect(() => {
-  if (activePage === "applications") {
-    fetchApplications();
-    fetchScholarships();
+    if (activePage === "applications") {
+      fetchApplications();
+      fetchScholarships();
+    }
+  }, [activePage]);
+
+  useEffect(() => {
+    if (activePage === "contactMessages") {
+      fetchContactMessage();
+    }
+  }, [activePage]);
+
+  async function fetchFeedbacks() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/feedback", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch feedback");
+      const data = await res.json();
+      setFeedbacks(data);
+    } catch (error) {
+      console.error("Fetch feedback error:", error);
+      alert(`Error: ${error.message}`);
+    }
   }
-}, [activePage]);
 
-useEffect(() => {
-  if (activePage === "contactMessages") {
-    fetchContactMessage();
+  async function handleDeleteFeedback(id) {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`https://localhost:7255/api/feedback/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete feedback");
+      setFeedbacks(feedbacks.filter(f => f.id !== id));
+    } catch (error) {
+      console.error("Delete feedback error:", error);
+      alert(`Error: ${error.message}`);
+    }
   }
-}, [activePage]);
-
-
 
   async function fetchRequests() {
     try {
@@ -109,9 +137,10 @@ useEffect(() => {
       setRequests([]);
     }
   }
+
   async function fetchApplications() {
-      setLoadingApplications(true);
-  setErrorApplications(null);
+    setLoadingApplications(true);
+    setErrorApplications(null);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch("https://localhost:7255/api/application/admin", {
@@ -123,8 +152,11 @@ useEffect(() => {
     } catch (error) {
       console.error("Fetch applications error:", error);
       alert(`Error: ${error.message}`);
+    } finally {
+      setLoadingApplications(false);
     }
   }
+
   async function fetchStats() {
     try {
       const res = await fetch("https://localhost:7255/api/admin/statistics");
@@ -173,31 +205,47 @@ useEffect(() => {
     }
   }
 
- async function fetchScholarships() {
-  try {
-    const token = localStorage.getItem("token");
-    console.log("Token in fetchScholarships:", token);
-    if (!token) throw new Error("No authentication token found");
+  async function fetchScholarships() {
+    try {
+      const token = localStorage.getItem("token");
+      console.log("Token in fetchScholarships:", token);
+      if (!token) throw new Error("No authentication token found");
 
-    const res = await fetch("https://localhost:7255/api/scholarship", {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch("https://localhost:7255/api/scholarship", {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(errorText || "Failed to fetch scholarships");
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to fetch scholarships");
+      }
+
+      const data = await res.json();
+      setScholarships(data);
+    } catch (error) {
+      console.error("Fetch scholarships error:", error);
+      alert(`Error fetching scholarships: ${error.message}`);
     }
-
-    const data = await res.json();
-    setScholarships(data);
-  } catch (error) {
-    console.error("Fetch scholarships error:", error);
-    alert(`Error fetching scholarships: ${error.message}`);
   }
-}
 
+  async function fetchContactMessage() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/contact", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error("Failed to fetch contact messages");
+      const data = await res.json();
+      setContactMessage(data);
+    } catch (error) {
+      console.error("Error fetching contact messages:", error);
+      alert(`Error: ${error.message}`);
+    }
+  }
 
   async function handleAddStudent(e) {
     e.preventDefault();
@@ -311,14 +359,14 @@ useEffect(() => {
   }
 
   function startEditProvider(provider) {
-  setEditingProviderId(provider.id);
-  setProviderEditData({
-    fullName: provider.fullName,
-    email: provider.email,
-    organizationName: provider.organizationName || "",
-    phoneNumber: provider.phoneNumber || ""
-  });
-}
+    setEditingProviderId(provider.id);
+    setProviderEditData({
+      fullName: provider.fullName,
+      email: provider.email,
+      organizationName: provider.organizationName || "",
+      phoneNumber: provider.phoneNumber || ""
+    });
+  }
 
   function cancelEditProvider() {
     setEditingProviderId(null);
@@ -363,23 +411,6 @@ useEffect(() => {
     });
     setRequests((prev) => prev.filter((r) => r.id !== id));
   }
-  async function fetchContactMessage() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch("https://localhost:7255/api/contact", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    if (!res.ok) throw new Error("Failed to fetch contact messages");
-    const data = await res.json();
-    setContactMessage(data);
-  } catch (error) {
-    console.error("Error fetching contact messages:", error);
-    alert(`Error: ${error.message}`);
-  }
-}
-
 
   return (
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
@@ -394,29 +425,35 @@ useEffect(() => {
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "students" ? "fw-bold" : ""}`} onClick={() => setActivePage("students")}> <FiUser className="me-2" /> Students </button>
             </li>
             <li className="nav-item mb-3">
-  <button 
-    className={`nav-link text-white btn btn-link text-start ${activePage === "applications" ? "fw-bold" : ""}`} 
-    onClick={() => setActivePage("applications")}
-  >
-    <FiFileText className="me-2" /> Applications
-  </button>
-</li>
+              <button 
+                className={`nav-link text-white btn btn-link text-start ${activePage === "applications" ? "fw-bold" : ""}`} 
+                onClick={() => setActivePage("applications")}
+              >
+                <FiFileText className="me-2" /> Applications
+              </button>
+            </li>
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "providers" ? "fw-bold" : ""}`} onClick={() => setActivePage("providers")}> <FiUsers className="me-2" /> Providers </button>
             </li>
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "scholarships" ? "fw-bold" : ""}`} onClick={() => setActivePage("scholarships")}> <FiAward className="me-2" /> Scholarships </button>
-
             </li>
             <li className="nav-item mb-3">
-  <button 
-    className={`nav-link text-white btn btn-link text-start ${activePage === "contactMessages" ? "fw-bold" : ""}`} 
-    onClick={() => setActivePage("contactMessages")}
-  >
-    <FiMail className="me-2" /> Contact Messages
-  </button>
-</li>
-
+              <button 
+                className={`nav-link text-white btn btn-link text-start ${activePage === "feedback" ? "fw-bold" : ""}`} 
+                onClick={() => setActivePage("feedback")}
+              >
+                <FiMessageSquare className="me-2" /> Feedback
+              </button>
+            </li>
+            <li className="nav-item mb-3">
+              <button 
+                className={`nav-link text-white btn btn-link text-start ${activePage === "contactMessages" ? "fw-bold" : ""}`} 
+                onClick={() => setActivePage("contactMessages")}
+              >
+                <FiMail className="me-2" /> Contact Messages
+              </button>
+            </li>
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "reports" ? "fw-bold" : ""}`} onClick={() => setActivePage("reports")}> <FiCalendar className="me-2" /> Reports </button>
             </li>
@@ -446,13 +483,12 @@ useEffect(() => {
                       labels: ["Students", "Providers", "Scholarships", "Applications"],
                       datasets: [{
                         label: "Total",
-                       data: [
-  stats?.totalStudents || 0,
-  stats?.totalProviders || 0,
-  stats?.totalScholarships || 0,
-  stats?.totalApplications || 0
-],
-
+                        data: [
+                          stats?.totalStudents || 0,
+                          stats?.totalProviders || 0,
+                          stats?.totalScholarships || 0,
+                          stats?.totalApplications || 0
+                        ],
                         backgroundColor: "rgba(0,77,124,0.7)",
                       }],
                     }}
@@ -497,77 +533,75 @@ useEffect(() => {
             />
           )}
 
-{activePage === "applications" && (
-  <div>
-    <ul className="nav nav-tabs mb-4">
-      <li className="nav-item">
-        <button 
-          className={`nav-link ${selectedApplicationsTab === 'admin' ? 'active' : ''}`}
-          onClick={() => setSelectedApplicationsTab('admin')}
-        >
-          Admin Scholarships Applications
-        </button>
-      </li>
-      <li className="nav-item">
-        <button 
-          className={`nav-link ${selectedApplicationsTab === 'providers' ? 'active' : ''}`}
-          onClick={() => setSelectedApplicationsTab('providers')}
-        >
-          Providers' Applications
-        </button>
-      </li>
-    </ul>
+          {activePage === "applications" && (
+            <div>
+              <ul className="nav nav-tabs mb-4">
+                <li className="nav-item">
+                  <button 
+                    className={`nav-link ${selectedApplicationsTab === 'admin' ? 'active' : ''}`}
+                    onClick={() => setSelectedApplicationsTab('admin')}
+                  >
+                    Admin Scholarships Applications
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button 
+                    className={`nav-link ${selectedApplicationsTab === 'providers' ? 'active' : ''}`}
+                    onClick={() => setSelectedApplicationsTab('providers')}
+                  >
+                    Providers' Applications
+                  </button>
+                </li>
+              </ul>
 
-  {selectedApplicationsTab === 'admin' ? (
-  <ApplicationsSection
-    applications={applications.filter(app => {
-      const s = scholarships.find(s => s.id === app.scholarshipId);
-      return !s?.providerId; 
-    })}
-    scholarships={scholarships.filter(s => !s.providerId)}
-    selectedScholarshipId={selectedScholarshipId}
-    setSelectedScholarshipId={setSelectedScholarshipId}
-    onStatusChange={async (applicationId, newStatusId) => {
-          try {
-            const token = localStorage.getItem("token");
-            const res = await fetch(
-              `https://localhost:7255/api/application/${applicationId}/status`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ statusId: newStatusId }),
-              }
-            );
-            if (!res.ok) throw new Error("Failed to update status");
-            fetchApplications();
-          } catch (error) {
-            console.error("Error updating status:", error);
-            alert(`Error: ${error.message}`);
-          }
-        }}
-        showActions={true}
-        showDocuments={true}
-      />
-    ) : (
-      <ApplicationsSection
-        applications={applications.filter(app => {
-          const s = scholarships.find(s => s.Id === app.ScholarshipId);
-          return s && s.ProviderId !== null;
-        })}
-        scholarships={scholarships.filter(s => s.ProviderId !== null)}
-        selectedScholarshipId={selectedScholarshipId}
-        setSelectedScholarshipId={setSelectedScholarshipId}
-        showActions={false}
-        showDocuments={false}
-      />
-    )}
-  </div>
-)}
-
-
+              {selectedApplicationsTab === 'admin' ? (
+                <ApplicationsSection
+                  applications={applications.filter(app => {
+                    const s = scholarships.find(s => s.id === app.scholarshipId);
+                    return !s?.providerId; 
+                  })}
+                  scholarships={scholarships.filter(s => !s.providerId)}
+                  selectedScholarshipId={selectedScholarshipId}
+                  setSelectedScholarshipId={setSelectedScholarshipId}
+                  onStatusChange={async (applicationId, newStatusId) => {
+                    try {
+                      const token = localStorage.getItem("token");
+                      const res = await fetch(
+                        `https://localhost:7255/api/application/${applicationId}/status`,
+                        {
+                          method: "PUT",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({ statusId: newStatusId }),
+                        }
+                      );
+                      if (!res.ok) throw new Error("Failed to update status");
+                      fetchApplications();
+                    } catch (error) {
+                      console.error("Error updating status:", error);
+                      alert(`Error: ${error.message}`);
+                    }
+                  }}
+                  showActions={true}
+                  showDocuments={true}
+                />
+              ) : (
+                <ApplicationsSection
+                  applications={applications.filter(app => {
+                    const s = scholarships.find(s => s.Id === app.ScholarshipId);
+                    return s && s.ProviderId !== null;
+                  })}
+                  scholarships={scholarships.filter(s => s.ProviderId !== null)}
+                  selectedScholarshipId={selectedScholarshipId}
+                  setSelectedScholarshipId={setSelectedScholarshipId}
+                  showActions={false}
+                  showDocuments={false}
+                />
+              )}
+            </div>
+          )}
 
           {activePage === "providers" && (
             <ProviderManager
@@ -593,35 +627,87 @@ useEffect(() => {
               fetchScholarships={fetchScholarships}
             />
           )}
-      {activePage === "contactMessages" && (
-  <div>
-    <h3>Contact Messages</h3>
-    {contactMessage.length === 0 ? (
-      <p>No messages found.</p>
-    ) : (
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Subject</th>
-            <th>Message</th>
-          </tr>
-        </thead>
-        <tbody>
-          {contactMessage.map((msg, index) => (
-            <tr key={index}>
-              <td>{msg.name}</td>
-              <td>{msg.email}</td>
-              <td>{msg.subject}</td>
-              <td>{msg.message}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    )}
-  </div>
-)}
+
+          {activePage === "feedback" && (
+            <div>
+              <h3>User Feedback</h3>
+              <div className="card">
+                <div className="card-body">
+                  {feedbacks.length === 0 ? (
+                    <p>No feedback received yet.</p>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>User</th>
+                            <th>Scholarship</th>
+                            <th>Rating</th>
+                            <th>Comment</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {feedbacks.map((feedback) => (
+                            <tr key={feedback.id}>
+                              <td>{feedback.userFullName}</td>
+                              <td>{feedback.scholarshipTitle}</td>
+                              <td>
+                                <div className="text-warning">
+                                  {Array(feedback.rating).fill('★').join('')}
+                                </div>
+                              </td>
+                              <td>{feedback.comment}</td>
+                              <td>{new Date(feedback.createdAt).toLocaleDateString()}</td>
+                              <td>
+                                <button 
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => handleDeleteFeedback(feedback.id)}
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activePage === "contactMessages" && (
+            <div>
+              <h3>Contact Messages</h3>
+              {contactMessage.length === 0 ? (
+                <p>No messages found.</p>
+              ) : (
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Subject</th>
+                      <th>Message</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contactMessage.map((msg, index) => (
+                      <tr key={index}>
+                        <td>{msg.name}</td>
+                        <td>{msg.email}</td>
+                        <td>{msg.subject}</td>
+                        <td>{msg.message}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
 
           {activePage === "reports" && (
             <div><h3>Reports Page</h3><p>Coming soon...</p></div>

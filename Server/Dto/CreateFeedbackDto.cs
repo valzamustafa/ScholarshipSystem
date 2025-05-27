@@ -4,4 +4,5 @@ public class CreateFeedbackDto
     public int Rating { get; set; }
     public int UserId { get; set; }
     public int ScholarshipId { get; set; }
+     public bool AllowFollowUp { get; set; } 
 }
