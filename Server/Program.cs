@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.FileProviders;
+using Server.Mappings;
 using Microsoft.AspNetCore.Authorization;
 
 internal class Program
@@ -91,8 +92,9 @@ internal class Program
                     Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
             };
         });
+  builder.Services.AddScoped<IContactService, ContactService>();
+   builder.Services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
 
-       
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
@@ -138,12 +140,12 @@ internal class Program
         app.UseHttpsRedirection();
 
        
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = new PhysicalFileProvider(
-                Path.Combine(builder.Environment.WebRootPath, "Uploads")),
-            RequestPath = "/Uploads"
-        });
+       app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "Uploads")),
+    RequestPath = "/Uploads"
+});
 
  
         app.UseCors("AllowFrontend");

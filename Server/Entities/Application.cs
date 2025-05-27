@@ -12,12 +12,11 @@ namespace Server.Entities
         public Scholarship Scholarship { get; set; }=null!;
         public ICollection<ApplicationDocument> ApplicationDocument { get; set; }=new List<ApplicationDocument>();
 
+        
        
-        public string? MotivationLetter { get; set; }
         public string? Gpa { get; set; }
         public string? StudyYear { get; set; }
         public string? StudyField { get; set; }
-        public string? Portfolio { get; set; }
-        public string? CvLink { get; set; }
+      
     }
 }

@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-
+import ContactUsPage from './pages/ContactUsPage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import { AuthProvider } from "./context/AuthProvider";
@@ -38,7 +38,8 @@ function App() {
           <Route path="/pending-approval" element={<PendingApproval />} />
            <Route path="/scholarships" element={<ScholarshipsPage />} />
            <Route path="/apply/:id" element={<ScholarshipApplyForm />} />
-           
+           <Route path="/contactus" element={<ContactUsPage />} />
+
           <Route
             path="/admin/*"
             element={

@@ -5,6 +5,7 @@ public class ApplicationDocument
     
     public required  string FileName { get; set; }
     public required string FilePath { get; set; }
+      public required string DocumentType { get; set; }
     public int ApplicationId { get; set; }
     public Application Application { get; set; }=null!;
 }

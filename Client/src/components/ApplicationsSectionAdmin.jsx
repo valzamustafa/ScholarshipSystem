@@ -172,7 +172,7 @@ ApplicationsSection.propTypes = {
       applicationDocument: PropTypes.array
     })
   ),
-  applications: PropTypes.array,
+ 
   scholarships: PropTypes.array,
   selectedScholarshipId: PropTypes.number,
   setSelectedScholarshipId: PropTypes.func,

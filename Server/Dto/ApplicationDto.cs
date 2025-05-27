@@ -8,4 +8,5 @@ public class ApplicationDto
     public string StudentName { get; set; } = string.Empty;
     public int ScholarshipId { get; set; }
     public string ScholarshipTitle { get; set; } = string.Empty;
+    public List<ApplicationDocumentDto> ApplicationDocument { get; set; } = new List<ApplicationDocumentDto>();
 }

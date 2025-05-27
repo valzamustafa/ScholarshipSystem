@@ -6,8 +6,8 @@ import {
   FiCalendar,
   FiUsers,
   FiAward,
-  FiFileText
-
+  FiFileText,
+FiMail 
 } from "react-icons/fi";
 import { Bar } from "react-chartjs-2";
 import {
@@ -32,8 +32,10 @@ function AdminDashboard() {
   const [requests, setRequests] = useState([]);
   const [stats, setStats] = useState(null);
   const [students, setStudents] = useState([]);
-  const [loadingApplications, setLoadingApplications] = useState(false);
-const [errorApplications, setErrorApplications] = useState(null);
+  const [contactMessage, setContactMessage] = useState([]);
+
+  const [_loadingApplications, setLoadingApplications] = useState(false);
+const [_errorApplications, setErrorApplications] = useState(null);
   const [providers, setProviders] = useState([]);
   
 
@@ -79,6 +81,7 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
     if (activePage === "scholarships") {
       fetchScholarships();
     }
+    
   }, [activePage]);
   useEffect(() => {
   if (activePage === "applications") {
@@ -87,6 +90,11 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
   }
 }, [activePage]);
 
+useEffect(() => {
+  if (activePage === "contactMessages") {
+    fetchContactMessage();
+  }
+}, [activePage]);
 
 
 
@@ -355,6 +363,23 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
     });
     setRequests((prev) => prev.filter((r) => r.id !== id));
   }
+  async function fetchContactMessage() {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://localhost:7255/api/contact", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    if (!res.ok) throw new Error("Failed to fetch contact messages");
+    const data = await res.json();
+    setContactMessage(data);
+  } catch (error) {
+    console.error("Error fetching contact messages:", error);
+    alert(`Error: ${error.message}`);
+  }
+}
+
 
   return (
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
@@ -381,7 +406,17 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
             </li>
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "scholarships" ? "fw-bold" : ""}`} onClick={() => setActivePage("scholarships")}> <FiAward className="me-2" /> Scholarships </button>
+
             </li>
+            <li className="nav-item mb-3">
+  <button 
+    className={`nav-link text-white btn btn-link text-start ${activePage === "contactMessages" ? "fw-bold" : ""}`} 
+    onClick={() => setActivePage("contactMessages")}
+  >
+    <FiMail className="me-2" /> Contact Messages
+  </button>
+</li>
+
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "reports" ? "fw-bold" : ""}`} onClick={() => setActivePage("reports")}> <FiCalendar className="me-2" /> Reports </button>
             </li>
@@ -487,7 +522,7 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
   <ApplicationsSection
     applications={applications.filter(app => {
       const s = scholarships.find(s => s.id === app.scholarshipId);
-      return !s?.providerId; // admin scholarships have no provider
+      return !s?.providerId; 
     })}
     scholarships={scholarships.filter(s => !s.providerId)}
     selectedScholarshipId={selectedScholarshipId}
@@ -558,6 +593,35 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
               fetchScholarships={fetchScholarships}
             />
           )}
+      {activePage === "contactMessages" && (
+  <div>
+    <h3>Contact Messages</h3>
+    {contactMessage.length === 0 ? (
+      <p>No messages found.</p>
+    ) : (
+      <table className="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Subject</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {contactMessage.map((msg, index) => (
+            <tr key={index}>
+              <td>{msg.name}</td>
+              <td>{msg.email}</td>
+              <td>{msg.subject}</td>
+              <td>{msg.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </div>
+)}
 
           {activePage === "reports" && (
             <div><h3>Reports Page</h3><p>Coming soon...</p></div>

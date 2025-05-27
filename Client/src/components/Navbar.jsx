@@ -31,7 +31,7 @@ function Navbar() {
         </button>
 
       
-        <div className="collapse navbar-collapse justify-content-centear" id="navbarNav">
+        <div className="collapse navbar-collapse justify-content-center" id="navbarNav">
           <ul className="navbar-nav gap-4 mb-2 mb-lg-0">
             <li className="nav-item">
               <Link className="nav-link" aria-current="page" to="/home" style={{ color: 'white' }}>
@@ -45,8 +45,9 @@ function Navbar() {
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/contactus" style={{ color: 'white' }}>
-                ContactUs
-              </Link>
+  ContactUs
+</Link>
+
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/aboutus" style={{ color: 'white' }}>

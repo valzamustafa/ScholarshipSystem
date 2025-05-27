@@ -17,9 +17,9 @@ function ProviderDashboard() {
   const [awardedStudents, setAwardedStudents] = useState([]);
   const [activeTab, setActiveTab] = useState('scholarships');
   const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
-  const [loadingApplications, setLoadingApplications] = useState(false);
-  const [loadingAwards, setLoadingAwards] = useState(false);
-  const [error, setError] = useState(null);
+  const [_loadingApplications, setLoadingApplications] = useState(false);
+  const [_loadingAwards, setLoadingAwards] = useState(false);
+  const [_error, setError] = useState(null);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -62,23 +62,31 @@ function ProviderDashboard() {
     }
   };
 
-  const fetchApplications = async (providerId) => {
-    setLoadingApplications(true);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`https://localhost:7255/api/application/byprovider/${providerId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      setApplications(data);
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-      setError(error.message || "Failed to load applications. Please try again later.");
-    } finally {
-      setLoadingApplications(false);
-    }
-  };
+
+const fetchApplications = async (providerId) => {
+  setLoadingApplications(true);
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`https://localhost:7255/api/application/byprovider/${providerId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    
+  
+    const transformedData = data.map(app => ({
+      ...app,
+      ApplicationDocument: app.ApplicationDocument || [] 
+    }));
+    
+    setApplications(transformedData);
+  } catch (error) {
+    console.error("Error fetching applications:", error);
+    setError(error.message || "Failed to load applications. Please try again later.");
+  } finally {
+    setLoadingApplications(false);
+  }
+};
 
   const fetchAwardedStudents = async (providerId) => {
     setLoadingAwards(true);

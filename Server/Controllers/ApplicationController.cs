@@ -67,40 +67,53 @@ public async Task<IActionResult> GetApplicationsForAdmin()
             ProviderName = a.Scholarship.Provider.FullName,
             a.ApplicationDate,
             a.ApplicationStatusId,
-            ApplicationDocument = a.ApplicationDocument.Select(d => d.FilePath).ToList()
+           ApplicationDocument = a.ApplicationDocument
+    .Select(d => new {
+        d.FileName,
+        d.FilePath
+    }).ToList()
+
         })
         .ToListAsync();
 
     return Ok(applications);
 }
 
-        [HttpGet("byprovider/{providerId}")]
-        public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetByProvider(int providerId)
+[HttpGet("byprovider/{providerId}")]
+public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetByProvider(int providerId)
+{
+    var applications = await _context.Application
+        .Include(a => a.ApplicationDocument) 
+        .Include(a => a.Scholarship)
+        .Include(a => a.Student)
+        .Include(a => a.ApplicationStatus)
+        .Where(a => a.Scholarship.ProviderId == providerId)
+        .Select(a => new ApplicationDto
         {
-            var applications = await _context.Application
-                .Include(a => a.Scholarship)  
-                .Include(a => a.Student)
-                .Include(a => a.ApplicationStatus)
-                .Where(a => a.Scholarship.ProviderId == providerId)  
-                .Select(a => new ApplicationDto
-                {
-                    Id = a.Id,
-                    ApplicationDate = a.ApplicationDate,
-                    ApplicationStatusId = a.ApplicationStatusId,
-                    ApplicationStatusName = a.ApplicationStatus.StatusName,
-                    StudentId = a.StudentId,
-                    StudentName = a.Student.FullName,
-                    ScholarshipId = a.ScholarshipId,
-                    ScholarshipTitle = a.Scholarship.Title
-                })
-                .ToListAsync();
+            Id = a.Id,
+            ApplicationDate = a.ApplicationDate,
+            ApplicationStatusId = a.ApplicationStatusId,
+            ApplicationStatusName = a.ApplicationStatus.StatusName,
+            StudentId = a.StudentId,
+            StudentName = a.Student.FullName,
+            ScholarshipId = a.ScholarshipId,
+            ScholarshipTitle = a.Scholarship.Title,
+            ApplicationDocument = a.ApplicationDocument.Select(d => new ApplicationDocumentDto
+            {
+                Id = d.Id,
+                FileName = d.FileName,
+                FilePath = d.FilePath,
+                ApplicationId = d.ApplicationId
+            }).ToList()
+        })
+        .ToListAsync();
 
-            return Ok(applications);
-        }
+    return Ok(applications);
+}
 
         
-     [HttpPost]
-public async Task<ActionResult<Application>> PostApplication([FromBody] CreateApplicationDto dto)
+[HttpPost]
+public async Task<ActionResult<Application>> PostApplication([FromForm] CreateApplicationDto dto)
 {
     var application = new Application
     {
@@ -108,19 +121,35 @@ public async Task<ActionResult<Application>> PostApplication([FromBody] CreateAp
         ScholarshipId = dto.ScholarshipId,
         ApplicationStatusId = dto.ApplicationStatusId,
         ApplicationDate = DateTime.UtcNow,
-        MotivationLetter = dto.MotivationLetter,
         Gpa = dto.Gpa,
         StudyYear = dto.StudyYear,
         StudyField = dto.StudyField,
-        Portfolio = dto.Portfolio,
-        CvLink = dto.CvLink,
-      ApplicationDocument = dto.ApplicationDocument.Select(doc => new ApplicationDocument
-{
-    FilePath = doc,
-    FileName = System.IO.Path.GetFileName(doc)  
-}).ToList()
-
+        ApplicationDocument = new List<ApplicationDocument>()
     };
+
+    var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+    if (!Directory.Exists(uploadsPath))
+    {
+        Directory.CreateDirectory(uploadsPath);
+    }
+
+    if (dto.CvFile != null)
+    {
+        var cvDoc = await SaveDocument(dto.CvFile, "CV", application.Id, uploadsPath);
+        application.ApplicationDocument.Add(cvDoc);
+    }
+
+    if (dto.MotivationLetterFile != null)
+    {
+        var mlDoc = await SaveDocument(dto.MotivationLetterFile, "MotivationLetter", application.Id, uploadsPath);
+        application.ApplicationDocument.Add(mlDoc);
+    }
+
+    if (dto.PortfolioFile != null)
+    {
+        var portfolioDoc = await SaveDocument(dto.PortfolioFile, "Portfolio", application.Id, uploadsPath);
+        application.ApplicationDocument.Add(portfolioDoc);
+    }
 
     _context.Application.Add(application);
     await _context.SaveChangesAsync();
@@ -128,6 +157,24 @@ public async Task<ActionResult<Application>> PostApplication([FromBody] CreateAp
     return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
 }
 
+private async Task<ApplicationDocument> SaveDocument(IFormFile file, string documentType, int applicationId, string uploadsPath)
+{
+    var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+    var filePath = Path.Combine(uploadsPath, uniqueFileName);
+
+    using (var stream = new FileStream(filePath, FileMode.Create))
+    {
+        await file.CopyToAsync(stream);
+    }
+
+    return new ApplicationDocument
+    {
+        FileName = file.FileName,
+        FilePath = $"/Uploads/{uniqueFileName}",  
+        DocumentType = documentType,
+        ApplicationId = applicationId
+    };
+}
 
         
         [HttpPut("{id}")]
