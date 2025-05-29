@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Form, Button } from "react-bootstrap";
+import { Form, Button, Modal } from "react-bootstrap";
 import { FiX } from "react-icons/fi";
 
-function FeedbackForm({ onClose, onSubmit, scholarships }) {
+function FeedbackForm({ show, onClose, onSubmit, scholarships }) {
   const [feedbackData, setFeedbackData] = useState({
     comment: "",
     rating: 0,
@@ -24,15 +24,11 @@ function FeedbackForm({ onClose, onSubmit, scholarships }) {
   };
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content bg-white p-4 rounded" style={{ width: '600px' }}>
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4>Submit Feedback</h4>
-          <Button variant="outline-secondary" onClick={onClose}>
-            <FiX size={20} />
-          </Button>
-        </div>
-
+    <Modal show={show} onHide={onClose} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>Submit Feedback</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
             <Form.Label>Scholarship *</Form.Label>
@@ -77,10 +73,17 @@ function FeedbackForm({ onClose, onSubmit, scholarships }) {
             />
           </Form.Group>
 
-          <Button variant="primary" type="submit">Submit</Button>
+          <div className="d-flex justify-content-end gap-2">
+            <Button variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Submit
+            </Button>
+          </div>
         </Form>
-      </div>
-    </div>
+      </Modal.Body>
+    </Modal>
   );
 }
 

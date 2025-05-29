@@ -404,7 +404,23 @@ function AdminDashboard() {
     });
     setRequests((prev) => prev.filter((r) => r.id !== id));
   }
-
+async function handleToggleFeatured(id) {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`https://localhost:7255/api/feedback/${id}/feature`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to toggle featured status");
+    
+    setFeedbacks(prev => prev.map(f => 
+      f.id === id ? {...f, isFeatured: !f.isFeatured} : f
+    ));
+  } catch (error) {
+    console.error("Toggle featured error:", error);
+    alert(`Error: ${error.message}`);
+  }
+}
   async function rejectRequest(id) {
     await fetch(`https://localhost:7255/api/provider/${id}`, {
       method: "DELETE",
@@ -638,16 +654,17 @@ function AdminDashboard() {
                   ) : (
                     <div className="table-responsive">
                       <table className="table table-striped">
-                        <thead>
-                          <tr>
-                            <th>User</th>
-                            <th>Scholarship</th>
-                            <th>Rating</th>
-                            <th>Comment</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
+                   <thead>
+  <tr>
+    <th>User</th>
+    <th>Scholarship</th>
+    <th>Rating</th>
+    <th>Comment</th>
+    <th>Date</th>
+    <th>Featured</th>
+    <th>Actions</th>
+  </tr>
+</thead>
                         <tbody>
                           {feedbacks.map((feedback) => (
                             <tr key={feedback.id}>
@@ -658,6 +675,14 @@ function AdminDashboard() {
                                   {Array(feedback.rating).fill('★').join('')}
                                 </div>
                               </td>
+                              <td>
+  <button 
+    className={`btn btn-sm ${feedback.isFeatured ? 'btn-success' : 'btn-outline-secondary'}`}
+    onClick={() => handleToggleFeatured(feedback.id)}
+  >
+    {feedback.isFeatured ? 'Featured ★' : 'Feature'}
+  </button>
+</td>
                               <td>{feedback.comment}</td>
                               <td>{new Date(feedback.createdAt).toLocaleDateString()}</td>
                               <td>

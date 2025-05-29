@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -5,6 +6,7 @@ const MyProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('info');
   const navigate = useNavigate();
   const inputRef = useRef();
 
@@ -27,7 +29,6 @@ const MyProfile = () => {
         } else {
           setError("Nuk u mor profili. Provoni përsëri më vonë.");
         }
-      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError("Gabim gjatë marrjes së profilit.");
       } finally {
@@ -38,162 +39,142 @@ const MyProfile = () => {
     fetchProfile();
   }, [navigate]);
 
-const handleImageUpload = async (event) => {
-  event.preventDefault();
+  const handleImageUpload = async (event) => {
+    event.preventDefault();
+    const file = event.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
 
-  const file = event.target.files[0]; 
-  const formData = new FormData();
-  formData.append("file", file);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://localhost:7255/api/student/upload-profile-picture", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
 
-  try {
-    const token = localStorage.getItem("token");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Upload failed:", errorText);
+        return;
+      }
 
-    const response = await fetch("https://localhost:7255/api/student/upload-profile-picture", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-  
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Upload failed:", errorText);
-      return;
+      const data = await response.json();
+      setProfile(prev => ({ ...prev, imageUrl: data.url }));
+    } catch (error) {
+      console.error("Gabim në ngarkim:", error);
     }
-
-    const data = await response.json();
-    console.log("Foto u ngarkua me sukses:", data.url);
-
- 
-    setProfile(prev => ({
-      ...prev,
-      imageUrl: data.url
-    }));
-
-  } catch (error) {
-    console.error("Gabim në ngarkim:", error);
-  }
-};
-
+  };
 
   const handleIconClick = () => {
     inputRef.current.click();
   };
 
-  if (loading) return <div className="text-center mt-4">Loading profile...</div>;
+  if (loading) return <div className="text-center mt-5">Duke u ngarkuar profili...</div>;
   if (error) return <div className="alert alert-danger mt-4">{error}</div>;
   if (!profile) return <div className="text-center mt-4">Nuk u gjetën të dhëna për profilin.</div>;
 
   return (
-    <div className="container-fluid px-5 mt-2 m-0 p-0 vw-100 overflow-x-hidden">
-      <div className="row justify-content-center" style={{ marginTop: '120px' }}>
-        <div className="col-lg-4 mb-4">
-          <div className="card shadow-lg rounded-4 border-0">
-            <div className="card-body text-center">
-              <div className="position-relative d-inline-block mb-3" style={{ width: 120, height: 120 }}>
- 
-  <img
-   src={profile.imageUrl || "/default-profile.png"}
-
-    alt="Profile"
-    style={{
-      width: '100%',
-      height: '100%',
-      objectFit: 'cover',   
-      borderRadius: '50%',
-      border: '3px solid #0d6efd',  
-      display: 'block',
-    }}
-  />
-
-  <input
-    type="file"
-    accept="image/*"
-    ref={inputRef}
-    onChange={handleImageUpload}
-    className="d-none"
-  />
-
- 
-  <button
-    type="button"
-    className="btn btn-sm btn-primary position-absolute bottom-0 end-0 translate-middle rounded-circle border border-white"
-    onClick={handleIconClick}
-    style={{ width: '30px', height: '30px', padding: 0, lineHeight: '30px', fontSize: '20px' }}
-  >
-    +
-  </button>
-</div>
-
-              <h5 className="card-title mt-2">{profile.fullName}</h5>
-              <p className="card-text text-muted">{profile.email}</p>
-              <span className="badge bg-primary mb-3">{profile.role}</span>
+    <div className="container-fluid py-4">
+      <div className="row">
+    
+        <div className="col-md-3 mb-4">
+          <div className="card shadow-sm border-0 text-center">
+            <div className="card-body">
+              <div className="position-relative mx-auto mb-3" style={{ width: '120px' }}>
+                <img
+                  src={profile.imageUrl || "/88b6a298-53ef-4c73-a89a-7a0116d4e7ee.png"}
+                  alt="Profile"
+                  className="rounded-circle border border-3 border-primary img-fluid"
+                  style={{ width: '120px', height: '120px', objectFit: 'cover' }}
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={inputRef}
+                  onChange={handleImageUpload}
+                  className="d-none"
+                />
+                <button
+                  className="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle"
+                  onClick={handleIconClick}
+                  style={{ width: '28px', height: '28px' }}
+                  title="Ndrysho foton"
+                >
+                  <i className="bi bi-pencil"></i>
+                </button>
+              </div>
+              <h5>{profile.fullName}</h5>
+              <p className="text-muted small">{profile.email}</p>
+              <span className="badge bg-primary">{profile.role}</span>
               <hr />
-              <p className="mb-1"><strong>Shkolla:</strong> {profile.schoolOrUniversityName}</p>
-              <p className="mb-1"><strong>Drejtimi:</strong> {profile.studyField}</p>
-              <p><strong>Niveli:</strong> {profile.studentLevelName}</p>
+              <div className="d-grid gap-2">
+                <button
+                  className={`btn ${activeTab === 'info' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveTab('info')}
+                >
+                  🧍‍♂️ Të Dhënat Personale
+                </button>
+                <button
+                  className={`btn ${activeTab === 'apps' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveTab('apps')}
+                >
+                  🎓 Aplikimet për Bursa
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="col-lg-8">
-      
-          <div className="card mb-4 shadow-sm rounded-4 border-0">
-            <div className="card-header bg-light fw-bold">Të Dhënat Bazë</div>
+       
+        <div className="col-md-9">
+          <div className="card shadow-sm border-0">
             <div className="card-body">
-              <table className="table table-bordered">
-                <tbody>
-                  <tr><th>Emri</th><td>{profile.fullName}</td></tr>
-                  <tr><th>Email</th><td>{profile.email}</td></tr>
-                  <tr><th>Shkolla/Universiteti</th><td>{profile.schoolOrUniversityName}</td></tr>
-                  <tr><th>Drejtimi</th><td>{profile.studyField}</td></tr>
-                  <tr><th>Niveli</th><td>{profile.studentLevelName}</td></tr>
-                  <tr><th>Roli</th><td>{profile.role}</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+              {activeTab === 'info' && (
+                <>
+                  <h5 className="mb-3">📄 Të Dhënat Personale</h5>
+                  <div className="row mb-2"><div className="col-5 fw-semibold">Emri:</div><div className="col-7">{profile.fullName}</div></div>
+                  <div className="row mb-2"><div className="col-5 fw-semibold">Email:</div><div className="col-7">{profile.email}</div></div>
+                  <div className="row mb-2"><div className="col-5 fw-semibold">Shkolla:</div><div className="col-7">{profile.schoolOrUniversityName}</div></div>
+                  <div className="row mb-2"><div className="col-5 fw-semibold">Drejtimi:</div><div className="col-7">{profile.studyField}</div></div>
+                  <div className="row"><div className="col-5 fw-semibold">Niveli:</div><div className="col-7">{profile.studentLevelName}</div></div>
+                </>
+              )}
 
-        
-          <div className="card shadow-sm rounded-4 border-0">
-            <div className="card-header bg-light fw-bold">Aplikimet për Bursa</div>
-            <div className="card-body">
-              {profile.applications && profile.applications.length > 0 ? (
-                <table className="table table-hover table-bordered mt-2">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Bursa</th>
-                      <th>Data e Aplikimit</th>
-                      <th>Statusi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profile.applications.map(app => (
-                      <tr key={app.id}>
-                        <td>{app.scholarshipTitle}</td>
-                        <td>{new Date(app.applicationDate).toLocaleDateString()}</td>
-                        <td>
-                          {app.applicationStatusName === "Approved" && (
-                            <span className="badge bg-success">Approved</span>
-                          )}
-                          {app.applicationStatusName === "Pending" && (
-                            <span className="badge bg-warning text-dark">Pending</span>
-                          )}
-                          {app.applicationStatusName === "Not Approved" && (
-                            <span className="badge bg-danger">Not Approved</span>
-                          )}
-                          {!["Approved", "Pending", "Not Approved"].includes(app.applicationStatusName) && (
-                            <span className="badge bg-secondary">{app.applicationStatusName}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-muted">Nuk keni aplikime për bursa.</p>
+              {activeTab === 'apps' && (
+                <>
+                  <h5 className="mb-3">🎓 Aplikimet për Bursa</h5>
+                  {profile.applications && profile.applications.length > 0 ? (
+                    <table className="table table-hover align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Bursa</th>
+                          <th>Data</th>
+                          <th>Statusi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {profile.applications.map(app => (
+                          <tr key={app.id}>
+                            <td>{app.scholarshipTitle}</td>
+                            <td>{new Date(app.applicationDate).toLocaleDateString()}</td>
+                            <td>
+                              <span className={`badge ${
+                                app.applicationStatusName === "Approved" ? "bg-success" :
+                                app.applicationStatusName === "Pending" ? "bg-warning text-dark" :
+                                app.applicationStatusName === "Not Approved" ? "bg-danger" : "bg-secondary"
+                              }`}>
+                                {app.applicationStatusName}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p className="text-muted">Nuk keni aplikime për bursa.</p>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -19,7 +19,7 @@ namespace Server.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetFeedbacks()
         {
-            return await _context.Feedback
+            var feedbacks = await _context.Feedback
                 .Include(f => f.User)
                 .Include(f => f.Scholarship)
                 .Select(f => new FeedbackDto
@@ -35,6 +35,8 @@ namespace Server.Controllers
                 })
                 .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
+
+            return Ok(feedbacks);
         }
 
         [HttpGet("{id}")]
@@ -60,14 +62,16 @@ namespace Server.Controllers
             if (feedback == null)
                 return NotFound();
 
-            return feedback;
+            return Ok(feedback);
         }
-        public async Task<ActionResult<Feedback>> CreateFeedback(CreateFeedbackDto createFeedbackDto)
+
+        [HttpPost]
+        public async Task<ActionResult<FeedbackDto>> CreateFeedback(CreateFeedbackDto createFeedbackDto)
         {
             try
             {
-               var student = await _context.Student
-    .FirstOrDefaultAsync(s => s.Id == createFeedbackDto.UserId);
+                var student = await _context.Student
+                    .FirstOrDefaultAsync(s => s.Id == createFeedbackDto.UserId);
 
                 if (student == null)
                     return BadRequest(new { message = "Only students can submit feedback" });
@@ -83,20 +87,68 @@ namespace Server.Controllers
                     UserId = createFeedbackDto.UserId,
                     ScholarshipId = createFeedbackDto.ScholarshipId,
                     CreatedAt = DateTime.UtcNow
-                    
                 };
 
                 _context.Feedback.Add(feedback);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetFeedback), new { id = feedback.Id }, feedback);
+                var feedbackDto = new FeedbackDto
+                {
+                    Id = feedback.Id,
+                    Comment = feedback.Comment,
+                    Rating = feedback.Rating,
+                    UserId = feedback.UserId,
+                    UserFullName = student.FullName,
+                    ScholarshipId = feedback.ScholarshipId,
+                    ScholarshipTitle = scholarship.Title,
+                    CreatedAt = feedback.CreatedAt
+                };
+
+                return CreatedAtAction(nameof(GetFeedback), new { id = feedback.Id }, feedbackDto);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
             }
         }
-     [HttpDelete("{id}")]
+[HttpPut("{id}/feature")]
+public async Task<IActionResult> ToggleFeaturedStatus(int id)
+{
+    var feedback = await _context.Feedback.FindAsync(id);
+    if (feedback == null)
+        return NotFound();
+
+    feedback.IsFeatured = !feedback.IsFeatured;
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
+
+[HttpGet("featured")]
+public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetFeaturedFeedbacks()
+{
+    var featuredFeedbacks = await _context.Feedback
+        .Include(f => f.User)
+        .Include(f => f.Scholarship)
+        .Where(f => f.IsFeatured)
+        .Select(f => new FeedbackDto
+        {
+            Id = f.Id,
+            Comment = f.Comment,
+            Rating = f.Rating,
+            UserId = f.UserId,
+            UserFullName = f.User.FullName,
+            ScholarshipId = f.ScholarshipId,
+            ScholarshipTitle = f.Scholarship.Title,
+            CreatedAt = f.CreatedAt,
+            IsFeatured = f.IsFeatured
+        })
+        .OrderByDescending(f => f.CreatedAt)
+        .ToListAsync();
+
+    return Ok(featuredFeedbacks);
+}
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFeedback(int id)
         {
             var feedback = await _context.Feedback.FindAsync(id);
