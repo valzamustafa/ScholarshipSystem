@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
 
+import React, { useState, useEffect } from "react";
+
+import { PlusCircle, XCircle, CheckCircle, TrashFill,PencilSquare } from "react-bootstrap-icons";
 function ScholarshipsManagement() {
   const [scholarships, setScholarships] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -30,63 +31,63 @@ function ScholarshipsManagement() {
   }, []);
 
   async function fetchScholarships() {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("No authentication token found");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found");
 
-    const res = await fetch("https://localhost:7255/api/scholarship", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch("https://localhost:7255/api/scholarship", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(errorText || "Failed to fetch scholarships");
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to fetch scholarships");
+      }
+
+      const data = await res.json();
+      setScholarships(data);
+    } catch (error) {
+      console.error("Error fetching scholarships:", error);
+      alert(`Error fetching scholarships: ${error.message}`);
     }
-
-    const data = await res.json();
-    setScholarships(data);
-  } catch (error) {
-    console.error("Error fetching scholarships:", error);
-    alert(`Error fetching scholarships: ${error.message}`);
   }
-}
 
-
-async function fetchCategories() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch("https://localhost:7255/api/scholarshipcategory", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (!res.ok) throw new Error("Failed to fetch categories");
-    const data = await res.json();
-    setCategories(data);
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    alert(`Error fetching categories: ${error.message}`);
+  async function fetchCategories() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/scholarshipcategory", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      const data = await res.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      alert(`Error fetching categories: ${error.message}`);
+    }
   }
-}
 
-async function fetchTypes() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch("https://localhost:7255/api/scholarshiptype", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (!res.ok) throw new Error("Failed to fetch types");
-    const data = await res.json();
-    setTypes(data);
-  } catch (error) {
-    console.error("Error fetching types:", error);
-    alert(`Error fetching types: ${error.message}`);
+  async function fetchTypes() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/scholarshiptype", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch types");
+      const data = await res.json();
+      setTypes(data);
+    } catch (error) {
+      console.error("Error fetching types:", error);
+      alert(`Error fetching types: ${error.message}`);
+    }
   }
-}
+
   async function fetchProviders() {
     try {
       const res = await fetch("https://localhost:7255/api/admin/providers", {
@@ -94,10 +95,12 @@ async function fetchTypes() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
+      if (!res.ok) throw new Error("Failed to fetch providers");
       const data = await res.json();
       setProviders(data);
     } catch (error) {
       console.error("Error fetching providers:", error);
+      alert(`Error fetching providers: ${error.message}`);
     }
   }
 
@@ -114,7 +117,7 @@ async function fetchTypes() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-    
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
@@ -123,92 +126,88 @@ async function fetchTypes() {
     }
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const requiredFields = [
-    { name: "Title", value: formData.title },
-    { name: "Description", value: formData.description },
-    { name: "Application Link", value: formData.applyLink },
-    { name: "Provider", value: formData.providerId },
-    { name: "Category", value: formData.scholarshipCategoryId },
-    { name: "Type", value: formData.scholarshipTypeId },
-  ];
+    const requiredFields = [
+      { name: "Title", value: formData.title },
+      { name: "Description", value: formData.description },
+      { name: "Application Link", value: formData.applyLink },
+      { name: "Provider", value: formData.providerId },
+      { name: "Category", value: formData.scholarshipCategoryId },
+      { name: "Type", value: formData.scholarshipTypeId },
+    ];
 
-  const missingFields = requiredFields.filter((field) => !field.value);
+    const missingFields = requiredFields.filter((field) => !field.value);
 
-  if (missingFields.length > 0) {
-    const fieldNames = missingFields.map((f) => f.name).join(", ");
-    alert(`Please fill in the following fields: ${fieldNames}`);
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem("token");
-    const url = editingId
-      ? `https://localhost:7255/api/scholarship/${editingId}`
-      : "https://localhost:7255/api/scholarship";
-    const method = editingId ? "PUT" : "POST";
-
-    const formToSend = new FormData();
-    formToSend.append("title", formData.title);
-    formToSend.append("description", formData.description);
-    formToSend.append("applyLink", formData.applyLink);
-    formToSend.append("isAvailable", formData.isAvailable);
-    formToSend.append("providerId", parseInt(formData.providerId));
-    formToSend.append("scholarshipCategoryId", parseInt(formData.scholarshipCategoryId));
-    formToSend.append("scholarshipTypeId", parseInt(formData.scholarshipTypeId));
-
-    if (imageFile) {
-      formToSend.append("imageFile", imageFile);
+    if (missingFields.length > 0) {
+      const fieldNames = missingFields.map((f) => f.name).join(", ");
+      alert(`Please fill in the following fields: ${fieldNames}`);
+      return;
     }
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formToSend,
-    });
+    try {
+      const token = localStorage.getItem("token");
+      const url = editingId
+        ? `https://localhost:7255/api/scholarship/${editingId}`
+        : "https://localhost:7255/api/scholarship";
+      const method = editingId ? "PUT" : "POST";
 
-    if (!response.ok) {
-      let errorMessage = "Failed to save scholarship";
-      
-      try {
-  
-        const errorData = await response.json();
-        
-        if (errorData.errors) {
-          errorMessage = Object.entries(errorData.errors)
-            .map(([field, errors]) => `${field}: ${errors.join(", ")}`)
-            .join("\n");
-        } else if (errorData.title) {
-          errorMessage = errorData.title;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        }
-      
-      // eslint-disable-next-line no-unused-vars
-      } catch (jsonError) {
-   
-        try {
-          const textResponse = await response.text();
-          errorMessage = textResponse || errorMessage;
-        } catch (textError) {
-          console.error("Failed to parse error response:", textError);
-        }
+      const formToSend = new FormData();
+      formToSend.append("title", formData.title);
+      formToSend.append("description", formData.description);
+      formToSend.append("applyLink", formData.applyLink);
+      formToSend.append("isAvailable", formData.isAvailable);
+      formToSend.append("providerId", parseInt(formData.providerId));
+      formToSend.append("scholarshipCategoryId", parseInt(formData.scholarshipCategoryId));
+      formToSend.append("scholarshipTypeId", parseInt(formData.scholarshipTypeId));
+
+      if (imageFile) {
+        formToSend.append("imageFile", imageFile);
       }
 
-      throw new Error(errorMessage);
-    }
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formToSend,
+      });
 
-    fetchScholarships();
-    resetForm();
-  } catch (error) {
-    console.error("Error saving scholarship:", error);
-    alert(`Error: ${error.message}`);
-  }
-};
+      if (!response.ok) {
+        let errorMessage = "Failed to save scholarship";
+
+        try {
+          const errorData = await response.json();
+
+          if (errorData.errors) {
+            errorMessage = Object.entries(errorData.errors)
+              .map(([field, errors]) => `${field}: ${errors.join(", ")}`)
+              .join("\n");
+          } else if (errorData.title) {
+            errorMessage = errorData.title;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          try {
+            const textResponse = await response.text();
+            errorMessage = textResponse || errorMessage;
+          } catch {
+            // ignore parsing error
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      fetchScholarships();
+      resetForm();
+    } catch (error) {
+      console.error("Error saving scholarship:", error);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -231,18 +230,12 @@ async function fetchTypes() {
       description: scholarship.description,
       applyLink: scholarship.applyLink,
       isAvailable: scholarship.isAvailable,
-      providerId: scholarship.providerId,
-      scholarshipCategoryId: scholarship.scholarshipCategoryId,
-      scholarshipTypeId: scholarship.scholarshipTypeId,
+      providerId: scholarship.providerId?.toString() || "",
+      scholarshipCategoryId: scholarship.scholarshipCategoryId?.toString() || "",
+      scholarshipTypeId: scholarship.scholarshipTypeId?.toString() || "",
     });
-    
 
-    if (scholarship.imageUrl) {
-      setPreviewImage(scholarship.imageUrl);
-    } else {
-      setPreviewImage(null);
-    }
-    
+    setPreviewImage(scholarship.imageUrl || null);
     setImageFile(null);
     setEditingId(scholarship.id);
     setShowAddForm(true);
@@ -286,231 +279,303 @@ async function fetchTypes() {
     return provider ? provider.fullName : "N/A";
   };
 
-  return (
-    <div className="p-4" style={{ marginTop: "200px" }}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3>Manage Scholarships</h3>
+ return (
+   <div className="card shadow-lg rounded-4 border border-primary mb-4" style={{ marginTop: '100px' }}>
+  <div className="card-header bg-primary text-white d-flex align-items-center justify-content-between rounded-top-4">
+    <div className="d-flex align-items-center">
+     
+      <h5 className="mb-0">Manage Scholarships</h5>
+        </div>
         <button
-          className="btn btn-primary"
+          className={`btn btn-${showAddForm ? "outline-danger" : "light"} d-flex align-items-center`}
           onClick={() => {
             resetForm();
-            setShowAddForm(true);
+            setShowAddForm(!showAddForm);
           }}
         >
-          <FiPlus className="me-2" />
-          Add Scholarship
+          {showAddForm ? (
+            <>
+              <XCircle className="me-2" />
+              Cancel
+            </>
+          ) : (
+            <>
+              <PlusCircle className="me-2" />
+              Add Scholarship
+            </>
+          )}
         </button>
       </div>
-
+ 
       {showAddForm && (
-        <div className="card mb-4">
+        <div className="card mb-5 shadow-lg rounded-3 border border-primary">
           <div className="card-body">
-            <h5 className="card-title">{editingId ? "Edit Scholarship" : "Add New Scholarship"}</h5>
+            <h5 className="card-title mb-4 text-primary fw-semibold">
+              {editingId ? "Edit Scholarship" : "Add New Scholarship"}
+            </h5>
             <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label className="form-label">Title</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Description</label>
-                <textarea
-                  className="form-control"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Application Link</label>
-                <input
-                  type="url"
-                  className="form-control"
-                  name="applyLink"
-                  value={formData.applyLink}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="mb-3 form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  name="isAvailable"
-                  checked={formData.isAvailable}
-                  onChange={handleInputChange}
-                  id="isAvailableCheck"
-                />
-                <label className="form-check-label" htmlFor="isAvailableCheck">
-                  Available
-                </label>
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Provider</label>
-                <select
-                  className="form-select"
-                  name="providerId"
-                  value={formData.providerId}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select Provider</option>
-                  {providers.map((provider) => (
-                    <option key={provider.id} value={provider.id}>
-                      {provider.fullName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Category</label>
-                <select
-                  className="form-select"
-                  name="scholarshipCategoryId"
-                  value={formData.scholarshipCategoryId}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Type</label>
-                <select
-                  className="form-select"
-                  name="scholarshipTypeId"
-                  value={formData.scholarshipTypeId}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select Type</option>
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Image (optional)</label>
-                <input
-                  type="file"
-                  className="form-control"
-                  name="imageFile"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                />
-                {previewImage && (
-                  <div className="mt-2">
-                    <img 
-                      src={previewImage} 
-                      alt="Preview" 
-                      style={{ maxWidth: "200px", maxHeight: "200px" }}
-                      className="img-thumbnail"
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <div className="form-floating">
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="title"
+                      placeholder="Title"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      required
                     />
-                    <button 
-                      type="button" 
-                      className="btn btn-sm btn-danger ms-2"
-                      onClick={() => {
-                        setPreviewImage(null);
-                        setImageFile(null);
-                      }}
-                    >
-                      Remove Image
-                    </button>
+                    <label htmlFor="title">Title</label>
                   </div>
-                )}
+                </div>
+
+                <div className="col-md-6">
+                  <div className="form-floating">
+                    <select
+                      className="form-select"
+                      id="providerId"
+                      name="providerId"
+                      value={formData.providerId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select Provider</option>
+                      {providers.map((provider) => (
+                        <option key={provider.id} value={provider.id}>
+                          {provider.fullName}
+                        </option>
+                      ))}
+                    </select>
+                    <label htmlFor="providerId">Provider</label>
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <div className="form-floating">
+                    <textarea
+                      className="form-control"
+                      id="description"
+                      placeholder="Description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      required
+                      style={{ height: "100px" }}
+                    />
+                    <label htmlFor="description">Description</label>
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <div className="form-floating">
+                    <input
+                      type="url"
+                      className="form-control"
+                      id="applyLink"
+                      placeholder="Application Link"
+                      name="applyLink"
+                      value={formData.applyLink}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <label htmlFor="applyLink">Application Link</label>
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="form-floating">
+                    <select
+                      className="form-select"
+                      id="scholarshipCategoryId"
+                      name="scholarshipCategoryId"
+                      value={formData.scholarshipCategoryId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <label htmlFor="scholarshipCategoryId">Category</label>
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="form-floating">
+                    <select
+                      className="form-select"
+                      id="scholarshipTypeId"
+                      name="scholarshipTypeId"
+                      value={formData.scholarshipTypeId}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select Type</option>
+                      {types.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </select>
+                    <label htmlFor="scholarshipTypeId">Type</label>
+                  </div>
+                </div>
+
+                <div className="col-md-4 d-flex align-items-center">
+                  <div className="form-check mt-3">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="isAvailable"
+                      name="isAvailable"
+                      checked={formData.isAvailable}
+                      onChange={handleInputChange}
+                    />
+                    <label className="form-check-label" htmlFor="isAvailable">
+                      Available
+                    </label>
+                  </div>
+                </div>
+
+                <div className="col-md-12">
+                  <label htmlFor="imageFile" className="form-label">
+                    Image (optional)
+                  </label>
+                  <input
+                    type="file"
+                    className="form-control"
+                    id="imageFile"
+                    name="imageFile"
+                    onChange={handleFileChange}
+                    accept="image/*"
+                  />
+                  {previewImage && (
+                    <div className="mt-2 d-flex align-items-center">
+                      <img
+                        src={previewImage}
+                        alt="Preview"
+                        style={{ width: "120px", height: "auto", objectFit: "cover" }}
+                        className="img-thumbnail me-3"
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => {
+                          setImageFile(null);
+                          setPreviewImage(null);
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <button type="submit" className="btn btn-success me-2">
-                {editingId ? "Update Scholarship" : "Add Scholarship"}
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={resetForm}>
-                Cancel
-              </button>
+              <div className="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-success d-flex align-items-center">
+                  <CheckCircle className="me-2" />
+                  {editingId ? "Update Scholarship" : "Add Scholarship"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Application Link</th>
-            <th>Available</th>
-            <th>Provider</th>
-            <th>Category</th>
-            <th>Type</th>
-            <th>Image</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {scholarships.length === 0 && (
-            <tr>
-              <td colSpan="9" className="text-center">
-                No scholarships found.
-              </td>
-            </tr>
-          )}
-          {scholarships.map((scholarship) => (
-            <tr key={scholarship.id}>
-              <td>{scholarship.title}</td>
-              <td>{scholarship.description}</td>
-              <td>
-                <a href={scholarship.applyLink} target="_blank" rel="noreferrer">
-                  Apply Link
-                </a>
-              </td>
-              <td>{scholarship.isAvailable ? "Yes" : "No"}</td>
-              <td>{getProviderName(scholarship.providerId)}</td>
-              <td>{getCategoryName(scholarship.scholarshipCategoryId)}</td>
-              <td>{getTypeName(scholarship.scholarshipTypeId)}</td>
-              <td>
-                {scholarship.imageFile ? (
-    <img
-    src={`https://localhost:7255/${scholarship.imageFile.replace(/^\.?\/?/, '')}`}
-    alt={scholarship.title}
-    style={{ width: "100px", height: "auto", objectFit: "cover" }}
-    className="img-thumbnail"
-  />
-) : (
-  "No image"
-)}
+      <div className="card shadow-lg rounded-3 border border-primary">
+        <div className="card-body">
+          <h5 className="card-title mb-4 text-primary fw-semibold">Scholarship List</h5>
+          <div className="table-responsive">
+            <table className="table table-striped table-hover align-middle mb-0">
+              <thead className="table-primary text-center">
+                <tr>
+                  <th>Title</th>
+                  <th>Description</th>
+                  <th>Application Link</th>
+                  <th>Available</th>
+                  <th>Provider</th>
+                  <th>Category</th>
+                  <th>Type</th>
+                  <th>Image</th>
+                  <th style={{ width: "110px" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scholarships.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="text-center fst-italic">
+                      No scholarships found.
+                    </td>
+                  </tr>
+                ) : (
+                  scholarships.map((scholarship) => (
+                    <tr key={scholarship.id}>
+                      <td>{scholarship.title}</td>
+                      <td className="text-truncate" style={{ maxWidth: "200px" }}>
+                        {scholarship.description}
+                      </td>
+                      <td className="text-center">
+                        <a
+                          href={scholarship.applyLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-sm btn-outline-primary"
+                        >
+                          Apply
+                        </a>
+                      </td>
+                      <td className="text-center">{scholarship.isAvailable ? "Yes" : "No"}</td>
+                      <td>{getProviderName(scholarship.providerId)}</td>
+                      <td>{getCategoryName(scholarship.scholarshipCategoryId)}</td>
+                      <td>{getTypeName(scholarship.scholarshipTypeId)}</td>
+                      <td className="text-center">
+                        {scholarship.imageFile ? (
+                          <img
+                            src={`https://localhost:7255/${scholarship.imageFile.replace(/^\.?\/?/, "")}`}
+                            alt={scholarship.title}
+                            style={{ width: "100px", height: "auto", objectFit: "cover" }}
+                            className="img-thumbnail"
+                          />
+                        ) : (
+                          <span className="text-muted">No image</span>
+                        )}
+                      </td>
+                      <td className="text-center">
+                        <button
+                          className="btn btn-outline-warning btn-sm me-2"
+                          onClick={() => handleEdit(scholarship)}
+                          title="Edit "
+                        >
+                          <PencilSquare />
+                        </button>
+                      
+      <button
+              className="btn btn-outline-danger btn-sm"
+              onClick={() => handleDelete(scholarship.id)}
+              title="Delete"
+            >
+              <TrashFill />
+            </button>
+                      </td>
+                    </tr>
+                  ))
 
-              </td>
-              <td>
-                <button
-                  className="btn btn-sm btn-primary me-2"
-                  onClick={() => handleEdit(scholarship)}
-                >
-                  <FiEdit />
-                </button>
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => handleDelete(scholarship.id)}
-                >
-                  <FiTrash2 />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

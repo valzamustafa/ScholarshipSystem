@@ -70,7 +70,19 @@ namespace Server.Controllers
 
             return NoContent();
         }
+[HttpPut("students/{id}")]
+public async Task<IActionResult> UpdateStudent(int id, [FromBody] UpdateStudentDto updateStudentDto)
+{
+    var student = await _context.Student.FindAsync(id);
+    if (student == null) return NotFound();
 
+    student.SchoolOrUniversityName = updateStudentDto.SchoolOrUniversityName;
+    student.StudyField = updateStudentDto.StudyField;
+    student.StudentLevelId = updateStudentDto.StudentLevelId;
+
+    await _context.SaveChangesAsync();
+    return NoContent();
+}
         
         [HttpGet("students")]
         public async Task<ActionResult<IEnumerable<Student>>> GetAllStudents()

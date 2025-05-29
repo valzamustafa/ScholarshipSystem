@@ -24,6 +24,8 @@ import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
 import StudentManager from "../components/StudentManager";
 import ProviderManager from "../components/ProviderManager.jsx";
 import ScholarshipsManagement from "../components/ScholarshipsManagement";
+import ContactMessages from "../components/ContactMessages";
+import FeedbackComponent from "../components/FeedbackComponent";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -61,7 +63,6 @@ function AdminDashboard() {
   const [showAddProviderForm, setShowAddProviderForm] = useState(false);
   const [editingProviderId, setEditingProviderId] = useState(null);
   const [providerEditData, setProviderEditData] = useState({});
-
   useEffect(() => {
     if (activePage === "dashboard") {
       fetchRequests();
@@ -404,23 +405,25 @@ function AdminDashboard() {
     });
     setRequests((prev) => prev.filter((r) => r.id !== id));
   }
-async function handleToggleFeatured(id) {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`https://localhost:7255/api/feedback/${id}/feature`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Failed to toggle featured status");
-    
-    setFeedbacks(prev => prev.map(f => 
-      f.id === id ? {...f, isFeatured: !f.isFeatured} : f
-    ));
-  } catch (error) {
-    console.error("Toggle featured error:", error);
-    alert(`Error: ${error.message}`);
+
+  async function handleToggleFeatured(id) {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`https://localhost:7255/api/feedback/${id}/feature`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to toggle featured status");
+      
+      setFeedbacks(prev => prev.map(f => 
+        f.id === id ? {...f, isFeatured: !f.isFeatured} : f
+      ));
+    } catch (error) {
+      console.error("Toggle featured error:", error);
+      alert(`Error: ${error.message}`);
+    }
   }
-}
+
   async function rejectRequest(id) {
     await fetch(`https://localhost:7255/api/provider/${id}`, {
       method: "DELETE",
@@ -428,7 +431,7 @@ async function handleToggleFeatured(id) {
     setRequests((prev) => prev.filter((r) => r.id !== id));
   }
 
-  return (
+ return (
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
       <div className="row g-0">
         <div className="col-md-2 text-white p-3 min-vh-100" style={{ backgroundColor: "#004D7C" }}>
@@ -548,7 +551,13 @@ async function handleToggleFeatured(id) {
               deleteStudent={deleteStudent}
             />
           )}
-
+          {activePage === "feedback" && (
+            <FeedbackComponent 
+              feedbacks={feedbacks}
+              onDeleteFeedback={handleDeleteFeedback}
+              onToggleFeatured={handleToggleFeatured}
+            />
+          )}
           {activePage === "applications" && (
             <div>
               <ul className="nav nav-tabs mb-4">
@@ -644,95 +653,14 @@ async function handleToggleFeatured(id) {
             />
           )}
 
-          {activePage === "feedback" && (
-            <div>
-              <h3>User Feedback</h3>
-              <div className="card">
-                <div className="card-body">
-                  {feedbacks.length === 0 ? (
-                    <p>No feedback received yet.</p>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="table table-striped">
-                   <thead>
-  <tr>
-    <th>User</th>
-    <th>Scholarship</th>
-    <th>Rating</th>
-    <th>Comment</th>
-    <th>Date</th>
-    <th>Featured</th>
-    <th>Actions</th>
-  </tr>
-</thead>
-                        <tbody>
-                          {feedbacks.map((feedback) => (
-                            <tr key={feedback.id}>
-                              <td>{feedback.userFullName}</td>
-                              <td>{feedback.scholarshipTitle}</td>
-                              <td>
-                                <div className="text-warning">
-                                  {Array(feedback.rating).fill('★').join('')}
-                                </div>
-                              </td>
-                              <td>
-  <button 
-    className={`btn btn-sm ${feedback.isFeatured ? 'btn-success' : 'btn-outline-secondary'}`}
-    onClick={() => handleToggleFeatured(feedback.id)}
-  >
-    {feedback.isFeatured ? 'Featured ★' : 'Feature'}
-  </button>
-</td>
-                              <td>{feedback.comment}</td>
-                              <td>{new Date(feedback.createdAt).toLocaleDateString()}</td>
-                              <td>
-                                <button 
-                                  className="btn btn-sm btn-danger"
-                                  onClick={() => handleDeleteFeedback(feedback.id)}
-                                >
-                                  Delete
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+         
 
           {activePage === "contactMessages" && (
-            <div>
-              <h3>Contact Messages</h3>
-              {contactMessage.length === 0 ? (
-                <p>No messages found.</p>
-              ) : (
-                <table className="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Subject</th>
-                      <th>Message</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contactMessage.map((msg, index) => (
-                      <tr key={index}>
-                        <td>{msg.name}</td>
-                        <td>{msg.email}</td>
-                        <td>{msg.subject}</td>
-                        <td>{msg.message}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
+  <ContactMessages 
+    messages={contactMessage} 
+    fetchMessages={fetchContactMessage}
+  />
+)}
 
           {activePage === "reports" && (
             <div><h3>Reports Page</h3><p>Coming soon...</p></div>

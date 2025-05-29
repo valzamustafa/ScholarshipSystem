@@ -36,6 +36,15 @@ public class ContactService : IContactService
         return _mapper.Map<ContactMessageDto>(message);
     }
 
+   public async Task<bool> DeleteMessageAsync(int id)
+{
+    var message = await _context.ContactMessage.FindAsync(id);
+    if (message == null) return false;
+    
+    _context.ContactMessage.Remove(message);
+    await _context.SaveChangesAsync();
+    return true;
+}
     public async Task MarkAsReadAsync(int id)
     {
         var message = await _context.ContactMessage.FindAsync(id);

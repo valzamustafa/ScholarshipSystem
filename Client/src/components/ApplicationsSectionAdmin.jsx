@@ -9,16 +9,15 @@ function ApplicationsSection({
   setSelectedScholarshipId,
   onStatusChange,
   showActions = false,
-  showDocuments = false
+  showDocuments = false,
 }) {
   const filteredApplications = selectedScholarshipId
-    ? applications.filter(app => app.ScholarshipId === selectedScholarshipId)
+    ? applications.filter((app) => app.ScholarshipId === selectedScholarshipId)
     : applications;
 
-const getApplicationDisplayData = (app) => {
-  return {
+  const getApplicationDisplayData = (app) => ({
     Id: app.id,
-   StudentName: app.studentName || "Unknown Student",
+    StudentName: app.studentName || "Unknown Student",
     SchoolOrUniversityName: app.schoolOrUniversityName || "Unknown",
     StudyField: app.studyField || "Unknown",
     StudentLevelName: app.studentLevelName || "Unknown",
@@ -26,50 +25,69 @@ const getApplicationDisplayData = (app) => {
     ProviderName: app.providerName || "Unknown Provider",
     ApplicationDate: app.applicationDate || "Unknown Date",
     ApplicationStatusId: app.applicationStatusId || 0,
-    ApplicationDocument: app.applicationDocument || []
-  };
-};
+    ApplicationDocument: app.applicationDocument || [],
+  });
+
   const getStatusBadge = (statusId) => {
-    switch(statusId) {
-      case 1: return <span className="badge bg-warning text-dark">Pending</span>;
-      case 2: return <span className="badge bg-success">Approved</span>;
-      case 3: return <span className="badge bg-danger">Rejected</span>;
-      default: return <span className="badge bg-secondary">Unknown</span>;
+    switch (statusId) {
+      case 1:
+        return (
+          <span className="badge bg-warning text-dark fw-semibold">
+            Pending
+          </span>
+        );
+      case 2:
+        return (
+          <span className="badge bg-success fw-semibold">Approved</span>
+        );
+      case 3:
+        return (
+          <span className="badge bg-danger fw-semibold">Rejected</span>
+        );
+      default:
+        return (
+          <span className="badge bg-secondary fw-semibold">Unknown</span>
+        );
     }
   };
 
   const formatDocuments = (docs) => {
-    if (!docs) return 'No documents';
+    if (!docs) return "No documents";
     if (Array.isArray(docs)) {
-      return docs.map(doc => typeof doc === 'string' ? doc : doc.name || 'Document').join(", ");
+      return docs
+        .map((doc) => (typeof doc === "string" ? doc : doc.name || "Document"))
+        .join(", ");
     }
-    return typeof docs === 'string' ? docs : 'No documents';
+    return typeof docs === "string" ? docs : "No documents";
   };
 
   const formatDate = (dateString) => {
     try {
       return new Date(dateString).toLocaleDateString();
     } catch {
-      return 'Invalid date';
+      return "Invalid date";
     }
   };
 
   return (
-    <div className="card">
-      <div className="card-header d-flex justify-content-between align-items-center">
-        <h5>
-          {showActions 
-            ? "Applications for Admin Scholarships" 
+    <div className="card shadow-sm rounded-4 border border-primary"
+    style={{ marginTop: '100px' }}>
+      <div className="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
+        <h5 className="mb-0">
+          {showActions
+            ? "Applications for Admin Scholarships"
             : "Applications for Providers' Scholarships"}
         </h5>
         {showActions && (
-          <select 
+          <select
             className="form-select w-auto"
             value={selectedScholarshipId || ""}
-            onChange={(e) => setSelectedScholarshipId(e.target.value ? parseInt(e.target.value) : null)}
+            onChange={(e) =>
+              setSelectedScholarshipId(e.target.value ? parseInt(e.target.value) : null)
+            }
           >
             <option value="">All Scholarships</option>
-            {scholarships.map(scholarship => (
+            {scholarships.map((scholarship) => (
               <option key={scholarship.Id} value={scholarship.Id}>
                 {scholarship.Title}
               </option>
@@ -77,13 +95,16 @@ const getApplicationDisplayData = (app) => {
           </select>
         )}
       </div>
-      <div className="card-body">
+
+      <div className="card-body p-3">
         {filteredApplications.length === 0 ? (
-          <p>No applications found.</p>
+          <p className="text-center fst-italic text-muted mb-0">
+            No applications found.
+          </p>
         ) : (
           <div className="table-responsive">
-            <table className="table table-striped">
-              <thead>
+            <table className="table table-striped table-hover align-middle mb-0">
+              <thead className="table-primary">
                 <tr>
                   <th>Student</th>
                   <th>School/University</th>
@@ -93,55 +114,64 @@ const getApplicationDisplayData = (app) => {
                   <th>Provider</th>
                   <th>Application Date</th>
                   <th>Status</th>
-                  {showActions && <th>Actions</th>}
-                  {showDocuments && <th>Details</th>}
+                  {showActions && <th style={{ width: "110px" }}>Actions</th>}
+                  {showDocuments && <th style={{ width: "90px" }}>Details</th>}
                 </tr>
               </thead>
               <tbody>
                 {filteredApplications.map((app) => {
                   const displayData = getApplicationDisplayData(app);
                   return (
-                <tr key={displayData.Id}>
-  <td>{displayData.StudentName ||displayData.StudentFullName }</td>
-  <td>{displayData.SchoolOrUniversityName}</td>
-  <td>{displayData.StudyField}</td>
-  <td>{displayData.StudentLevelName}</td>
-  <td>{displayData.ScholarshipTitle}</td>
-  <td>{displayData.ProviderName}</td>
-  <td>{formatDate(displayData.ApplicationDate)}</td>
-  <td>{getStatusBadge(displayData.ApplicationStatusId)}</td>
+                    <tr key={displayData.Id}>
+                      <td>{displayData.StudentName}</td>
+                      <td>{displayData.SchoolOrUniversityName}</td>
+                      <td>{displayData.StudyField}</td>
+                      <td>{displayData.StudentLevelName}</td>
+                      <td>{displayData.ScholarshipTitle}</td>
+                      <td>{displayData.ProviderName}</td>
+                      <td>{formatDate(displayData.ApplicationDate)}</td>
+                      <td>{getStatusBadge(displayData.ApplicationStatusId)}</td>
+
                       {showActions && (
                         <td>
-                          <div className="btn-group">
+                          <div className="btn-group" role="group">
                             <button
-                              className="btn btn-sm btn-success"
+                              className="btn btn-sm btn-success d-flex align-items-center justify-content-center"
                               onClick={() => onStatusChange(app.Id, 2)}
                               disabled={app.ApplicationStatusId === 2}
                               aria-label="Approve application"
+                              title="Approve"
                             >
-                              <FiCheck />
+                              <FiCheck size={18} />
                             </button>
                             <button
-                              className="btn btn-sm btn-danger"
+                              className="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
                               onClick={() => onStatusChange(app.Id, 3)}
                               disabled={app.ApplicationStatusId === 3}
                               aria-label="Reject application"
+                              title="Reject"
                             >
-                              <FiX />
+                              <FiX size={18} />
                             </button>
                           </div>
                         </td>
                       )}
+
                       {showDocuments && (
                         <td>
-                          <button 
-                            className="btn btn-sm btn-primary"
-                            onClick={() => {
-                              alert(`Application Details:\n\nDocuments: ${formatDocuments(app.ApplicationDocument)}`);
-                            }}
+                          <button
+                            className="btn btn-sm btn-primary d-flex align-items-center justify-content-center"
+                            onClick={() =>
+                              alert(
+                                `Application Details:\n\nDocuments: ${formatDocuments(
+                                  app.ApplicationDocument
+                                )}`
+                              )
+                            }
                             aria-label="View application details"
+                            title="View Details"
                           >
-                            <FiEye />
+                            <FiEye size={18} />
                           </button>
                         </td>
                       )}
@@ -158,7 +188,7 @@ const getApplicationDisplayData = (app) => {
 }
 
 ApplicationsSection.propTypes = {
-      applications: PropTypes.arrayOf(
+  applications: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
       studentName: PropTypes.string,
@@ -169,16 +199,18 @@ ApplicationsSection.propTypes = {
       providerName: PropTypes.string,
       applicationDate: PropTypes.string,
       applicationStatusId: PropTypes.number,
-      applicationDocument: PropTypes.array
+      applicationDocument: PropTypes.array,
+      ScholarshipId: PropTypes.number,
+      ApplicationStatusId: PropTypes.number,
     })
   ),
- 
+
   scholarships: PropTypes.array,
   selectedScholarshipId: PropTypes.number,
   setSelectedScholarshipId: PropTypes.func,
   onStatusChange: PropTypes.func,
   showActions: PropTypes.bool,
-  showDocuments: PropTypes.bool
+  showDocuments: PropTypes.bool,
 };
 
 export default ApplicationsSection;

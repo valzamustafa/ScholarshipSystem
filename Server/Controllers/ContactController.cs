@@ -34,6 +34,15 @@ namespace Server.Controllers
             return Ok(messages);
         }
 
+[HttpDelete("{id}")]
+[Authorize(Roles = "Admin")]
+public async Task<IActionResult> DeleteMessage(int id)
+{
+    var result = await _contactService.DeleteMessageAsync(id);
+    if (!result) return NotFound();
+    return NoContent();
+}
+
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetMessageById(int id)

@@ -4,4 +4,5 @@ public interface IContactService
     Task<IEnumerable<ContactMessageDto>> GetAllMessagesAsync();
     Task<ContactMessageDto> GetMessageByIdAsync(int id);
     Task MarkAsReadAsync(int id);
+    Task<bool> DeleteMessageAsync(int id);
 }
