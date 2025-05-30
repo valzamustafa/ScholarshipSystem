@@ -58,27 +58,26 @@ public async Task<IActionResult> GetApplicationsForAdmin()
         .Select(a => new
         {
             a.Id,
-             Student = a.Student,
+            Student = a.Student,
             StudentName = a.Student.FullName,
             SchoolOrUniversityName = a.Student.SchoolOrUniversityName,
             StudyField = a.Student.StudyField,
             StudentLevelName = a.Student.StudentLevel.Level,
             ScholarshipTitle = a.Scholarship.Title,
             ProviderName = a.Scholarship.Provider.FullName,
+            ProviderId = a.Scholarship.ProviderId, // Shto këtë
             a.ApplicationDate,
             a.ApplicationStatusId,
-           ApplicationDocument = a.ApplicationDocument
-    .Select(d => new {
-        d.FileName,
-        d.FilePath
-    }).ToList()
-
+            ApplicationDocument = a.ApplicationDocument
+                .Select(d => new {
+                    d.FileName,
+                    d.FilePath
+                }).ToList()
         })
         .ToListAsync();
 
     return Ok(applications);
 }
-
 [HttpGet("byprovider/{providerId}")]
 public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetByProvider(int providerId)
 {

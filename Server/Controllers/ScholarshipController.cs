@@ -102,9 +102,7 @@ public async Task<IActionResult> GetByProvider(int providerId)
         [HttpPost]
         public async Task<ActionResult<Scholarship>> Create([FromForm] CreateScholarshipDto dto)
         {
-            if (!await _context.Provider.AnyAsync(p => p.Id == dto.ProviderId))
-                return BadRequest("ProviderId nuk ekziston.");
-
+            
             if (!await _context.ScholarshipCategory.AnyAsync(c => c.Id == dto.ScholarshipCategoryId))
                 return BadRequest("ScholarshipCategoryId nuk ekziston.");
 
@@ -119,7 +117,7 @@ public async Task<IActionResult> GetByProvider(int providerId)
                 IsAvailable = dto.IsAvailable,
                 Deadline = dto.Deadline,
 
-                ProviderId = dto.ProviderId,
+                ProviderId = null,
                 ScholarshipCategoryId = dto.ScholarshipCategoryId,
                 ScholarshipTypeId = dto.ScholarshipTypeId
             };

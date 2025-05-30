@@ -102,7 +102,7 @@ builder.Services.AddScoped(typeof(IPasswordVerificationService<>), typeof(Passwo
         });
   builder.Services.AddScoped<IContactService, ContactService>();
    builder.Services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
-
+builder.Services.AddScoped<IAboutUsService, AboutUsService>();
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));

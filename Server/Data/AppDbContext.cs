@@ -8,6 +8,7 @@ public class AppDbContext : DbContext
 
     public DbSet<AcademicYear> AcademicYear { get; set; }
     public DbSet<Admin> Admin { get; set; }
+    public DbSet<AboutUs> AboutUs { get; set; }
     public DbSet<Application> Application { get; set; }
     public DbSet<ApplicationDocument> ApplicationDocument { get; set; }
     public DbSet<ApplicationStatus> ApplicationStatus { get; set; }

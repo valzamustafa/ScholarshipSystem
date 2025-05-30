@@ -17,7 +17,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ProviderDashboard from './pages/ProviderDashboard';
 
 import ProtectedRoute from './components/ProtectedRoute';
-
+import AboutUsSection from './components/AboutUsSection';
 import Unauthorized from './pages/Unauthorized';
 import PendingApproval from './pages/PendingApproval';
 import MyProfile from './pages/MyProfile';
@@ -39,7 +39,7 @@ function App() {
            <Route path="/scholarships" element={<ScholarshipsPage />} />
            <Route path="/apply/:id" element={<ScholarshipApplyForm />} />
            <Route path="/contactus" element={<ContactUsPage />} />
-
+<Route path="/about" element={<AboutUsSection />} />
           <Route
             path="/admin/*"
             element={

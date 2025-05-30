@@ -10,13 +10,13 @@ function ScholarshipsManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
-
+const [isAdminScholarship, setIsAdminScholarship] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     applyLink: "",
     isAvailable: true,
-    providerId: "",
+
     scholarshipCategoryId: "",
     scholarshipTypeId: "",
   });
@@ -127,53 +127,58 @@ function ScholarshipsManagement() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  const formToSend = new FormData();
 
-    const requiredFields = [
-      { name: "Title", value: formData.title },
-      { name: "Description", value: formData.description },
-      { name: "Application Link", value: formData.applyLink },
-      { name: "Provider", value: formData.providerId },
-      { name: "Category", value: formData.scholarshipCategoryId },
-      { name: "Type", value: formData.scholarshipTypeId },
-    ];
+  const requiredFields = [
+    { name: "Title", value: formData.title },
+    { name: "Description", value: formData.description },
+    { name: "Application Link", value: formData.applyLink },
+    { name: "Category", value: formData.scholarshipCategoryId },
+    { name: "Type", value: formData.scholarshipTypeId },
+  ];
 
-    const missingFields = requiredFields.filter((field) => !field.value);
+  const missingFields = requiredFields.filter((field) => !field.value);
+  if (missingFields.length > 0) {
+    const fieldNames = missingFields.map((f) => f.name).join(", ");
+    alert(`Please fill in the following fields: ${fieldNames}`);
+    return;
+  }
 
-    if (missingFields.length > 0) {
-      const fieldNames = missingFields.map((f) => f.name).join(", ");
-      alert(`Please fill in the following fields: ${fieldNames}`);
-      return;
+  try {
+    const token = localStorage.getItem("token");
+    const url = editingId
+      ? `https://localhost:7255/api/scholarship/${editingId}`
+      : "https://localhost:7255/api/scholarship";
+    const method = editingId ? "PUT" : "POST";
+
+    formToSend.append("title", formData.title);
+    formToSend.append("description", formData.description);
+    formToSend.append("applyLink", formData.applyLink);
+    formToSend.append("isAvailable", formData.isAvailable);
+     formToSend.append("deadline", formData.deadline || null); 
+    // Only append providerId if it's not an admin scholarship
+    if (!isAdminScholarship && formData.providerId) {
+      formToSend.append("providerId", formData.providerId);
+    } else {
+      // For admin scholarships, don't send providerId at all
+      // Or send it as null (but not as string "null")
+    }
+    
+    formToSend.append("scholarshipCategoryId", parseInt(formData.scholarshipCategoryId));
+    formToSend.append("scholarshipTypeId", parseInt(formData.scholarshipTypeId));
+
+    if (imageFile) {
+      formToSend.append("imageFile", imageFile);
     }
 
-    try {
-      const token = localStorage.getItem("token");
-      const url = editingId
-        ? `https://localhost:7255/api/scholarship/${editingId}`
-        : "https://localhost:7255/api/scholarship";
-      const method = editingId ? "PUT" : "POST";
-
-      const formToSend = new FormData();
-      formToSend.append("title", formData.title);
-      formToSend.append("description", formData.description);
-      formToSend.append("applyLink", formData.applyLink);
-      formToSend.append("isAvailable", formData.isAvailable);
-      formToSend.append("providerId", parseInt(formData.providerId));
-      formToSend.append("scholarshipCategoryId", parseInt(formData.scholarshipCategoryId));
-      formToSend.append("scholarshipTypeId", parseInt(formData.scholarshipTypeId));
-
-      if (imageFile) {
-        formToSend.append("imageFile", imageFile);
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formToSend,
-      });
-
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formToSend,
+    });
       if (!response.ok) {
         let errorMessage = "Failed to save scholarship";
 
@@ -208,38 +213,39 @@ function ScholarshipsManagement() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      applyLink: "",
-      isAvailable: true,
-      providerId: "",
-      scholarshipCategoryId: "",
-      scholarshipTypeId: "",
-    });
+ const resetForm = () => {
+  setFormData({
+    title: "",
+    description: "",
+    applyLink: "",
+    isAvailable: true,
+    providerId: "", // Keep as empty string for the form
+    scholarshipCategoryId: "",
+    scholarshipTypeId: "",
+  });
     setImageFile(null);
     setPreviewImage(null);
     setEditingId(null);
     setShowAddForm(false);
   };
 
-  const handleEdit = (scholarship) => {
-    setFormData({
-      title: scholarship.title,
-      description: scholarship.description,
-      applyLink: scholarship.applyLink,
-      isAvailable: scholarship.isAvailable,
-      providerId: scholarship.providerId?.toString() || "",
-      scholarshipCategoryId: scholarship.scholarshipCategoryId?.toString() || "",
-      scholarshipTypeId: scholarship.scholarshipTypeId?.toString() || "",
-    });
+ const handleEdit = (scholarship) => {
+  setFormData({
+    title: scholarship.title,
+    description: scholarship.description,
+    applyLink: scholarship.applyLink,
+    isAvailable: scholarship.isAvailable,
+    deadline: scholarship.deadline || '',
+    providerId: scholarship.providerId ? scholarship.providerId.toString() : "",
+    scholarshipCategoryId: scholarship.scholarshipCategoryId?.toString() || "",
+    scholarshipTypeId: scholarship.scholarshipTypeId?.toString() || "",
+  });
 
-    setPreviewImage(scholarship.imageUrl || null);
-    setImageFile(null);
-    setEditingId(scholarship.id);
-    setShowAddForm(true);
-  };
+   setPreviewImage(scholarship.imageUrl || null);
+  setImageFile(null);
+  setEditingId(scholarship.id);
+  setShowAddForm(true);
+};
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this scholarship?")) return;
@@ -330,28 +336,9 @@ function ScholarshipsManagement() {
                     <label htmlFor="title">Title</label>
                   </div>
                 </div>
+                
 
-                <div className="col-md-6">
-                  <div className="form-floating">
-                    <select
-                      className="form-select"
-                      id="providerId"
-                      name="providerId"
-                      value={formData.providerId}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Select Provider</option>
-                      {providers.map((provider) => (
-                        <option key={provider.id} value={provider.id}>
-                          {provider.fullName}
-                        </option>
-                      ))}
-                    </select>
-                    <label htmlFor="providerId">Provider</label>
-                  </div>
-                </div>
-
+                
                 <div className="col-md-6">
                   <div className="form-floating">
                     <textarea
@@ -367,6 +354,56 @@ function ScholarshipsManagement() {
                     <label htmlFor="description">Description</label>
                   </div>
                 </div>
+<div className="col-md-6">
+  <div className="form-check">
+    <input
+      type="checkbox"
+      className="form-check-input"
+      id="isAdminScholarship"
+      checked={isAdminScholarship}
+      onChange={() => setIsAdminScholarship(!isAdminScholarship)}
+    />
+    <label className="form-check-label" htmlFor="isAdminScholarship">
+      Admin Scholarship (no provider)
+    </label>
+  </div>
+</div>
+<div className="col-md-6">
+  <div className="form-floating">
+    <input
+      type="date"
+      className="form-control"
+      id="deadline"
+      placeholder="Deadline"
+      name="deadline"
+      value={formData.deadline || ''}
+      onChange={handleInputChange}
+    />
+    <label htmlFor="deadline">Deadline</label>
+  </div>
+</div>
+{!isAdminScholarship && (
+  <div className="col-md-6">
+    <div className="form-floating">
+      <select
+        className="form-select"
+        id="providerId"
+        name="providerId"
+        value={formData.providerId}
+        onChange={handleInputChange}
+        required={!isAdminScholarship}
+      >
+        <option value="">Select Provider</option>
+        {providers.map((provider) => (
+          <option key={provider.id} value={provider.id}>
+            {provider.fullName}
+          </option>
+        ))}
+      </select>
+      <label htmlFor="providerId">Provider</label>
+    </div>
+  </div>
+)}
 
                 <div className="col-md-6">
                   <div className="form-floating">
@@ -504,6 +541,8 @@ function ScholarshipsManagement() {
                   <th>Available</th>
                   <th>Provider</th>
                   <th>Category</th>
+                  <th>Deadline</th>
+
                   <th>Type</th>
                   <th>Image</th>
                   <th style={{ width: "110px" }}>Actions</th>
@@ -523,6 +562,15 @@ function ScholarshipsManagement() {
                       <td className="text-truncate" style={{ maxWidth: "200px" }}>
                         {scholarship.description}
                       </td>
+                      <td>
+  {scholarship.deadline ? 
+    new Date(scholarship.deadline).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }) : 
+    'No deadline'}
+</td>
                       <td className="text-center">
                         <a
                           href={scholarship.applyLink}

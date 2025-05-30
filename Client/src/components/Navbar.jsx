@@ -50,7 +50,7 @@ function Navbar() {
 
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/aboutus" style={{ color: 'white' }}>
+              <Link className="nav-link" to="/about" style={{ color: 'white' }}>
                 AboutUs
               </Link>
             </li>

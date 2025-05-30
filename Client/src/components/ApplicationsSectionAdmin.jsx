@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { FiCheck, FiX, FiEye } from "react-icons/fi";
 
@@ -10,10 +10,30 @@ function ApplicationsSection({
   onStatusChange,
   showActions = false,
   showDocuments = false,
+  showStatusOnly = false 
 }) {
-  const filteredApplications = selectedScholarshipId
-    ? applications.filter((app) => app.ScholarshipId === selectedScholarshipId)
-    : applications;
+
+  const [filterType, setFilterType] = useState("all"); 
+
+
+  const filteredScholarships = scholarships.filter((sch) => {
+    if (filterType === "admin") return sch.providerId === null;
+    if (filterType === "provider") return sch.providerId !== null;
+    return true;
+  });
+
+
+  const filteredApplications = applications.filter((app) => {
+    const scholarship = scholarships.find((sch) => sch.Id === app.ScholarshipId);
+    if (!scholarship) return false;
+
+    if (filterType === "admin" && scholarship.providerId !== null) return false;
+    if (filterType === "provider" && scholarship.providerId === null) return false;
+
+    if (selectedScholarshipId && app.ScholarshipId !== selectedScholarshipId) return false;
+
+    return true;
+  });
 
   const getApplicationDisplayData = (app) => ({
     Id: app.id,
@@ -31,23 +51,13 @@ function ApplicationsSection({
   const getStatusBadge = (statusId) => {
     switch (statusId) {
       case 1:
-        return (
-          <span className="badge bg-warning text-dark fw-semibold">
-            Pending
-          </span>
-        );
+        return <span className="badge bg-warning text-dark fw-semibold">Pending</span>;
       case 2:
-        return (
-          <span className="badge bg-success fw-semibold">Approved</span>
-        );
+        return <span className="badge bg-success fw-semibold">Approved</span>;
       case 3:
-        return (
-          <span className="badge bg-danger fw-semibold">Rejected</span>
-        );
+        return <span className="badge bg-danger fw-semibold">Rejected</span>;
       default:
-        return (
-          <span className="badge bg-secondary fw-semibold">Unknown</span>
-        );
+        return <span className="badge bg-secondary fw-semibold">Unknown</span>;
     }
   };
 
@@ -70,29 +80,52 @@ function ApplicationsSection({
   };
 
   return (
-    <div className="card shadow-sm rounded-4 border border-primary"
-    style={{ marginTop: '100px' }}>
+    <div
+      className="card shadow-sm rounded-4 border border-primary"
+      style={{ marginTop: "100px" }}
+    >
       <div className="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
         <h5 className="mb-0">
           {showActions
             ? "Applications for Admin Scholarships"
             : "Applications for Providers' Scholarships"}
         </h5>
+
         {showActions && (
-          <select
-            className="form-select w-auto"
-            value={selectedScholarshipId || ""}
-            onChange={(e) =>
-              setSelectedScholarshipId(e.target.value ? parseInt(e.target.value) : null)
-            }
-          >
-            <option value="">All Scholarships</option>
-            {scholarships.map((scholarship) => (
-              <option key={scholarship.Id} value={scholarship.Id}>
-                {scholarship.Title}
-              </option>
-            ))}
-          </select>
+          <div className="d-flex gap-2 align-items-center">
+            <select
+              className="form-select w-auto"
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value);
+                setSelectedScholarshipId(null);
+              }}
+              aria-label="Filter by scholarship type"
+            >
+              <option value="all">All Scholarships</option>
+              <option value="admin">Admin Scholarships</option>
+              <option value="provider">Provider Scholarships</option>
+            </select>
+
+            <select
+              className="form-select w-auto"
+              value={selectedScholarshipId || ""}
+              onChange={(e) =>
+                setSelectedScholarshipId(
+                  e.target.value ? parseInt(e.target.value) : null
+                )
+              }
+              aria-label="Select Scholarship"
+            >
+              <option value="">All Scholarships</option>
+              {filteredScholarships.map((scholarship) => (
+                <option key={scholarship.Id} value={scholarship.Id}>
+                  {scholarship.Title}
+                  {scholarship.providerName ? ` – ${scholarship.providerName}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
       </div>
 
@@ -202,6 +235,7 @@ ApplicationsSection.propTypes = {
       applicationDocument: PropTypes.array,
       ScholarshipId: PropTypes.number,
       ApplicationStatusId: PropTypes.number,
+      providerId: PropTypes.number, 
     })
   ),
 
