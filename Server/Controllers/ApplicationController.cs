@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Entities;
-
+using Microsoft.AspNetCore.Hosting;
 namespace Server.Controllers
 {
     [ApiController]
@@ -10,10 +10,11 @@ namespace Server.Controllers
     public class ApplicationController : ControllerBase
     {
         private readonly AppDbContext _context;
-
-        public ApplicationController(AppDbContext context)
+ private readonly IWebHostEnvironment _env; 
+        public ApplicationController(AppDbContext context , IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
        
         [HttpGet]
@@ -65,7 +66,7 @@ public async Task<IActionResult> GetApplicationsForAdmin()
             StudentLevelName = a.Student.StudentLevel.Level,
             ScholarshipTitle = a.Scholarship.Title,
             ProviderName = a.Scholarship.Provider.FullName,
-            ProviderId = a.Scholarship.ProviderId, // Shto këtë
+            ProviderId = a.Scholarship.ProviderId,
             a.ApplicationDate,
             a.ApplicationStatusId,
             ApplicationDocument = a.ApplicationDocument
@@ -82,11 +83,12 @@ public async Task<IActionResult> GetApplicationsForAdmin()
 public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetByProvider(int providerId)
 {
     var applications = await _context.Application
-        .Include(a => a.ApplicationDocument) 
+        .Include(a => a.ApplicationDocument)
         .Include(a => a.Scholarship)
         .Include(a => a.Student)
         .Include(a => a.ApplicationStatus)
         .Where(a => a.Scholarship.ProviderId == providerId)
+        .AsNoTracking()
         .Select(a => new ApplicationDto
         {
             Id = a.Id,
@@ -97,20 +99,20 @@ public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetByProvider(int p
             StudentName = a.Student.FullName,
             ScholarshipId = a.ScholarshipId,
             ScholarshipTitle = a.Scholarship.Title,
-            ApplicationDocument = a.ApplicationDocument.Select(d => new ApplicationDocumentDto
-            {
-                Id = d.Id,
-                FileName = d.FileName,
-                FilePath = d.FilePath,
-                ApplicationId = d.ApplicationId
-            }).ToList()
+            ApplicationDocument = a.ApplicationDocument
+                .Select(d => new ApplicationDocumentDto
+                {
+                    Id = d.Id,
+                    FileName = d.FileName,
+                    FilePath = d.FilePath,
+                    DocumentType = d.DocumentType
+                }).ToList()
         })
         .ToListAsync();
 
     return Ok(applications);
 }
-
-        
+   
 [HttpPost]
 public async Task<ActionResult<Application>> PostApplication([FromForm] CreateApplicationDto dto)
 {
@@ -132,49 +134,76 @@ public async Task<ActionResult<Application>> PostApplication([FromForm] CreateAp
         Directory.CreateDirectory(uploadsPath);
     }
 
-    if (dto.CvFile != null)
-    {
-        var cvDoc = await SaveDocument(dto.CvFile, "CV", application.Id, uploadsPath);
-        application.ApplicationDocument.Add(cvDoc);
-    }
+     if (dto.CvFile != null)
+            {
+                var cvDoc = await SaveDocument(dto.CvFile, "CV", application.Id);
+                application.ApplicationDocument.Add(cvDoc);
+            }
 
-    if (dto.MotivationLetterFile != null)
-    {
-        var mlDoc = await SaveDocument(dto.MotivationLetterFile, "MotivationLetter", application.Id, uploadsPath);
-        application.ApplicationDocument.Add(mlDoc);
-    }
+            if (dto.MotivationLetterFile != null)
+            {
+                var mlDoc = await SaveDocument(dto.MotivationLetterFile, "MotivationLetter", application.Id);
+                application.ApplicationDocument.Add(mlDoc);
+            }
 
-    if (dto.PortfolioFile != null)
-    {
-        var portfolioDoc = await SaveDocument(dto.PortfolioFile, "Portfolio", application.Id, uploadsPath);
-        application.ApplicationDocument.Add(portfolioDoc);
-    }
+            if (dto.PortfolioFile != null)
+            {
+                var portfolioDoc = await SaveDocument(dto.PortfolioFile, "Portfolio", application.Id);
+                application.ApplicationDocument.Add(portfolioDoc);
+            }
 
-    _context.Application.Add(application);
-    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-    return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
-}
+            return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
+        }
 
-private async Task<ApplicationDocument> SaveDocument(IFormFile file, string documentType, int applicationId, string uploadsPath)
+ private async Task<ApplicationDocument> SaveDocument(IFormFile file, string documentType, int applicationId)
+        {
+            var uploadsPath = Path.Combine(_env.WebRootPath, "Uploads");
+            Directory.CreateDirectory(uploadsPath);
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+            var filePath = Path.Combine(uploadsPath, uniqueFileName);
+            
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return new ApplicationDocument
+            {
+                FileName = file.FileName,
+                FilePath = $"/Uploads/{uniqueFileName}",
+                DocumentType = documentType,
+                ApplicationId = applicationId
+            };
+        }
+
+[HttpGet("download/{documentId}")]
+public async Task<IActionResult> DownloadDocument(int documentId)
 {
-    var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-    var filePath = Path.Combine(uploadsPath, uniqueFileName);
-
-    using (var stream = new FileStream(filePath, FileMode.Create))
+    var document = await _context.ApplicationDocument.FindAsync(documentId);
+    if (document == null)
     {
-        await file.CopyToAsync(stream);
+        return NotFound();
     }
 
-    return new ApplicationDocument
+    var filePath = Path.Combine(Directory.GetCurrentDirectory(), document.FilePath.TrimStart('/'));
+    
+    if (!System.IO.File.Exists(filePath))
     {
-        FileName = file.FileName,
-        FilePath = $"/Uploads/{uniqueFileName}",  
-        DocumentType = documentType,
-        ApplicationId = applicationId
-    };
-}
+        return NotFound();
+    }
 
+    var memory = new MemoryStream();
+    using (var stream = new FileStream(filePath, FileMode.Open))
+    {
+        await stream.CopyToAsync(memory);
+    }
+    memory.Position = 0;
+
+    return File(memory, "application/octet-stream", document.FileName);
+}
         
         [HttpPut("{id}")]
         public async Task<IActionResult> PutApplication(int id, Application application)

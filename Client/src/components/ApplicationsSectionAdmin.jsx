@@ -10,7 +10,7 @@ function ApplicationsSection({
   onStatusChange,
   showActions = false,
   showDocuments = false,
-  showStatusOnly = false 
+ 
 }) {
 
   const [filterType, setFilterType] = useState("all"); 
@@ -34,6 +34,7 @@ function ApplicationsSection({
 
     return true;
   });
+  
 
   const getApplicationDisplayData = (app) => ({
     Id: app.id,
@@ -48,6 +49,7 @@ function ApplicationsSection({
     ApplicationDocument: app.applicationDocument || [],
   });
 
+
   const getStatusBadge = (statusId) => {
     switch (statusId) {
       case 1:
@@ -61,7 +63,7 @@ function ApplicationsSection({
     }
   };
 
-  const formatDocuments = (docs) => {
+  const _formatDocuments = (docs) => {
     if (!docs) return "No documents";
     if (Array.isArray(docs)) {
       return docs
@@ -190,24 +192,24 @@ function ApplicationsSection({
                         </td>
                       )}
 
-                      {showDocuments && (
-                        <td>
-                          <button
-                            className="btn btn-sm btn-primary d-flex align-items-center justify-content-center"
-                            onClick={() =>
-                              alert(
-                                `Application Details:\n\nDocuments: ${formatDocuments(
-                                  app.ApplicationDocument
-                                )}`
-                              )
-                            }
-                            aria-label="View application details"
-                            title="View Details"
-                          >
-                            <FiEye size={18} />
-                          </button>
-                        </td>
-                      )}
+                    {showDocuments && (
+  <td>
+    <button
+      className="btn btn-sm btn-primary"
+      onClick={() =>
+        alert(
+          `Documents:\n${displayData.applicationDocument
+            ?.map((d, i) => `${i + 1}. ${d.fileName} (${d.filePath})`)
+            .join("\n") || "No documents"}`
+        )
+      }
+      title="View Documents"
+    >
+      <FiEye size={18} />
+    </button>
+  </td>
+)}
+
                     </tr>
                   );
                 })}

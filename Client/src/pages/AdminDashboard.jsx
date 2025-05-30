@@ -9,7 +9,7 @@ import {
   FiFileText,
   FiMail,
   FiMessageSquare,
-  FiInfo
+  FiSettings
 } from "react-icons/fi";
 import { Bar } from "react-chartjs-2";
 import {
@@ -21,14 +21,13 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import AboutUsSection from "../components/AboutUsSection.jsx";
+import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
 import StudentManager from "../components/StudentManager";
 import ProviderManager from "../components/ProviderManager.jsx";
 import ScholarshipsManagement from "../components/ScholarshipsManagement";
 import ContactMessages from "../components/ContactMessages";
 import FeedbackComponent from "../components/FeedbackComponent";
-import AboutUsManagement from "../components/AboutUsManagement.jsx";
-import ApplicationsSection from "../components/ApplicationsSection.jsx";
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function AdminDashboard() {
@@ -65,6 +64,10 @@ function AdminDashboard() {
   const [showAddProviderForm, setShowAddProviderForm] = useState(false);
   const [editingProviderId, setEditingProviderId] = useState(null);
   const [providerEditData, setProviderEditData] = useState({});
+  const [admins, setAdmins] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
   useEffect(() => {
     if (activePage === "dashboard") {
       fetchRequests();
@@ -84,6 +87,9 @@ function AdminDashboard() {
     if (activePage === "feedback") {
       fetchFeedbacks();
     }
+    if (activePage === "settings") {
+      fetchAdmins();
+    }
   }, [activePage]);
 
   useEffect(() => {
@@ -98,6 +104,67 @@ function AdminDashboard() {
       fetchContactMessage();
     }
   }, [activePage]);
+
+  async function fetchAdmins() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/admin/users/admins", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch admins");
+      const data = await res.json();
+      setAdmins(data);
+    } catch (error) {
+      console.error("Fetch admins error:", error);
+      alert(`Error: ${error.message}`);
+    }
+  }
+
+  async function searchUsers() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`https://localhost:7255/api/admin/users/search?term=${searchTerm}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to search users");
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error("Search users error:", error);
+      alert(`Error: ${error.message}`);
+    }
+  }
+
+  async function grantAdminAccess(id) {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`https://localhost:7255/api/admin/users/${id}/grant-admin`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to grant admin access");
+      fetchAdmins();
+      searchUsers();
+    } catch (error) {
+      console.error("Grant admin error:", error);
+      alert(`Error: ${error.message}`);
+    }
+  }
+
+  async function revokeAdminAccess(id) {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`https://localhost:7255/api/admin/users/${id}/revoke-admin`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to revoke admin access");
+      fetchAdmins();
+    } catch (error) {
+      console.error("Revoke admin error:", error);
+      alert(`Error: ${error.message}`);
+    }
+  }
 
   async function fetchFeedbacks() {
     try {
@@ -433,7 +500,7 @@ function AdminDashboard() {
     setRequests((prev) => prev.filter((r) => r.id !== id));
   }
 
- return (
+  return (
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
       <div className="row g-0">
         <div className="col-md-2 text-white p-3 min-vh-100" style={{ backgroundColor: "#004D7C" }}>
@@ -468,14 +535,6 @@ function AdminDashboard() {
               </button>
             </li>
             <li className="nav-item mb-3">
-  <button 
-    className={`nav-link text-white btn btn-link text-start ${activePage === "aboutUs" ? "fw-bold" : ""}`} 
-    onClick={() => setActivePage("aboutUs")}
-  >
-    <FiInfo className="me-2" /> About Us Management
-  </button>
-</li>
-            <li className="nav-item mb-3">
               <button 
                 className={`nav-link text-white btn btn-link text-start ${activePage === "contactMessages" ? "fw-bold" : ""}`} 
                 onClick={() => setActivePage("contactMessages")}
@@ -485,6 +544,14 @@ function AdminDashboard() {
             </li>
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "reports" ? "fw-bold" : ""}`} onClick={() => setActivePage("reports")}> <FiCalendar className="me-2" /> Reports </button>
+            </li>
+            <li className="nav-item mb-3">
+              <button 
+                className={`nav-link text-white btn btn-link text-start ${activePage === "settings" ? "fw-bold" : ""}`} 
+                onClick={() => setActivePage("settings")}
+              >
+                <FiSettings className="me-2" /> Settings
+              </button>
             </li>
           </ul>
         </div>
@@ -568,7 +635,6 @@ function AdminDashboard() {
               onToggleFeatured={handleToggleFeatured}
             />
           )}
-          {activePage === "aboutUs" && <AboutUsManagement />}
           {activePage === "applications" && (
             <div>
               <ul className="nav nav-tabs mb-4">
@@ -589,47 +655,53 @@ function AdminDashboard() {
                   </button>
                 </li>
               </ul>
-{selectedApplicationsTab === 'admin' ? (
-  <ApplicationsSection
-    applications={applications.filter(app => app.providerId === null)}
-    scholarships={scholarships.filter(s => s.providerId === null)}
-    selectedScholarshipId={selectedScholarshipId}
-    setSelectedScholarshipId={setSelectedScholarshipId}
-    onStatusChange={async (applicationId, newStatusId) => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(
-          `https://localhost:7255/api/application/${applicationId}/status`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ statusId: newStatusId }),
-          }
-        );
-        if (!res.ok) throw new Error("Failed to update status");
-        fetchApplications();
-      } catch (error) {
-        console.error("Error updating status:", error);
-        alert(`Error: ${error.message}`);
-      }
-    }}
-    showActions={true}
-    showDocuments={true}
-  />
-) : (
-  <ApplicationsSection
-    applications={applications.filter(app => app.providerId !== null)}
-    scholarships={scholarships.filter(s => s.providerId !== null)}
-    selectedScholarshipId={selectedScholarshipId}
-    setSelectedScholarshipId={setSelectedScholarshipId}
-    showActions={false}
-    showDocuments={false}
-    showStatusOnly={true} 
-  />
-)}
+
+              {selectedApplicationsTab === 'admin' ? (
+                <ApplicationsSection
+                  applications={applications.filter(app => {
+                    const s = scholarships.find(s => s.id === app.scholarshipId);
+                    return !s?.providerId; 
+                  })}
+                  scholarships={scholarships.filter(s => !s.providerId)}
+                  selectedScholarshipId={selectedScholarshipId}
+                  setSelectedScholarshipId={setSelectedScholarshipId}
+                  onStatusChange={async (applicationId, newStatusId) => {
+                    try {
+                      const token = localStorage.getItem("token");
+                      const res = await fetch(
+                        `https://localhost:7255/api/application/${applicationId}/status`,
+                        {
+                          method: "PUT",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({ statusId: newStatusId }),
+                        }
+                      );
+                      if (!res.ok) throw new Error("Failed to update status");
+                      fetchApplications();
+                    } catch (error) {
+                      console.error("Error updating status:", error);
+                      alert(`Error: ${error.message}`);
+                    }
+                  }}
+                  showActions={true}
+                  showDocuments={true}
+                />
+              ) : (
+                <ApplicationsSection
+                  applications={applications.filter(app => {
+                    const s = scholarships.find(s => s.Id === app.ScholarshipId);
+                    return s && s.ProviderId !== null;
+                  })}
+                  scholarships={scholarships.filter(s => s.ProviderId !== null)}
+                  selectedScholarshipId={selectedScholarshipId}
+                  setSelectedScholarshipId={setSelectedScholarshipId}
+                  showActions={false}
+                  showDocuments={false}
+                />
+              )}
             </div>
           )}
 
@@ -658,14 +730,111 @@ function AdminDashboard() {
             />
           )}
 
-         
-
           {activePage === "contactMessages" && (
-  <ContactMessages 
-    messages={contactMessage} 
-    fetchMessages={fetchContactMessage}
-  />
-)}
+            <ContactMessages 
+              messages={contactMessage} 
+              fetchMessages={fetchContactMessage}
+            />
+          )}
+
+          {activePage === "settings" && (
+            <div>
+              <h3>Admin Access Management</h3>
+              
+              <div className="card mb-4 mt-5" >
+                <div className="card-header mt-5">
+                  <h5>Grant Admin Access</h5>
+                </div>
+                <div className="card-body">
+                  <div className="input-group mb-3">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Search users by name or email"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <button className="btn btn-primary" onClick={searchUsers}>
+                      Search
+                    </button>
+                  </div>
+                  
+                  {searchResults.length > 0 && (
+                    <div className="table-responsive">
+                      <table className="table table-bordered">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {searchResults.map((user) => (
+                            <tr key={`${user.type}-${user.id}`}>
+                              <td>{user.fullName}</td>
+                              <td>{user.email}</td>
+                              <td>{user.type}</td>
+                              <td>
+                                <button 
+                                  className="btn btn-success"
+                                  onClick={() => grantAdminAccess(user.id)}
+                                >
+                                  Grant Admin
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="card">
+                <div className="card-header">
+                  <h5>Current Admins</h5>
+                </div>
+                <div className="card-body">
+                  {admins.length === 0 ? (
+                    <p>No admins found.</p>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-bordered">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {admins.map((admin) => (
+                            <tr key={`${admin.type}-${admin.id}`}>
+                              <td>{admin.fullName}</td>
+                              <td>{admin.email}</td>
+                              <td>{admin.type}</td>
+                              <td>
+                                <button 
+                                  className="btn btn-danger"
+                                  onClick={() => revokeAdminAccess(admin.id)}
+                                >
+                                  Revoke Admin
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {activePage === "reports" && (
             <div><h3>Reports Page</h3><p>Coming soon...</p></div>

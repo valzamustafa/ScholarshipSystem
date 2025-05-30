@@ -16,7 +16,7 @@ namespace Server.Controllers
             _context = context;
         }
 
-        
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ApplicationDocument>>> GetAll()
         {
@@ -25,7 +25,7 @@ namespace Server.Controllers
                 .ToListAsync();
         }
 
-        
+
         [HttpGet("{id}")]
         public async Task<ActionResult<ApplicationDocument>> GetById(int id)
         {
@@ -39,11 +39,11 @@ namespace Server.Controllers
             return document;
         }
 
-        
+
         [HttpPost]
         public async Task<ActionResult<ApplicationDocument>> Create(ApplicationDocument document)
         {
-           
+
             var applicationExists = await _context.Application.AnyAsync(a => a.Id == document.ApplicationId);
             if (!applicationExists)
                 return BadRequest("ApplicationId nuk ekziston.");
@@ -54,7 +54,7 @@ namespace Server.Controllers
             return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
         }
 
-        
+
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ApplicationDocument updatedDocument)
         {
@@ -74,7 +74,7 @@ namespace Server.Controllers
             return NoContent();
         }
 
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -88,16 +88,39 @@ namespace Server.Controllers
             return NoContent();
         }
 
-     
+[HttpGet("test/{applicationId}")]
+public async Task<IActionResult> TestDocuments(int applicationId)
+{
+    var docs = await _context.ApplicationDocument
+        .Where(d => d.ApplicationId == applicationId)
+        .ToListAsync();
+        
+    return Ok(new {
+        CountInDatabase = docs.Count,
+        Documents = docs
+    });
+}
         [HttpGet("application/{applicationId}")]
-        public async Task<ActionResult<IEnumerable<ApplicationDocument>>> GetByApplicationId(int applicationId)
+        public async Task<ActionResult<IEnumerable<ApplicationDocumentDto>>> GetByApplicationId(int applicationId)
         {
             var documents = await _context.ApplicationDocument
                 .Where(d => d.ApplicationId == applicationId)
-                .Include(d => d.Application)
+                .Select(d => new ApplicationDocumentDto
+                {
+                    Id = d.Id,
+                    FileName = d.FileName,
+                    FilePath = d.FilePath,
+                    DocumentType = d.DocumentType,
+                    ApplicationId = d.ApplicationId
+                })
                 .ToListAsync();
 
-            return documents;
+            if (!documents.Any())
+            {
+                return NotFound("No documents found for this application");
+            }
+
+            return Ok(documents);
         }
     }
 }

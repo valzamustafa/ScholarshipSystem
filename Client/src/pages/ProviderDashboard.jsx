@@ -70,19 +70,22 @@ const fetchApplications = async (providerId) => {
     const res = await fetch(`https://localhost:7255/api/application/byprovider/${providerId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    
     const data = await res.json();
     
-  
     const transformedData = data.map(app => ({
       ...app,
-      ApplicationDocument: app.ApplicationDocument || [] 
+   
+      applicationDocument: app.applicationDocument || app.ApplicationDocument || [],
+      ApplicationDocument: app.ApplicationDocument || app.applicationDocument || []
     }));
     
     setApplications(transformedData);
   } catch (error) {
     console.error("Error fetching applications:", error);
-    setError(error.message || "Failed to load applications. Please try again later.");
+    setError(error.message || "Failed to load applications");
   } finally {
     setLoadingApplications(false);
   }

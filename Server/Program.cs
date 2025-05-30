@@ -149,10 +149,11 @@ builder.Services.AddScoped<IAboutUsService, AboutUsService>();
 
        
        app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
+       {
+           FileProvider = new PhysicalFileProvider(
         Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "Uploads")),
-    RequestPath = "/Uploads"
+           RequestPath = "/Uploads",
+      ServeUnknownFileTypes = true 
 });
 
  
