@@ -55,7 +55,7 @@ const handleSubmit = (e) => {
   onSubmit(formDataToSend);
 };
   return (
-    <div className="modal-backdrop" style={{
+    <div className="modal-backdrop " style={{
       position: 'fixed',
       top: 0,
       left: 0,
@@ -67,7 +67,7 @@ const handleSubmit = (e) => {
       alignItems: 'center',
       zIndex: 1000
     }}>
-      <div className="modal-content bg-white p-4 rounded" style={{ width: '600px', maxWidth: '90%' }}>
+      <div className="modal-content m-0 p-0 vw-100 overflow-x-hidden bg-white p-4 rounded" style={{ width: '600px', maxWidth: '90%' }}>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h4>{scholarship ? "Edit Scholarship" : "Add New Scholarship"}</h4>
           <button className="btn btn-sm btn-outline-secondary" onClick={onClose}>

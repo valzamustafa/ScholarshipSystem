@@ -75,7 +75,7 @@ const MyProfile = () => {
   if (!profile) return <div className="text-center mt-4">Nuk u gjetën të dhëna për profilin.</div>;
 
   return (
-    <div className="container-fluid py-4">
+    <div className="container-fluid py-4 mt-5 m-0 p-0 vw-100 overflow-x-hidden">
       <div className="row">
     
         <div className="col-md-3 mb-4">

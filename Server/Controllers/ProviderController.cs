@@ -80,7 +80,7 @@ public async Task<ActionResult<Provider>> CreateProvider([FromBody] CreateProvid
         OrganizationName = providerDto.OrganizationName,
         PhoneNumber = providerDto.PhoneNumber,
         PasswordHash = passwordHash,
-        IsLocal = providerDto.IsLocal,
+       
         IsApproved = true,
         RoleId = providerDto.RoleId 
     };
@@ -109,7 +109,7 @@ public async Task<IActionResult> UpdateProvider(int id, [FromBody] UpdateProvide
     provider.Email = providerDto.Email;
     provider.OrganizationName = providerDto.OrganizationName;
     provider.PhoneNumber = providerDto.PhoneNumber;
-    provider.IsLocal = providerDto.IsLocal;
+   
 
     try
     {

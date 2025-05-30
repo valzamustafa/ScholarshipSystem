@@ -4,7 +4,8 @@ import fotorrethnesh from '../assets/fotorrethnesh.jpg';
 import FeedbackForm from "../components/FeedbackForm";
 import { useAuth } from "../context/useAuth";
 import { useNavigate } from 'react-router-dom';
-
+import heroBg from '../assets/hero-bg.jpg';
+import fotostatistics from '../assets/fotostatistics.jpg';
 const HomePage = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
@@ -90,23 +91,23 @@ const fetchFeedbacks = async () => {
   
   const scholarshipTypes = [
     {
-      title: 'Bursa të Plota',
-      desc: 'Mbulojnë 100% të shkollimit dhe shpenzimeve jetese',
+      title: 'Full Scholarships',
+      desc: 'Covers the whole tuition ',
       icon: '🏆'
     },
     {
-      title: 'Bursa Parciale',
-      desc: 'Mbulojnë një pjesë të shkollimit',
+      title: 'Partial Scholarships',
+      desc: 'Covers a part of the studies',
       icon: '🎓'
     },
     {
-      title: 'Bursa Kërkimore',
-      desc: 'Për studentët e masterit dhe doktoraturës',
+      title: 'Research Scholarships',
+      desc: 'For masters and Phd Students',
       icon: '🔬'
     },
     {
-      title: 'Bursa Atletike',
-      desc: 'Për studentët-atletë me performancë të lartë',
+      title: 'Training Scholarships',
+      desc: 'Have the chance to be trained with scholarships for free',
       icon: '⚽'
     }
   ];
@@ -114,13 +115,17 @@ const fetchFeedbacks = async () => {
   return (
     <div className="m-0 p-0 vw-100 overflow-x-hidden">
      
-      <section className="position-relative bg-primary text-white text-center py-5 vh-100 d-flex align-items-center">
-        <div className="position-absolute top-0 start-0 w-100 h-100 opacity-25" 
-          style={{
-            background: 'linear-gradient(135deg, rgba(0,75,124,0.8) 0%, rgba(0,180,216,0.6) 100%)',
-            zIndex: 0
-          }}>
-        </div>
+     <section className="position-relative text-white text-center py-5 vh-100 d-flex align-items-center justify-content-center"
+  style={{
+    background: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroBg}) center/cover no-repeat`
+  }}>
+
+  <div className="position-absolute top-0 start-0 w-100 h-100"
+    style={{
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+      zIndex: 0
+    }}>
+  </div>
         
         
         <div className="position-fixed bottom-0 end-0 p-3">
@@ -146,9 +151,9 @@ const fetchFeedbacks = async () => {
         
 
         <div className="container position-relative" style={{ zIndex: 1 }}>
-          <h1 className="display-3 fw-bold mb-4">Apliko për Bursa nga Universitete të Njohura</h1>
+          <h1 className="display-3 fw-bold mb-4">Apply for Scholarships in the most famous Universities </h1>
           <p className="lead fs-4 mb-5">
-            Platforma më e lehtë dhe efikase për të siguruar një të ardhme më të ndritur akademike
+           The easiest and most efficient platform to secure a brighter academic future
           </p>
           <div className="d-flex justify-content-center gap-3">
             <button
@@ -158,7 +163,7 @@ const fetchFeedbacks = async () => {
               style={{ transition: 'all 0.3s ease' }}
               onClick={() => navigate('/scholarships')}
             >
-              Apliko Tani
+              Apply Now 
             </button>
             <button
               className={`btn btn-outline-light btn-lg px-4 py-3 fw-bold ${hoveredBtn === 'learn' ? 'animate__animated animate__pulse' : ''}`}
@@ -167,7 +172,7 @@ const fetchFeedbacks = async () => {
               style={{ transition: 'all 0.3s ease' }}
               onClick={() => navigate('/about')}
             >
-              Mëso Më Shumë
+              Learn More
             </button>
           </div>
         </div>
@@ -176,7 +181,7 @@ const fetchFeedbacks = async () => {
    
       <section className="py-5 bg-light">
         <div className="container">
-          <h2 className="text-center mb-5 fw-bold">Partnerët Tanë</h2>
+          <h2 className="text-center mb-5 fw-bold">Our Partners </h2>
           <div className="row g-4 justify-content-center">
             {universityLogos.map((uni, idx) => (
               <div key={idx} className="col-6 col-md-4 col-lg-2">
@@ -204,9 +209,9 @@ const fetchFeedbacks = async () => {
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6 mb-4 mb-lg-0">
-              <h2 className="fw-bold mb-4">Kush jemi ne?</h2>
+              <h2 className="fw-bold mb-4">Who are we?</h2>
               <p className="lead mb-4">
-                Ne jemi platforma e parë shqiptare e krijuar posaçërisht për të ndihmuar studentët të gjejnë dhe të aplikojnë për bursa në mënyrë të lehtë, të shpejtë dhe të sigurtë.
+               We are the first  platform specifically designed to help students find and apply for scholarships easily, quickly and securely.
               </p>
               <ul className="list-unstyled">
                 <li className="mb-3">
@@ -214,7 +219,7 @@ const fetchFeedbacks = async () => {
                     <span className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
                       <span className="text-primary">✓</span>
                     </span>
-                    <span>Bursa nga universitete prestigjioze botërore</span>
+                    <span>Scholarships from prestigious world universities</span>
                   </div>
                 </li>
                 <li className="mb-3">
@@ -222,7 +227,7 @@ const fetchFeedbacks = async () => {
                     <span className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
                       <span className="text-primary">✓</span>
                     </span>
-                    <span>Proces i thjeshtë dhe i përshpejtuar i aplikimit</span>
+                    <span>Simple and expedited application process</span>
                   </div>
                 </li>
                 <li className="mb-3">
@@ -230,7 +235,7 @@ const fetchFeedbacks = async () => {
                     <span className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
                       <span className="text-primary">✓</span>
                     </span>
-                    <span>Këshilla personalizuar nga ekspertë</span>
+                    <span>Personalized advice from experts</span>
                   </div>
                 </li>
               </ul>
@@ -238,7 +243,7 @@ const fetchFeedbacks = async () => {
                 className="btn btn-primary btn-lg mt-3 px-4"
                 onClick={() => navigate('/about')}
               >
-                Mëso Më Shumë
+                Learn More 
               </button>
             </div>
             <div className="col-lg-6">
@@ -263,33 +268,41 @@ const fetchFeedbacks = async () => {
       </section>
 
     
-      <section className="py-5 bg-primary text-white">
-        <div className="container">
-          <h2 className="text-center mb-5 fw-bold">Statistikat Tona</h2>
-          <div className="row g-4">
-            {[
-              { num: 20, text: 'Universitete Partnere', suffix: '+' },
-              { num: 1500, text: 'Studentë të Regjistruar', suffix: '+' },
-              { num: 500, text: 'Bursa të Dhëna', suffix: '+' },
-              { num: 100, text: 'Trajnime të Realizuara', suffix: '+' },
-            ].map((item, idx) => (
-              <div key={idx} className="col-md-3 col-6">
-                <div className="text-center p-4">
-                  <h3 className="display-4 fw-bold mb-3 counter" data-target={item.num}>
-                    {item.num}{item.suffix}
-                  </h3>
-                  <p className="fs-5">{item.text}</p>
-                </div>
-              </div>
-            ))}
+      <section 
+  className="py-5 text-white position-relative"
+  style={{
+    background: `linear-gradient(rgba(0, 75, 124, 0.8), rgba(0, 75, 124, 0.8)), url(${fotostatistics}) center/cover no-repeat`
+  }}
+>
+ 
+  <div className="position-absolute top-0 start-0 w-100 h-100 bg-primary opacity-50" style={{ zIndex: 0 }}></div>
+  
+  <div className="container position-relative" style={{ zIndex: 1 }}>
+    <h2 className="text-center mb-5 fw-bold">Our Statistics</h2>
+    <div className="row g-4">
+      {[
+        { num: 20, text: 'Universities Partners', suffix: '+' },
+        { num: 1500, text: 'Registered Students', suffix: '+' },
+        { num: 500, text: 'Approved Scholarships', suffix: '+' },
+        { num: 100, text: 'Realized Trainings', suffix: '+' },
+      ].map((item, idx) => (
+        <div key={idx} className="col-md-3 col-6">
+          <div className="text-center p-4">
+            <h3 className="display-4 fw-bold mb-3 counter" data-target={item.num}>
+              {item.num}{item.suffix}
+            </h3>
+            <p className="fs-5">{item.text}</p>
           </div>
         </div>
-      </section>
+      ))}
+    </div>
+  </div>
+</section>
 
      
       <section className="py-5">
         <div className="container">
-          <h2 className="text-center mb-5 fw-bold">Llojet e Bursave</h2>
+          <h2 className="text-center mb-5 fw-bold">Types of Scholarships</h2>
           <div className="row g-4">
             {scholarshipTypes.map((type, idx) => (
               <div key={idx} className="col-md-3 col-6">
@@ -314,13 +327,13 @@ const fetchFeedbacks = async () => {
 
       <section className="py-5 bg-light">
         <div className="container">
-          <h2 className="text-center mb-5 fw-bold">Si Funksionon?</h2>
+          <h2 className="text-center mb-5 fw-bold">How it works?</h2>
           <div className="row g-4">
             {[
-              { step: '1', title: 'Regjistrohu', desc: 'Krijo llogarinë tënde në pak sekonda', icon: '📝' },
-              { step: '2', title: 'Gjej Bursën', desc: 'Përdor filtrat për të gjetur bursën perfekte', icon: '🔍' },
-              { step: '3', title: 'Apliko', desc: 'Plotëso formularin online me udhëzimet tona', icon: '🚀' },
-              { step: '4', title: 'Prano Përgjigjen', desc: 'Ndiq aplikimin dhe prano përgjigjen direkt', icon: '🎉' },
+              { step: '1', title: 'Register', desc: 'Create your account in a few seconds', icon: '📝' },
+              { step: '2', title: 'Find the Scholarship that you want ', desc: 'Use filters to find the perfect scholarship', icon: '🔍' },
+              { step: '3', title: 'Apply', desc: 'Fill out the online form with our instructions.', icon: '🚀' },
+              { step: '4', title: 'Wait for Approval', desc: 'Follow the application and receive the answer directly', icon: '🎉' },
             ].map((item, idx) => (
               <div key={idx} className="col-md-3 col-6">
                 <div className="p-4 bg-white rounded-4 h-100 text-center position-relative">
@@ -343,7 +356,7 @@ const fetchFeedbacks = async () => {
 
 <section className="py-5">
   <div className="container">
-    <h2 className="text-center mb-5 fw-bold">Çfarë Thonë Studentët Tanë</h2>
+    <h2 className="text-center mb-5 fw-bold">What our Students Says?</h2>
     <div className="row g-4">
       {feedbacks.length > 0 ? (
         feedbacks.slice(0, 3).map((feedback) => (
@@ -375,7 +388,7 @@ const fetchFeedbacks = async () => {
         ))
       ) : (
         <div className="col-12 text-center">
-          <p>Asnjë feedback ende. Bëhu i pari që të lësh komentin tënd!</p>
+          <p>No feedback yet. Be the first to leave your comment!</p>
         </div>
       )}
     </div>
@@ -384,7 +397,7 @@ const fetchFeedbacks = async () => {
         className="btn btn-primary"
         onClick={() => setShowFeedbackForm(true)}
       >
-        Jepni Feedback-in Tuaj
+       Give Feedback
       </button>
     </div>
   </div>
@@ -392,22 +405,22 @@ const fetchFeedbacks = async () => {
       
       <section className="py-5 bg-primary text-white">
         <div className="container text-center">
-          <h2 className="display-5 fw-bold mb-4">Gati për të aplikuar për bursën tënde?</h2>
-          <p className="lead mb-5">Regjistrohu tani dhe fillo udhëtimin tënd akademik</p>
+          <h2 className="display-5 fw-bold mb-4">Ready to Apply for your Scholarship?</h2>
+          <p className="lead mb-5">Register now and start your academic journey with us</p>
           <div className="d-flex justify-content-center gap-3">
             <button
               className="btn btn-light btn-lg px-4 py-3 fw-bold shadow-lg"
               style={{ transition: 'all 0.3s ease' }}
               onClick={() => navigate('/register')}
             >
-              Regjistrohu Falas
+             Register for free
             </button>
             <button
               className="btn btn-outline-light btn-lg px-4 py-3 fw-bold"
               style={{ transition: 'all 0.3s ease' }}
               onClick={() => navigate('/contact')}
             >
-              Bisedo me Ekspert
+              Talk with Us
             </button>
           </div>
         </div>

@@ -32,34 +32,29 @@ namespace Server.Services
             return GenerateTokenInternal(admin.Id, admin.Email, admin.FullName, admin.Role?.Emri ?? "Admin");
         }
 
-        private string GenerateTokenInternal(int id, string email, string fullName, string roleName)
-        {
-            var jwtKey = _configuration["Jwt:Key"];
-            if (string.IsNullOrWhiteSpace(jwtKey))
-            {
-                throw new InvalidOperationException("JWT key is missing or empty in configuration.");
-            }
+       private string GenerateTokenInternal(int id, string email, string fullName, string roleName)
+{
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, id.ToString()),  
+        new Claim(JwtRegisteredClaimNames.Email, email),
+        new Claim(ClaimTypes.Role, roleName),
+        new Claim("FullName", fullName)
+    };
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, id.ToString()),  
-                new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim(ClaimTypes.Role, roleName),
-                new Claim("FullName", fullName)
-            };
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("this_is_a_very_long_secret_key_with_more_than_32_chars_1234"));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var token = new JwtSecurityToken(
+        issuer: "your_app_name",
+        audience: "your_app_users",
+        claims: claims,
+        expires: DateTime.UtcNow.AddMinutes(60),
+        signingCredentials: creds
+    );
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: creds
-            );
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
     }
 }

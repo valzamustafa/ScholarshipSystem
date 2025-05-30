@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
-function ScholarshipApply({ scholarshipId }) {
+function ScholarshipApply() {
+  const { id: scholarshipId } = useParams();
+  const navigate = useNavigate();
   const [scholarship, setScholarship] = useState(null);
   const [formData, setFormData] = useState({
     gpa: '',
@@ -13,15 +17,37 @@ function ScholarshipApply({ scholarshipId }) {
     portfolio: null
   });
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (!scholarshipId) {
+      setError('No scholarship ID provided');
+      return;
+    }
+
     const fetchData = async () => {
-      const res = await fetch(`https://localhost:7255/api/scholarship/${scholarshipId}`);
-      const data = await res.json();
-      setScholarship(data);
+      setIsLoading(true);
+      try {
+        const res = await fetch(`https://localhost:7255/api/scholarship/${scholarshipId}`);
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch scholarship (Status: ${res.status})`);
+        }
+        
+        const data = await res.json();
+        setScholarship(data);
+        setError(null);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError(err.message || 'Failed to load scholarship details');
+        navigate('/scholarships');
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     fetchData();
-  }, [scholarshipId]);
+  }, [scholarshipId, navigate]);
 
   const handleFileChange = (e) => {
     setFiles({
@@ -37,19 +63,41 @@ function ScholarshipApply({ scholarshipId }) {
     });
   };
 
+  const validateForm = () => {
+    if (!formData.gpa || isNaN(formData.gpa)) {
+      setError('Ju lutem shkruani një GPA të vlefshme');
+      return false;
+    }
+
+    if (!formData.studyYear) {
+      setError('Ju lutem shkruani vitin tuaj të studimeve');
+      return false;
+    }
+
+    if (!formData.studyField) {
+      setError('Ju lutem shkruani fushën tuaj të studimeve');
+      return false;
+    }
+
+    if (!files.motivationLetter || !files.cv) {
+      setError("Letra e motivimit dhe CV janë të detyrueshme");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+
+    if (!validateForm()) return;
+
     const token = localStorage.getItem('token');
     const studentId = localStorage.getItem("studentId");
 
     if (!studentId || isNaN(parseInt(studentId))) {
-      alert("Nuk u gjet studenti. Ju lutem hyni në llogari.");
-      return;
-    }
-
- 
-    if (!files.motivationLetter || !files.cv) {
-      setError("Letra e motivimit dhe CV janë të detyrueshme");
+      setError("Nuk u gjet studenti. Ju lutem hyni në llogari.");
       return;
     }
 
@@ -62,9 +110,9 @@ function ScholarshipApply({ scholarshipId }) {
       formPayload.append('StudyYear', formData.studyYear);
       formPayload.append('StudyField', formData.studyField);
       
-     
       formPayload.append('MotivationLetterFile', files.motivationLetter);
       formPayload.append('CvFile', files.cv);
+      
       if (files.portfolio) {
         formPayload.append('PortfolioFile', files.portfolio);
       }
@@ -83,7 +131,10 @@ function ScholarshipApply({ scholarshipId }) {
       }
 
       alert('Aplikimi u dorëzua me sukses!');
+      navigate('/scholarships');
   
+    
+      
       setFormData({
         gpa: '',
         studyYear: '',
@@ -94,23 +145,44 @@ function ScholarshipApply({ scholarshipId }) {
         cv: null,
         portfolio: null
       });
-      setError(null);
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Submission error:', err);
       setError(err.message || 'Gabim gjatë dorëzimit të aplikimit');
     }
   };
 
-  if (!scholarship) return <p>Loading...</p>;
+  if (!scholarshipId) {
+    return <div className="alert alert-danger">Nuk është zgjedhur bursa</div>;
+  }
+
+  if (isLoading) {
+    return <div className="d-flex justify-content-center">
+      <div className="spinner-border" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>;
+  }
+
+  if (error) {
+    return <div className="alert alert-danger">{error}</div>;
+  }
+
+  if (!scholarship) {
+    return <div className="alert alert-warning">Detajet e bursës nuk janë të disponueshme</div>;
+  }
 
   return (
-    <div className="container mt-4">
-      <h2>Apliko për: {scholarship.title}</h2>
-      <p>{scholarship.description}</p>
+<div className="container mt-5 vw-100 overflow-x-hidden">
+
+  <div className="mt-5">
+    <h2>Apliko për: {scholarship.title}</h2>
+    <p>{scholarship.description}</p>
+  </div>
+
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
+      <form onSubmit={handleSubmit} encType="multipart/form-data  m-0 p-0 vw-100 overflow-x-hidden">
         <div className="mb-3">
           <label className="form-label">Letra e motivimit (e detyrueshme):</label>
           <input
@@ -154,10 +226,13 @@ function ScholarshipApply({ scholarshipId }) {
           <input
             type="number"
             step="0.1"
+            min="0"
+            max="10"
             className="form-control"
             name="gpa"
             value={formData.gpa}
             onChange={handleInputChange}
+            required
           />
         </div>
 
@@ -170,6 +245,7 @@ function ScholarshipApply({ scholarshipId }) {
             placeholder="p.sh. Viti i dytë Bachelor"
             value={formData.studyYear}
             onChange={handleInputChange}
+            required
           />
         </div>
 
@@ -182,6 +258,7 @@ function ScholarshipApply({ scholarshipId }) {
             placeholder="p.sh. Inxhinieri Kompjuterike"
             value={formData.studyField}
             onChange={handleInputChange}
+            required
           />
         </div>
 

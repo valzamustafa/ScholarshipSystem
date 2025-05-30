@@ -5,6 +5,6 @@ public class CreateProviderDto
     public required string OrganizationName { get; set; }
     public string? PhoneNumber { get; set; }
     public required string Password { get; set; }
-    public required bool IsLocal { get; set; }
+   
     public required int RoleId { get; set; } 
 }

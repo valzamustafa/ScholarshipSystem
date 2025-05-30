@@ -10,12 +10,10 @@ public class RegisterProviderDto
     public string? PhoneNumber { get; set; }
     
     [Required]
-    [MinLength(6)]
+    [MinLength(9)]
     public string Password { get; set; }=string.Empty;
     
     [Required]
     public string OrganizationName { get; set; }=string.Empty;
     
-    [Required]
-    public bool IsLocal { get; set; }
 }

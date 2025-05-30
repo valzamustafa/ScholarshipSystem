@@ -131,20 +131,22 @@ namespace Server.Controllers
                 if (providerRole == null)
                     return BadRequest(new { message = "Provider role not found" });
 
-                var provider = new Provider
-                {
-                    FullName = dto.FullName,
-                    Email = dto.Email,
-                    PhoneNumber = dto.PhoneNumber,
-                    PasswordHash = _providerPasswordHasher.HashPassword(null!, dto.Password),
-                    OrganizationName = dto.OrganizationName,
-                    IsLocal = dto.IsLocal,
-                    RoleId = providerRole.Id,
-                    IsApproved = false 
-                };
+               var provider = new Provider
+{
+    FullName = dto.FullName,
+    Email = dto.Email,
+    PhoneNumber = dto.PhoneNumber,
+    OrganizationName = dto.OrganizationName,
+    RoleId = providerRole.Id,
+    IsApproved = false 
+};
 
-                _context.Provider.Add(provider);
-                await _context.SaveChangesAsync();
+
+provider.PasswordHash = _providerPasswordHasher.HashPassword(provider, dto.Password);
+
+_context.Provider.Add(provider);
+await _context.SaveChangesAsync();
+
 
                 return Ok(new { message = "Provider registered successfully. Waiting for admin approval." });
             }
@@ -158,90 +160,114 @@ namespace Server.Controllers
             }
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+       [HttpPost("login")]
+public async Task<IActionResult> Login([FromBody] LoginDto dto)
+{
+    try
+    {
+        var student = await _context.Student.Include(s => s.Role).FirstOrDefaultAsync(s => s.Email == dto.Email);
+        if (student != null)
         {
+            if (string.IsNullOrEmpty(student.PasswordHash))
+                return Unauthorized(new { message = "Invalid email or password" });
+
+            var result = _studentPasswordHasher.VerifyHashedPassword(student, student.PasswordHash!, dto.Password);
+            if (result == PasswordVerificationResult.Success)
+            {
+                var token = _tokenService.GenerateToken(student);
+                return Ok(new
+                {
+                    token,
+                    user = new UserResponseDto
+                    {
+                        Id = student.Id,
+                        FullName = student.FullName,
+                        Email = student.Email,
+                        PhoneNumber = student.PhoneNumber,
+                        Role = new RoleDto { Id = student.Role.Id, Emri = student.Role.Emri }
+                    }
+                });
+            }
+            return Unauthorized(new { message = "Invalid password" });
+        }
+
+        var provider = await _context.Provider.Include(p => p.Role).FirstOrDefaultAsync(p => p.Email == dto.Email);
+        if (provider != null)
+        {
+            if (string.IsNullOrEmpty(provider.PasswordHash))
+                return Unauthorized(new { message = "Invalid email or password" });
+
+            var result = PasswordVerificationResult.Failed;
             try
             {
-             
-                var student = await _context.Student.Include(s => s.Role).FirstOrDefaultAsync(s => s.Email == dto.Email);
-                if (student != null)
-                {
-                    var result = _studentPasswordHasher.VerifyHashedPassword(student, student.PasswordHash!, dto.Password);
-                    if (result == PasswordVerificationResult.Success)
-                    {
-                        var token = _tokenService.GenerateToken(student);
-                        return Ok(new
-                        {
-                            token,
-                            user = new UserResponseDto
-                            {
-                                Id = student.Id,
-                                FullName = student.FullName,
-                                Email = student.Email,
-                                PhoneNumber = student.PhoneNumber,
-                                Role = new RoleDto { Id = student.Role.Id, Emri = student.Role.Emri }
-                            }
-                        });
-                    }
-                    return Unauthorized(new { message = "Invalid password" });
-                }
-
-                var provider = await _context.Provider.Include(p => p.Role).FirstOrDefaultAsync(p => p.Email == dto.Email);
-                if (provider != null)
-                {
-                    var result = _providerPasswordHasher.VerifyHashedPassword(provider, provider.PasswordHash!, dto.Password);
-                    if (result == PasswordVerificationResult.Success)
-                    {
-                        if (!provider.IsApproved)
-                            return Unauthorized(new { message = "Your account is pending approval by the admin." });
-
-                        var token = _tokenService.GenerateToken(provider);
-                        return Ok(new
-                        {
-                            token,
-                            user = new UserResponseDto
-                            {
-                                Id = provider.Id,
-                                FullName = provider.FullName,
-                                Email = provider.Email,
-                                PhoneNumber = provider.PhoneNumber,
-                                Role = new RoleDto { Id = provider.Role.Id, Emri = provider.Role.Emri }
-                            }
-                        });
-                    }
-                    return Unauthorized(new { message = "Invalid password" });
-                }
-
-             var admin = await _context.Admin
-    .Include(a => a.Role)
-    .FirstOrDefaultAsync(a => a.Email == dto.Email && a.IsApproved == true);
-
-    if (admin != null)
-    {
-        if (string.IsNullOrEmpty(admin.PasswordHash))
-        {
-            return Unauthorized(new { message = "Admin account not properly configured" });
-        }
-
-        var result = _adminPasswordHasher.VerifyHashedPassword(admin, admin.PasswordHash, dto.Password);
-        if (result == PasswordVerificationResult.Success)
-        {
-            var token = _tokenService.GenerateToken(admin);
-            return Ok(new
+                result = _providerPasswordHasher.VerifyHashedPassword(provider, provider.PasswordHash!, dto.Password);
+            }
+            catch (FormatException)
             {
-                token,
-                user = new AdminDto 
+            
+                return Unauthorized(new { message = "Invalid password format" });
+            }
+
+            if (result == PasswordVerificationResult.Success)
+            {
+                if (!provider.IsApproved)
+                    return Unauthorized(new { message = "Your account is pending approval by the admin." });
+
+                var token = _tokenService.GenerateToken(provider);
+                return Ok(new
                 {
-                    Id = admin.Id,
-                    FullName = admin.FullName,
-                    Email = admin.Email,
-                   
-                }
-            });
+                    token,
+                    user = new UserResponseDto
+                    {
+                        Id = provider.Id,
+                        FullName = provider.FullName,
+                        Email = provider.Email,
+                        PhoneNumber = provider.PhoneNumber,
+                        Role = new RoleDto { Id = provider.Role.Id, Emri = provider.Role.Emri }
+                    }
+                });
+            }
+            return Unauthorized(new { message = "Invalid password" });
         }
-        return Unauthorized(new { message = "Invalid password" });
-    }
+
+        var admin = await _context.Admin
+            .Include(a => a.Role)
+            .FirstOrDefaultAsync(a => a.Email == dto.Email && a.IsApproved == true);
+
+        if (admin != null)
+        {
+            if (string.IsNullOrEmpty(admin.PasswordHash))
+            {
+                return Unauthorized(new { message = "Admin account not properly configured" });
+            }
+
+            var result = PasswordVerificationResult.Failed;
+            try
+            {
+                result = _adminPasswordHasher.VerifyHashedPassword(admin, admin.PasswordHash, dto.Password);
+            }
+            catch (FormatException)
+            {
+                return Unauthorized(new { message = "Invalid password format" });
+            }
+
+            if (result == PasswordVerificationResult.Success)
+            {
+                var token = _tokenService.GenerateToken(admin);
+                return Ok(new
+                {
+                    token,
+                    user = new AdminDto
+                    {
+                        Id = admin.Id,
+                        FullName = admin.FullName,
+                        Email = admin.Email,
+                    }
+                });
+            }
+            return Unauthorized(new { message = "Invalid password" });
+        }
+
         return Unauthorized(new { message = "Invalid email or password" });
     }
     catch (Exception ex)
@@ -250,5 +276,5 @@ namespace Server.Controllers
         return StatusCode(500, new { error = "Internal Server Error", message = ex.Message });
     }
 }
-    }
+   }
 }

@@ -67,7 +67,7 @@ internal class Program
         builder.Services.AddScoped<IPasswordHasher<Student>, PasswordHasher<Student>>();
         builder.Services.AddScoped<IPasswordHasher<Provider>, PasswordHasher<Provider>>();
         builder.Services.AddScoped<IPasswordHasher<Admin>, PasswordHasher<Admin>>();
-
+builder.Services.AddScoped(typeof(IPasswordVerificationService<>), typeof(PasswordVerificationService<>));
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
 
@@ -78,7 +78,15 @@ internal class Program
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         })
         .AddJwtBearer(options =>
+{
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
         {
+            Console.WriteLine("JWT authentication failed: " + context.Exception.Message);
+            return Task.CompletedTask;
+        }
+    };
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
