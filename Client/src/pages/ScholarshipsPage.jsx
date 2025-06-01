@@ -4,6 +4,7 @@ import { Button, Card, Form, InputGroup, Pagination, Badge, Alert, Spinner, Moda
 import { FiSearch, FiCalendar, FiAward, FiFilter, FiX, FiEdit, FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { useAuth } from "../context/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 function ScholarshipsPage() {
@@ -11,6 +12,7 @@ function ScholarshipsPage() {
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState({
     scholarships: false,
     categories: false,
@@ -44,7 +46,7 @@ function ScholarshipsPage() {
   useEffect(() => {
     AOS.init({ duration: 1000 });
     fetchInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   useEffect(() => {
@@ -364,9 +366,9 @@ function ScholarshipsPage() {
         </motion.div>
       </motion.div>
 
-      {/* Main Content */}
+
       <div className="main-content" style={{ flex: 1, padding: '20px' }}>
-        {/* Hero Section */}
+   
         <motion.div 
           className="hero-section text-center py-5 mb-4 mt-3" 
           style={{ 
@@ -588,15 +590,31 @@ function ScholarshipsPage() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
-                    <Button
-  variant="primary"
-  className="rounded-pill px-3"
-  onClick={() => navigate(`/apply/${scholarship.id}`)}
-  disabled={!scholarship.isAvailable || new Date(scholarship.deadline) <= new Date()}
+<Button
+    variant="primary"
+    className="rounded-pill px-3"
+    onClick={() => {
+        if (!user) {
+            navigate('/login', { 
+                state: { 
+                    from: `/apply/${scholarship.id}`,
+                    message: 'You need to login as a student to apply for scholarships'
+                } 
+            });
+        } else if (user.role !== 'student') {
+            navigate('/unauthorized', { 
+                state: { 
+                    message: 'Only students can apply for scholarships'
+                } 
+            });
+        } else {
+            navigate(`/apply/${scholarship.id}`);
+        }
+    }}
+    disabled={!scholarship.isAvailable || new Date(scholarship.deadline) <= new Date()}
 >
-  Apply Now
-</Button>
-                          </motion.div>
+    Apply Now
+</Button>                          </motion.div>
                         </div>
                       </div>
                     </Card.Body>

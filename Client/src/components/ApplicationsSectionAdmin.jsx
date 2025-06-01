@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { FiCheck, FiX, FiEye } from "react-icons/fi";
+import { FiCheck, FiX, FiEye, FiFileText, FiCheckCircle, FiXCircle } from "react-icons/fi";
 
 function ApplicationsSection({
   applications = [],
@@ -10,11 +10,9 @@ function ApplicationsSection({
   onStatusChange,
   showActions = false,
   showDocuments = false,
- 
+  showStatusOnly = false,
 }) {
-
-  const [filterType, setFilterType] = useState("all"); 
-
+  const [filterType, setFilterType] = useState("all");
 
   const filteredScholarships = scholarships.filter((sch) => {
     if (filterType === "admin") return sch.providerId === null;
@@ -22,55 +20,22 @@ function ApplicationsSection({
     return true;
   });
 
-
   const filteredApplications = applications.filter((app) => {
-    const scholarship = scholarships.find((sch) => sch.Id === app.ScholarshipId);
-    if (!scholarship) return false;
-
-    if (filterType === "admin" && scholarship.providerId !== null) return false;
-    if (filterType === "provider" && scholarship.providerId === null) return false;
-
-    if (selectedScholarshipId && app.ScholarshipId !== selectedScholarshipId) return false;
-
-    return true;
+    const scholarshipMatch = selectedScholarshipId ? app.scholarshipId === parseInt(selectedScholarshipId) : true;
+    const typeMatch = 
+      filterType === "all" ? true :
+      filterType === "admin" ? scholarships.find(s => s.id === app.scholarshipId)?.providerId === null :
+      scholarships.find(s => s.id === app.scholarshipId)?.providerId !== null;
+    return scholarshipMatch && typeMatch;
   });
-  
-
-  const getApplicationDisplayData = (app) => ({
-    Id: app.id,
-    StudentName: app.studentName || "Unknown Student",
-    SchoolOrUniversityName: app.schoolOrUniversityName || "Unknown",
-    StudyField: app.studyField || "Unknown",
-    StudentLevelName: app.studentLevelName || "Unknown",
-    ScholarshipTitle: app.scholarshipTitle || "Unknown Scholarship",
-    ProviderName: app.providerName || "Unknown Provider",
-    ApplicationDate: app.applicationDate || "Unknown Date",
-    ApplicationStatusId: app.applicationStatusId || 0,
-    ApplicationDocument: app.applicationDocument || [],
-  });
-
 
   const getStatusBadge = (statusId) => {
     switch (statusId) {
-      case 1:
-        return <span className="badge bg-warning text-dark fw-semibold">Pending</span>;
-      case 2:
-        return <span className="badge bg-success fw-semibold">Approved</span>;
-      case 3:
-        return <span className="badge bg-danger fw-semibold">Rejected</span>;
-      default:
-        return <span className="badge bg-secondary fw-semibold">Unknown</span>;
+      case 1: return <span className="badge bg-warning text-dark">Pending</span>;
+      case 2: return <span className="badge bg-danger">Rejected</span>;
+      case 3: return <span className="badge bg-success">Approved</span>;
+      default: return <span className="badge bg-secondary">Unknown</span>;
     }
-  };
-
-  const _formatDocuments = (docs) => {
-    if (!docs) return "No documents";
-    if (Array.isArray(docs)) {
-      return docs
-        .map((doc) => (typeof doc === "string" ? doc : doc.name || "Document"))
-        .join(", ");
-    }
-    return typeof docs === "string" ? docs : "No documents";
   };
 
   const formatDate = (dateString) => {
@@ -82,137 +47,97 @@ function ApplicationsSection({
   };
 
   return (
-    <div
-      className="card shadow-sm rounded-4 border border-primary"
-      style={{ marginTop: "100px" }}
-    >
-      <div className="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top-4">
+    <div className="card shadow-lg rounded-4 border border-primary mb-4" style={{ marginTop: '100px' }}>
+      <div className="card-header bg-primary text-white d-flex align-items-center justify-content-between rounded-top-4">
         <h5 className="mb-0">
-          {showActions
-            ? "Applications for Admin Scholarships"
-            : "Applications for Providers' Scholarships"}
+          {showActions ? "Applications for Admin Scholarships" : "Applications for Provider Scholarships"}
         </h5>
-
-        {showActions && (
-          <div className="d-flex gap-2 align-items-center">
-            <select
-              className="form-select w-auto"
-              value={filterType}
-              onChange={(e) => {
-                setFilterType(e.target.value);
-                setSelectedScholarshipId(null);
-              }}
-              aria-label="Filter by scholarship type"
-            >
-              <option value="all">All Scholarships</option>
-              <option value="admin">Admin Scholarships</option>
-              <option value="provider">Provider Scholarships</option>
-            </select>
-
-            <select
-              className="form-select w-auto"
-              value={selectedScholarshipId || ""}
-              onChange={(e) =>
-                setSelectedScholarshipId(
-                  e.target.value ? parseInt(e.target.value) : null
-                )
-              }
-              aria-label="Select Scholarship"
-            >
-              <option value="">All Scholarships</option>
-              {filteredScholarships.map((scholarship) => (
-                <option key={scholarship.Id} value={scholarship.Id}>
-                  {scholarship.Title}
-                  {scholarship.providerName ? ` – ${scholarship.providerName}` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div className="d-flex gap-2 align-items-center">
+          
+          
+        </div>
       </div>
 
       <div className="card-body p-3">
         {filteredApplications.length === 0 ? (
-          <p className="text-center fst-italic text-muted mb-0">
-            No applications found.
-          </p>
+          <p className="text-center fst-italic text-muted mb-0">No applications found.</p>
         ) : (
           <div className="table-responsive">
             <table className="table table-striped table-hover align-middle mb-0">
               <thead className="table-primary">
                 <tr>
                   <th>Student</th>
-                  <th>School/University</th>
-                  <th>Study Field</th>
-                  <th>Level</th>
                   <th>Scholarship</th>
-                  <th>Provider</th>
                   <th>Application Date</th>
                   <th>Status</th>
-                  {showActions && <th style={{ width: "110px" }}>Actions</th>}
-                  {showDocuments && <th style={{ width: "90px" }}>Details</th>}
+                  {showDocuments && <th>Documents</th>}
+                  {showActions && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {filteredApplications.map((app) => {
-                  const displayData = getApplicationDisplayData(app);
-                  return (
-                    <tr key={displayData.Id}>
-                      <td>{displayData.StudentName}</td>
-                      <td>{displayData.SchoolOrUniversityName}</td>
-                      <td>{displayData.StudyField}</td>
-                      <td>{displayData.StudentLevelName}</td>
-                      <td>{displayData.ScholarshipTitle}</td>
-                      <td>{displayData.ProviderName}</td>
-                      <td>{formatDate(displayData.ApplicationDate)}</td>
-                      <td>{getStatusBadge(displayData.ApplicationStatusId)}</td>
-
-                      {showActions && (
-                        <td>
-                          <div className="btn-group" role="group">
-                            <button
-                              className="btn btn-sm btn-success d-flex align-items-center justify-content-center"
-                              onClick={() => onStatusChange(app.Id, 2)}
-                              disabled={app.ApplicationStatusId === 2}
-                              aria-label="Approve application"
-                              title="Approve"
-                            >
-                              <FiCheck size={18} />
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
-                              onClick={() => onStatusChange(app.Id, 3)}
-                              disabled={app.ApplicationStatusId === 3}
-                              aria-label="Reject application"
-                              title="Reject"
-                            >
-                              <FiX size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      )}
-
+                {filteredApplications.map((app) => (
+                  <tr key={app.id}>
+                    <td>{app.studentName || "N/A"}</td>
+                    <td>{app.scholarshipTitle || "N/A"}</td>
+                    <td>{formatDate(app.applicationDate)}</td>
+                    <td>{getStatusBadge(app.applicationStatusId)}</td>
                     {showDocuments && (
-  <td>
-    <button
-      className="btn btn-sm btn-primary"
-      onClick={() =>
-        alert(
-          `Documents:\n${displayData.applicationDocument
-            ?.map((d, i) => `${i + 1}. ${d.fileName} (${d.filePath})`)
-            .join("\n") || "No documents"}`
-        )
-      }
-      title="View Documents"
-    >
-      <FiEye size={18} />
-    </button>
-  </td>
-)}
-
-                    </tr>
-                  );
-                })}
+                      <td>
+                        {app.ApplicationDocument?.length > 0 ? (
+                          <div className="dropdown">
+                            <button
+                              className="btn btn-sm btn-outline-primary dropdown-toggle"
+                              type="button"
+                              data-bs-toggle="dropdown"
+                            >
+                              <FiFileText /> View ({app.ApplicationDocument.length})
+                            </button>
+                            <ul className="dropdown-menu">
+                              {app.ApplicationDocument.map((doc, index) => (
+                                <li key={index}>
+                                  <a
+                                    className="dropdown-item"
+                                    href={`https://localhost:7255${doc.filePath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {doc.fileName}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          "No documents"
+                        )}
+                      </td>
+                    )}
+                    {showActions && (
+                      <td>
+                        <div className="d-flex gap-2">
+                          {app.applicationStatusId !== 3 && (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => onStatusChange(app.id, 3)}
+                              disabled={app.applicationStatusId === 3}
+                            >
+                              <FiCheckCircle /> Approve
+                            </button>
+                          )}
+                          {app.applicationStatusId !== 2 && (
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => onStatusChange(app.id, 2)}
+                              disabled={app.applicationStatusId === 2}
+                            >
+                              <FiXCircle /> Decline
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -227,26 +152,19 @@ ApplicationsSection.propTypes = {
     PropTypes.shape({
       id: PropTypes.number,
       studentName: PropTypes.string,
-      schoolOrUniversityName: PropTypes.string,
-      studyField: PropTypes.string,
-      studentLevelName: PropTypes.string,
       scholarshipTitle: PropTypes.string,
-      providerName: PropTypes.string,
       applicationDate: PropTypes.string,
       applicationStatusId: PropTypes.number,
-      applicationDocument: PropTypes.array,
-      ScholarshipId: PropTypes.number,
-      ApplicationStatusId: PropTypes.number,
-      providerId: PropTypes.number, 
+      ApplicationDocument: PropTypes.array,
     })
   ),
-
   scholarships: PropTypes.array,
-  selectedScholarshipId: PropTypes.number,
+  selectedScholarshipId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   setSelectedScholarshipId: PropTypes.func,
   onStatusChange: PropTypes.func,
   showActions: PropTypes.bool,
   showDocuments: PropTypes.bool,
+  showStatusOnly: PropTypes.bool,
 };
 
 export default ApplicationsSection;

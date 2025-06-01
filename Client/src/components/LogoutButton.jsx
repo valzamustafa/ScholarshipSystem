@@ -1,19 +1,26 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 function LogoutButton() {
-  const navigate = useNavigate();
+    const { logout } = useAuth();
+    const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login'); 
-  };
+    const handleLogout = async () => {
+        const confirmLogout = window.confirm('Are you sure you want to log out?');
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
 
-  return (
-    <button className="btn btn-danger" onClick={handleLogout}>
-      Logout
-    </button>
-  );
+    return (
+        <button className="dropdown-item" onClick={handleLogout}>
+            Logout
+        </button>
+    );
 }
 
 export default LogoutButton;

@@ -1,27 +1,34 @@
 import { useAuth } from "../context/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import Spinner from "react-bootstrap/Spinner";
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
-  if (loading) return <div className="text-center my-5">Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+if (loading) {
+  console.log('ProtectedRoute: Loading...');
+  return <Spinner animation="border" variant="primary" />;
+}
 
-
-  console.log('Current user:', user);
-  console.log('Required roles:', roles);
-  console.log('User approved status:', user.approved);
+if (!user) {
+  console.log('ProtectedRoute: No user, redirecting to login');
+  return <Navigate to="/login" state={{ from: location }} replace />;
+}
 
   if (user.role === "provider" && !user.approved) {
     return <Navigate to="/pending-approval" replace />;
   }
+if (user.role === "provider" && location.pathname === "/") {
+  return <Navigate to="/provider" replace />;
+}
 
-  const normalizedUserRole = user.role?.toLowerCase();
-  const hasAccess = roles?.some(role => 
-    role.toLowerCase() === normalizedUserRole
+
+  const hasAccess = !roles || roles.some(role => 
+    role.toLowerCase() === user.role.toLowerCase()
   );
 
-  if (roles && !hasAccess) {
+  if (!hasAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
 

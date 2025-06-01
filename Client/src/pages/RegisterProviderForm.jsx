@@ -21,10 +21,11 @@ export default function RegisterProviderForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
 
+  // Validations
   if (formData.password.length < 6) {
     setError('Password must be at least 6 characters');
     return;
@@ -37,42 +38,39 @@ export default function RegisterProviderForm() {
 
   try {
     setLoading(true);
+    
+    const payload = {
+      FullName: formData.fullName,
+      Email: formData.email,
+      PhoneNumber: formData.phoneNumber || null,
+      Password: formData.password,
+      ConfirmPassword: formData.confirmPassword,
+      OrganizationName: formData.organizationName,
+      Description: formData.description
+    };
+
+    console.log('Sending payload:', payload); 
 
     const response = await fetch('https://localhost:7255/api/auth/register/provider', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        FullName: formData.fullName,
-        Email: formData.email,
-        PhoneNumber: formData.phoneNumber,
-        Password: formData.password,
-        OrganizationName: formData.organizationName,
-        Description: formData.description
-      })
+      body: JSON.stringify(payload)
     });
 
-    const contentType = response.headers.get('content-type');
-    const data = contentType && contentType.includes('application/json')
-      ? await response.json()
-      : { message: await response.text() };
-
     if (!response.ok) {
-      throw new Error(data.message || 'Registration failed');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Registration failed');
     }
 
-   
-
-
-    alert('Your request has been sent. Please wait for admin approval.');
-
-   
+    const data = await response.json();
+    alert(data.message || 'Your request has been sent. Please wait for admin approval.');
     navigate('/login');
-
+    
   } catch (err) {
     setError(err.message || 'An error occurred during registration');
+    console.error('Registration error:', err);
   } finally {
     setLoading(false);
   }

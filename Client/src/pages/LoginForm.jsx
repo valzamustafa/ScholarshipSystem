@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
+
+const originalFetch = window.fetch;
 
 export default function LoginForm() {
   const [formData, setFormData] = useState({
@@ -12,6 +15,97 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+ const refreshToken = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const refreshToken = localStorage.getItem('refreshToken');
+    
+    if (!token || !refreshToken) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      return null;
+    }
+
+    const response = await originalFetch('https://localhost:7255/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, refreshToken })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to refresh token');
+    }
+
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    
+
+    const { login } = useAuth();
+   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    login(user, data.token, data.refreshToken);
+    
+    return data.token;
+  } catch (err) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    return null;
+  }
+};
+  const handleLogout = async () => {
+  try {
+    const { logout } = useAuth();
+    await logout();
+    navigate('/login');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
+const { login } = useAuth(); 
+
+
+ useEffect(() => {
+  const fetchInterceptor = async (url, options = {}) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      options.headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+      };
+    }
+
+     let response = await originalFetch(url, options);
+    
+    if (response.status === 401) {
+      const newToken = await refreshToken();
+      if (newToken) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${newToken}`
+        };
+        response = await originalFetch(url, options);
+      } else {
+        // If refresh fails, force logout
+        const { logout } = useAuth();
+        await logout();
+        navigate('/login');
+        return response;
+      }
+    }
+    
+    return response;
+  };
+
+  window.fetch = fetchInterceptor;
+
+  return () => {
+    window.fetch = originalFetch;
+  };
+}, [navigate]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -21,7 +115,7 @@ export default function LoginForm() {
     setFormData(prev => ({ ...prev, role }));
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
 
@@ -48,9 +142,7 @@ export default function LoginForm() {
       throw new Error(data.message || `Login failed with status: ${response.status}`);
     }
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-
+   
     const roleRaw = data.user?.Role || data.user?.role || null;
     const approved = data.user?.approved ?? true;
 
@@ -67,9 +159,20 @@ export default function LoginForm() {
       throw new Error('User role is not a string or valid object');
     }
 
+
+    login(
+      {
+        ...data.user,
+        role: role.toLowerCase(), 
+        approved
+      },
+      data.token,
+      data.refreshToken
+    );
+
     localStorage.setItem("user", JSON.stringify({
       ...data.user,
-      role,
+      role: role.toLowerCase(),
       approved
     }));
 
@@ -79,23 +182,22 @@ export default function LoginForm() {
       navigate('/admin');
     } else if (role === 'Provider') {
       navigate(approved ? '/provider' : '/pending-approval');
- } else if (role === 'Student') {
-  let studentId =
-    data.user?.id ||
-    data.user?.studentId ||
-    data.user?.student?.id ||
-    data.user?.StudentId ||
-    data.user?.Student?.id;
+    } else if (role === 'Student') {
+      let studentId =
+        data.user?.id ||
+        data.user?.studentId ||
+        data.user?.student?.id ||
+        data.user?.StudentId ||
+        data.user?.Student?.id;
 
-  if (studentId) {
-    localStorage.setItem("studentId", studentId);
-  } else {
-    console.warn("Nuk u gjet studentId në objektin e userit:", data.user);
-  }
+      if (studentId) {
+        localStorage.setItem("studentId", studentId);
+      } else {
+        console.warn("Nuk u gjet studentId në objektin e userit:", data.user);
+      }
 
-  navigate('/home');
-}
- else {
+      navigate('/home');
+    } else {
       throw new Error('Unknown user role');
     }
 

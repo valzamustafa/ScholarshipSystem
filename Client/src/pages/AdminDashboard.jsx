@@ -9,8 +9,10 @@ import {
   FiFileText,
   FiMail,
   FiMessageSquare,
-  FiSettings
+  FiSettings,
+  FiInfo 
 } from "react-icons/fi";
+
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -21,6 +23,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import AboutUsSection from "../components/AboutUsSection.jsx"
+import AboutUsManagement from "../components/AboutUsManagement.jsx";
 import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
 import StudentManager from "../components/StudentManager";
 import ProviderManager from "../components/ProviderManager.jsx";
@@ -226,7 +230,6 @@ function AdminDashboard() {
       setLoadingApplications(false);
     }
   }
-
   async function fetchStats() {
     try {
       const res = await fetch("https://localhost:7255/api/admin/statistics");
@@ -541,6 +544,14 @@ function AdminDashboard() {
               >
                 <FiMail className="me-2" /> Contact Messages
               </button>
+               <li className="nav-item mb-3">
+  <button 
+    className={`nav-link text-white btn btn-link text-start ${activePage === "aboutUs" ? "fw-bold" : ""}`} 
+    onClick={() => setActivePage("aboutUs")}
+  >
+    <FiInfo className="me-2" /> About Us Management
+  </button>
+</li>
             </li>
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "reports" ? "fw-bold" : ""}`} onClick={() => setActivePage("reports")}> <FiCalendar className="me-2" /> Reports </button>
@@ -635,6 +646,7 @@ function AdminDashboard() {
               onToggleFeatured={handleToggleFeatured}
             />
           )}
+          {activePage === "aboutUs" && <AboutUsManagement />}
           {activePage === "applications" && (
             <div>
               <ul className="nav nav-tabs mb-4">
@@ -656,52 +668,51 @@ function AdminDashboard() {
                 </li>
               </ul>
 
-              {selectedApplicationsTab === 'admin' ? (
-                <ApplicationsSection
-                  applications={applications.filter(app => {
-                    const s = scholarships.find(s => s.id === app.scholarshipId);
-                    return !s?.providerId; 
-                  })}
-                  scholarships={scholarships.filter(s => !s.providerId)}
-                  selectedScholarshipId={selectedScholarshipId}
-                  setSelectedScholarshipId={setSelectedScholarshipId}
-                  onStatusChange={async (applicationId, newStatusId) => {
-                    try {
-                      const token = localStorage.getItem("token");
-                      const res = await fetch(
-                        `https://localhost:7255/api/application/${applicationId}/status`,
-                        {
-                          method: "PUT",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                          },
-                          body: JSON.stringify({ statusId: newStatusId }),
-                        }
-                      );
-                      if (!res.ok) throw new Error("Failed to update status");
-                      fetchApplications();
-                    } catch (error) {
-                      console.error("Error updating status:", error);
-                      alert(`Error: ${error.message}`);
-                    }
-                  }}
-                  showActions={true}
-                  showDocuments={true}
-                />
-              ) : (
-                <ApplicationsSection
-                  applications={applications.filter(app => {
-                    const s = scholarships.find(s => s.Id === app.ScholarshipId);
-                    return s && s.ProviderId !== null;
-                  })}
-                  scholarships={scholarships.filter(s => s.ProviderId !== null)}
-                  selectedScholarshipId={selectedScholarshipId}
-                  setSelectedScholarshipId={setSelectedScholarshipId}
-                  showActions={false}
-                  showDocuments={false}
-                />
-              )}
+            {selectedApplicationsTab === 'admin' ? (
+ <ApplicationsSection
+  applications={applications.filter(app => 
+    selectedApplicationsTab === 'admin' ? app.providerId === null : app.providerId !== null
+  )}
+  scholarships={scholarships.filter(s => 
+    selectedApplicationsTab === 'admin' ? s.providerId === null : s.providerId !== null
+  )}
+  selectedScholarshipId={selectedScholarshipId}
+  setSelectedScholarshipId={setSelectedScholarshipId}
+  onStatusChange={async (applicationId, newStatusId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `https://localhost:7255/api/application/${applicationId}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ statusId: newStatusId }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to update status");
+      fetchApplications();
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert(`Error: ${error.message}`);
+    }
+  }}
+  showActions={selectedApplicationsTab === 'admin'}
+  showDocuments={selectedApplicationsTab === 'admin'}
+/>
+) : (
+  <ApplicationsSection
+    applications={applications.filter(app => app.providerId !== null)}
+    scholarships={scholarships.filter(s => s.providerId !== null)}
+    selectedScholarshipId={selectedScholarshipId}
+    setSelectedScholarshipId={setSelectedScholarshipId}
+    showActions={false}
+    showDocuments={false}
+    showStatusOnly={true} 
+  />
+)}
             </div>
           )}
 

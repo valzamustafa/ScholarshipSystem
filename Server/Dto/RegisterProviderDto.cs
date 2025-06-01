@@ -8,6 +8,9 @@ public class RegisterProviderDto
     public string Email { get; set; }=string.Empty;
     
     public string? PhoneNumber { get; set; }
+      
+    public string? Description { get; set; }
+         public string ConfirmPassword { get; set; } = string.Empty;
     
     [Required]
     [MinLength(9)]

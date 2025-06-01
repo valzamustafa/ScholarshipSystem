@@ -100,6 +100,8 @@ builder.Services.AddScoped(typeof(IPasswordVerificationService<>), typeof(Passwo
                     Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
             };
         });
+       builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
+        builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
   builder.Services.AddScoped<IContactService, ContactService>();
    builder.Services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
 builder.Services.AddScoped<IAboutUsService, AboutUsService>();
