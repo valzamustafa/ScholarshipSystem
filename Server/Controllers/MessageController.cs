@@ -6,6 +6,7 @@ using Server.Dtos;
 using Server.Entities;
 using System.Collections.Generic;
 using System.Linq;
+using Server.Services;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
@@ -16,10 +17,11 @@ using Server.DTOs;
 public class MessageController : ControllerBase
 {
     private readonly AppDbContext _context;
-
-    public MessageController(AppDbContext context)
+ private readonly INotificationService _notificationService;
+    public MessageController(AppDbContext context, INotificationService notificationService)
     {
         _context = context;
+          _notificationService = notificationService;
     }
 
   [HttpPost]
@@ -46,6 +48,13 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
 
     _context.Message.Add(message);
     await _context.SaveChangesAsync();
+        await _notificationService.CreateNotification(
+           messageDto.RecipientId,
+           $"New message from {User.FindFirst(ClaimTypes.Name)?.Value}",
+           "NewMessage",
+           "Message",
+           message.Id
+        );
 
     return Ok(new { message.Id });
 }

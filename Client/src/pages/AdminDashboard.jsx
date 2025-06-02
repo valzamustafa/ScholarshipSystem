@@ -33,11 +33,14 @@ import NotificationsPanel from "../components/NotificationsPanel.jsx";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function AdminDashboard() {
-  const [adminNotifications, setAdminNotifications] = useState([]);
-const [adminUnreadCount, setAdminUnreadCount] = useState(0);
+ 
 
   const [activePage, setActivePage] = useState("dashboard");
   const [requests, setRequests] = useState([]);
+  const [adminNotifications, setAdminNotifications] = useState([]);
+const [adminUnreadCount, setAdminUnreadCount] = useState(0);
+
+
   const [stats, setStats] = useState(null);
   const [students, setStudents] = useState([]);
   const [contactMessage, setContactMessage] = useState([]);
@@ -75,7 +78,7 @@ const [adminUnreadCount, setAdminUnreadCount] = useState(0);
   const [admins, setAdmins] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-useEffect(() => {
+ useEffect(() => {
   const loadAdminNotifications = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -97,17 +100,6 @@ useEffect(() => {
 
 
 
-const fetchAdminNotifications = async () => {
-    try {
-        const data = await fetchAdminNotifications();
-        setAdminNotifications(Array.isArray(data) ? data : []);
-        setAdminUnreadCount(data.filter(n => !n.isRead).length);
-    } catch (error) {
-        console.error("Error fetching admin notifications:", error);
-        setAdminNotifications([]);
-        setAdminUnreadCount(0);
-    }
-};
   useEffect(() => {
     if (activePage === "dashboard") {
       fetchRequests();
@@ -623,7 +615,14 @@ async function fetchStats() {
             <>
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <h3>Admin Dashboard</h3>
-                <div><FiBell className="me-2" /> {new Date().toDateString()}</div>
+                <div>
+  <FiBell className="me-2" />
+  {new Date().toDateString()}
+  {adminUnreadCount > 0 && (
+    <span className="badge bg-danger ms-2">{adminUnreadCount}</span>
+  )}
+</div>
+
               </div>
               {stats && (
                 <div className="row mb-4">
@@ -704,6 +703,19 @@ async function fetchStats() {
     </div>
   ))}
 </div>
+{adminNotifications.length > 0 && (
+  <div className="card mt-3">
+    <div className="card-header">Recent Notifications</div>
+    <ul className="list-group list-group-flush">
+      {adminNotifications.slice(0, 5).map((n, i) => (
+        <li key={i} className="list-group-item d-flex justify-content-between">
+          <span>{n.message}</span>
+          <small className="text-muted">{new Date(n.timestamp).toLocaleString()}</small>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
 
 
 

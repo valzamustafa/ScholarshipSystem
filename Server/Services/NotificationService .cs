@@ -35,13 +35,13 @@ public class NotificationService : INotificationService
         await _context.SaveChangesAsync();
     }
 
-    public async Task CreateApplicationSubmittedNotification(int studentId, int applicationId)
-    {
-        await CreateNotification(studentId,
-            "Your scholarship application was submitted successfully",
-            NotificationType.ApplicationSubmitted.ToString(),
-            "Application", applicationId);
-    }
+public async Task CreateApplicationSubmittedNotification(int studentId, int applicationId)
+{
+    await CreateNotification(studentId,
+        "Your scholarship application was submitted successfully",
+        "ApplicationSubmitted",
+        "Application", applicationId);
+}
 
     public async Task CreateApplicationAcceptedNotification(int studentId, int applicationId)
     {
@@ -83,19 +83,21 @@ public class NotificationService : INotificationService
             "Scholarship", scholarshipId);
     }
 
-    public async Task CreateNewApplicationNotification(int providerId, int applicationId)
-    {
-        var application = await _context.Application
-            .Include(a => a.Student)
-            .FirstOrDefaultAsync(a => a.Id == applicationId);
+   public async Task CreateNewApplicationNotification(int userId, int applicationId)
+{
+    var application = await _context.Application
+        .Include(a => a.Student)
+        .Include(a => a.Scholarship)
+        .FirstOrDefaultAsync(a => a.Id == applicationId);
 
-        string studentName = application?.Student?.FullName ?? "A student";
+    string studentName = application?.Student?.FullName ?? "A student";
+    string scholarshipName = application?.Scholarship?.Title ?? "a scholarship";
 
-        await CreateNotification(providerId,
-            $"New application received from {studentName}",
-            NotificationType.NewApplication.ToString(),
-            "Application", applicationId);
-    }
+    await CreateNotification(userId,
+        $"New application received from {studentName} for {scholarshipName}",
+        "NewApplication",
+        "Application", applicationId);
+}
 
     public async Task CreateApplicationDecisionConfirmedNotification(int providerId, int applicationId)
     {

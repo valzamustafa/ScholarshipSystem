@@ -1,109 +1,130 @@
 import React, { useEffect, useState } from 'react';
-import { Card, ListGroup, Badge, Button } from 'react-bootstrap';
-import { FiBell, FiCheck } from 'react-icons/fi';
+import { FiBell, FiCheck, FiMessageSquare, FiMail } from 'react-icons/fi';
 
-import { fetchUserNotifications,  markAsRead,markAllAsRead } from '../services/notificationService';
-function NotificationsPanel() {
-    const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
+const NotificationsPanel = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-    useEffect(() => {
-        const loadNotifications = async () => {
-            try {
-                const data = await fetchUserNotifications();
-                setNotifications(Array.isArray(data) ? data : []);
-                setUnreadCount(data.filter(n => !n.isRead).length);
-            } catch (error) {
-                console.error("Error loading notifications:", error);
-                setNotifications([]);
-                setUnreadCount(0);
-            }
-        };
-      
-
-
-        loadNotifications();
-        
-        
-        const interval = setInterval(loadNotifications, 30000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const handleMarkAsRead = async (id) => {
-        try {
-            await markAsRead(id);
-            setNotifications(notifications.map(n => 
-                n.id === id ? { ...n, isRead: true } : n
-            ));
-            setUnreadCount(prev => prev - 1);
-        } catch (error) {
-            console.error("Error marking notification as read:", error);
-        }
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("https://localhost:7255/api/notification/for-user", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.isRead).length);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
     };
 
-    const handleMarkAllAsRead = async () => {
-        try {
-            await markAllAsRead();
-            setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-            setUnreadCount(0);
-        } catch (error) {
-            console.error("Error marking all as read:", error);
-        }
-    };
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Refresh every 30 seconds
 
+    return () => clearInterval(interval);
+  }, []);
 
-    return (
-        <Card className="shadow-sm">
-            <Card.Header className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                    <FiBell className="me-2" />
-                    Notifications
-                </h5>
-                <div>
-                    <Badge pill bg="primary">{unreadCount} unread</Badge>
-                    <Button variant="link" size="sm" onClick={markAllAsRead}>
-                        Mark all as read
-                    </Button>
-                </div>
-            </Card.Header>
-            <ListGroup variant="flush">
-                {notifications.length === 0 ? (
-                    <ListGroup.Item className="text-center py-4 text-muted">
-                        No notifications yet
-                    </ListGroup.Item>
-                ) : (
-                    notifications.map(notification => (
-                        <ListGroup.Item 
-                            key={notification.id}
-                            className={`${!notification.isRead ? 'fw-bold' : ''}`}
+  const markAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`https://localhost:7255/api/notification/${id}/read`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(notifications.map(n => 
+        n.id === id ? { ...n, isRead: true } : n
+      ));
+      setUnreadCount(unreadCount - 1);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch("https://localhost:7255/api/notification/mark-all-read", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
+  };
+
+     return (
+    <div className="dropdown">
+      <button 
+        className="btn btn-light dropdown-toggle position-relative" 
+        type="button" 
+        data-bs-toggle="dropdown"
+      >
+        <FiBell size={20} />
+        {unreadCount > 0 && (
+          <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+      <div className="dropdown-menu dropdown-menu-end p-0" style={{ width: '300px' }}>
+        <div className="card">
+          <div className="card-header d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">Notifications</h6>
+            <button 
+              className="btn btn-sm btn-link text-muted"
+              onClick={markAllAsRead}
+            >
+              Mark all as read
+            </button>
+          </div>
+          <div className="card-body p-0">
+            {notifications.length === 0 ? (
+              <div className="p-3 text-center text-muted">No notifications</div>
+            ) : (
+              <ul className="list-group list-group-flush">
+                {notifications.map(notification => (
+                  <li 
+                    key={notification.id} 
+                    className={`list-group-item ${!notification.isRead ? 'bg-light' : ''}`}
+                  >
+                    <div className="d-flex">
+                      <div className="me-2">
+                        {notification.notificationType === 'NewMessage' ? (
+                          <FiMessageSquare className="text-primary" />
+                        ) : notification.notificationType === 'NewApplication' ? (
+                          <FiMail className="text-success" />
+                        ) : (
+                          <FiBell className="text-warning" />
+                        )}
+                      </div>
+                      <div className="flex-grow-1">
+                        <p className="mb-1">{notification.message}</p>
+                        <small className="text-muted">
+                          {new Date(notification.dateSent).toLocaleString()}
+                        </small>
+                      </div>
+                      {!notification.isRead && (
+                        <button 
+                          className="btn btn-sm btn-link"
+                          onClick={() => markAsRead(notification.id)}
                         >
-                            <div className="d-flex justify-content-between">
-                                <div>
-                                    <span className="me-2">{notification.icon}</span>
-                                    {notification.message}
-                                </div>
-                                <div>
-                                    {!notification.isRead && (
-                                        <Button 
-                                            variant="link" 
-                                            size="sm" 
-                                            className="text-success p-0 me-2"
-                                            onClick={() => markAsRead(notification.id)}
-                                        >
-                                            <FiCheck />
-                                        </Button>
-                                    )}
-                                    <small className="text-muted">
-                                        {new Date(notification.dateSent).toLocaleTimeString()}
-                                    </small>
-                                </div>
-                            </div>
-                        </ListGroup.Item>
-                    ))
-                )}
-            </ListGroup>
-        </Card>
-    );
-}
+                          <FiCheck />
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default NotificationsPanel;

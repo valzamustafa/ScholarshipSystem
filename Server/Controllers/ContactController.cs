@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Server.Services;
 namespace Server.Controllers
 {
 
@@ -12,20 +13,36 @@ namespace Server.Controllers
     [Route("api/[controller]")]
     public class ContactController : ControllerBase
     {
-        private readonly IContactService _contactService;
-
-        public ContactController(IContactService contactService)
+         private readonly AppDbContext _context;
+                private readonly IContactService _contactService;
+ private readonly INotificationService _notificationService;
+        public ContactController(    AppDbContext context,IContactService contactService, INotificationService notificationService)
         {
+              _context = context;
             _contactService = contactService;
+             _notificationService = notificationService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateMessage([FromBody] ContactMessageDto contactMessageDto)
-        {
-            var createdMessage = await _contactService.CreateMessageAsync(contactMessageDto);
-            return CreatedAtAction(nameof(GetMessageById), new { id = createdMessage.Id }, createdMessage);
-        }
+public async Task<IActionResult> CreateMessage([FromBody] ContactMessageDto contactMessageDto)
+{
+    var createdMessage = await _contactService.CreateMessageAsync(contactMessageDto);
+    
+    
+    var admins = await _context.Admin.ToListAsync();
+    foreach (var admin in admins)
+    {
+        await _notificationService.CreateNotification(
+            admin.Id,
+            $"New contact message from {contactMessageDto.Name}",
+            "NewContactMessage",
+            "ContactMessage",
+            createdMessage.Id
+        );
+    }
 
+    return CreatedAtAction(nameof(GetMessageById), new { id = createdMessage.Id }, createdMessage);
+}
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllMessages()

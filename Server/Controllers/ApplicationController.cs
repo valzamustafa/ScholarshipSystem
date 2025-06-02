@@ -137,29 +137,57 @@ public async Task<ActionResult<Application>> PostApplication([FromForm] CreateAp
         Directory.CreateDirectory(uploadsPath);
     }
 
-     if (dto.CvFile != null)
-            {
-                var cvDoc = await SaveDocument(dto.CvFile, "CV", application.Id);
-                application.ApplicationDocument.Add(cvDoc);
-            }
+    if (dto.CvFile != null)
+    {
+        var cvDoc = await SaveDocument(dto.CvFile, "CV", application.Id);
+        application.ApplicationDocument.Add(cvDoc);
+    }
 
-            if (dto.MotivationLetterFile != null)
-            {
-                var mlDoc = await SaveDocument(dto.MotivationLetterFile, "MotivationLetter", application.Id);
-                application.ApplicationDocument.Add(mlDoc);
-            }
+    if (dto.MotivationLetterFile != null)
+    {
+        var mlDoc = await SaveDocument(dto.MotivationLetterFile, "MotivationLetter", application.Id);
+        application.ApplicationDocument.Add(mlDoc);
+    }
 
-            if (dto.PortfolioFile != null)
-            {
-                var portfolioDoc = await SaveDocument(dto.PortfolioFile, "Portfolio", application.Id);
-                application.ApplicationDocument.Add(portfolioDoc);
-            }
+    if (dto.PortfolioFile != null)
+    {
+        var portfolioDoc = await SaveDocument(dto.PortfolioFile, "Portfolio", application.Id);
+        application.ApplicationDocument.Add(portfolioDoc);
+    }
 
-            await _context.SaveChangesAsync();
-await _notificationService.CreateApplicationSubmittedNotification(dto.StudentId, application.Id);
+    _context.Application.Add(application);
+    await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
+    await _notificationService.CreateApplicationSubmittedNotification(dto.StudentId, application.Id);
+
+    var scholarship = await _context.Scholarship
+        .Include(s => s.Provider)
+        .FirstOrDefaultAsync(s => s.Id == dto.ScholarshipId);
+
+    if (scholarship != null)
+    {
+        if (scholarship.ProviderId.HasValue)
+        {
+            await _notificationService.CreateNewApplicationNotification(
+                scholarship.Provider.Id,
+                application.Id
+            );
         }
+
+      
+        var admins = await _context.Admin.ToListAsync();
+
+        foreach (var admin in admins)
+        {
+            await _notificationService.CreateNewApplicationNotification(
+                admin.Id, 
+                application.Id
+            );
+        }
+    }
+
+    return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
+}
 
  private async Task<ApplicationDocument> SaveDocument(IFormFile file, string documentType, int applicationId)
         {
