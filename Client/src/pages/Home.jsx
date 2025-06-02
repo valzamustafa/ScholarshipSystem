@@ -259,7 +259,7 @@ const fetchFeedbacks = async () => {
                 <img
                   src={fotorrethnesh}
                   className="img-fluid w-100"
-                  alt="Rreth nesh"
+                  alt="Rreth nesh"loading="lazy"
                 />
               </div>
             </div>

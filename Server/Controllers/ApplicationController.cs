@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Entities;
 using Microsoft.AspNetCore.Hosting;
+using Server.Services;
 namespace Server.Controllers
 {
     [ApiController]
@@ -10,12 +11,14 @@ namespace Server.Controllers
     public class ApplicationController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly INotificationService _notificationService;
  private readonly IWebHostEnvironment _env; 
-        public ApplicationController(AppDbContext context , IWebHostEnvironment env)
-        {
-            _context = context;
-            _env = env;
-        }
+       public ApplicationController(AppDbContext context, IWebHostEnvironment env, INotificationService notificationService)
+{
+    _context = context;
+    _env = env;
+    _notificationService = notificationService;
+}
        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Application>>> GetApplications()
@@ -153,6 +156,7 @@ public async Task<ActionResult<Application>> PostApplication([FromForm] CreateAp
             }
 
             await _context.SaveChangesAsync();
+await _notificationService.CreateApplicationSubmittedNotification(dto.StudentId, application.Id);
 
             return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
         }
@@ -178,6 +182,7 @@ public async Task<ActionResult<Application>> PostApplication([FromForm] CreateAp
                 ApplicationId = applicationId
             };
         }
+
 
 [HttpGet("download/{documentId}")]
 public async Task<IActionResult> DownloadDocument(int documentId)
@@ -253,24 +258,32 @@ public async Task<IActionResult> DownloadDocument(int documentId)
 [HttpPut("{id}/status")]
 public async Task<IActionResult> UpdateApplicationStatus(int id, [FromBody] UpdateStatusDto statusDto)
 {
-    var application = await _context.Application.FindAsync(id);
-    if (application == null)
-    {
-        return NotFound();
-    }
-
-    var statusExists = await _context.ApplicationStatus.AnyAsync(s => s.Id == statusDto.StatusId);
-    if (!statusExists)
-    {
-        return BadRequest("Invalid status ID");
-    }
+    var application = await _context.Application
+        .Include(a => a.Scholarship)
+        .FirstOrDefaultAsync(a => a.Id == id);
+    
+    if (application == null) return NotFound();
 
     application.ApplicationStatusId = statusDto.StatusId;
     await _context.SaveChangesAsync();
 
+    
+    switch (statusDto.StatusId)
+    {
+        case 2: 
+            await _notificationService.CreateApplicationAcceptedNotification(application.StudentId, id);
+          
+            break;
+        case 3: 
+            await _notificationService.CreateApplicationRejectedNotification(application.StudentId, id);
+            break;
+        default:
+            await _notificationService.CreateApplicationStatusUpdatedNotification(application.StudentId, id);
+            break;
+    }
+
     return NoContent();
 }
-
 public class UpdateStatusDto
 {
     public int StatusId { get; set; }

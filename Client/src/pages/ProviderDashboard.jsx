@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { 
   FiUser, FiBriefcase, FiBookOpen, FiMail, FiBell, FiUsers, FiAward 
 } from "react-icons/fi";
+import NotificationsDropdown from "../components/NotificationsDropdown.jsx";
+import NotificationsPanel from "../components/NotificationsPanel.jsx";
 import { Spinner, Alert } from "react-bootstrap";
 import ScholarshipsSection from "../components/ScholarshipsSection";
 import ApplicationsSection from "../components/ApplicationsSection";
@@ -23,7 +25,8 @@ function ProviderDashboard() {
   const [_error, setError] = useState(null);
   const [messages, setMessages] = useState([]);
   const [providerUserId, setProviderUserId] = useState(null);
-
+const [providerNotifications, setProviderNotifications] = useState([]);
+const [providerUnreadCount, setProviderUnreadCount] = useState(0);
 const [loadingMessages, setLoadingMessages] = useState(false);
 const [messageError, setMessageError] = useState(null);
 const [recentActivity, setRecentActivity] = useState([]);
@@ -33,6 +36,20 @@ const [recentActivity, setRecentActivity] = useState([]);
 }
 
 }, [providerUserId, activeTab]);
+useEffect(() => {
+    const fetchProviderNotifications = async () => {
+        if (currentProvider?.userId) { 
+            try {
+                const data = await fetchUserNotifications(currentProvider.userId);
+                setProviderNotifications(data);
+                setProviderUnreadCount(data.filter(n => !n.isRead).length);
+            } catch (error) {
+                console.error("Error fetching provider notifications:", error);
+            }
+        }
+    };
+    fetchProviderNotifications();
+}, [currentProvider]);
 
 
   useEffect(() => {
@@ -67,13 +84,26 @@ if (activeTab === 'messages') {
       }
     };
     fetchInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, []);
 const [stats, setStats] = useState({
     scholarshipCount: 0,
     awardedCount: 0,
     recentApplications: []
 });
+const fetchNotifications = async () => {
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`https://localhost:7255/api/notification/for-user/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.isRead).length);
+    } catch (error) {
+        console.error("Error fetching notifications:", error);
+    }
+};
  const fetchProviderStats = async (providerId) => {
     try {
         const token = localStorage.getItem("token");
@@ -538,6 +568,7 @@ const markMessageAsRead = async (messageId) => {
           </div>
           <div className="row mb-4">
             <div className="col-md-4 mb-3">
+               <NotificationsPanel />
               <div className="card border-start-primary h-100">
                 <div className="card-body">
                   <h6 className="text-muted">Active Scholarships</h6>

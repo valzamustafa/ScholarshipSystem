@@ -28,10 +28,14 @@ import ProviderManager from "../components/ProviderManager.jsx";
 import ScholarshipsManagement from "../components/ScholarshipsManagement";
 import ContactMessages from "../components/ContactMessages";
 import FeedbackComponent from "../components/FeedbackComponent";
-
+import NotificationsDropdown from "../components/NotificationsDropdown.jsx";
+import NotificationsPanel from "../components/NotificationsPanel.jsx";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function AdminDashboard() {
+  const [adminNotifications, setAdminNotifications] = useState([]);
+const [adminUnreadCount, setAdminUnreadCount] = useState(0);
+
   const [activePage, setActivePage] = useState("dashboard");
   const [requests, setRequests] = useState([]);
   const [stats, setStats] = useState(null);
@@ -71,7 +75,39 @@ function AdminDashboard() {
   const [admins, setAdmins] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+useEffect(() => {
+  const loadAdminNotifications = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/notification/admin", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
+      if (!res.ok) throw new Error("Failed to fetch admin notifications");
+      const data = await res.json();
+      setAdminNotifications(Array.isArray(data) ? data : []);
+      setAdminUnreadCount(data.filter(n => !n.isRead).length);
+    } catch (err) {
+      console.error("Error fetching admin notifications:", err);
+    }
+  };
+
+  loadAdminNotifications();
+}, []);
+
+
+
+const fetchAdminNotifications = async () => {
+    try {
+        const data = await fetchAdminNotifications();
+        setAdminNotifications(Array.isArray(data) ? data : []);
+        setAdminUnreadCount(data.filter(n => !n.isRead).length);
+    } catch (error) {
+        console.error("Error fetching admin notifications:", error);
+        setAdminNotifications([]);
+        setAdminUnreadCount(0);
+    }
+};
   useEffect(() => {
     if (activePage === "dashboard") {
       fetchRequests();
@@ -595,8 +631,10 @@ async function fetchStats() {
                     <div className="col-md-3" key={i}>
                       <div className="card"><div className="card-body"><h6>{label}</h6><h3>{Object.values(stats)[i]}</h3></div></div>
                     </div>
+                    
                   ))}
                 </div>
+                
               )}
          
               <div className="card mb-4">
@@ -671,6 +709,7 @@ async function fetchStats() {
 
 
                 <div className="col-md-4">
+                   <NotificationsPanel />
                  <div className="card h-100 shadow-sm">
   <div className="card-header bg-light d-flex align-items-center">
     <FiClock className="me-2 text-primary" />

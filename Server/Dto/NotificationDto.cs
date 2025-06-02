@@ -1,8 +1,13 @@
 public class NotificationDto
 {
     public int Id { get; set; }
-    public string Message { get; set; } = string.Empty;
+    public required string Message { get; set; }
     public DateTime DateSent { get; set; }
-    public int UserId { get; set; }
-    public string UserFullName { get; set; } = string.Empty; // Mund të shtohet emri i përdoruesit
+    public bool IsRead { get; set; }
+     public int UserId { get; set; }
+    public required string NotificationType { get; set; }
+    public string? RelatedEntityType { get; set; }
+    public int? RelatedEntityId { get; set; }
+    public string? Icon { get; set; }
+    
 }

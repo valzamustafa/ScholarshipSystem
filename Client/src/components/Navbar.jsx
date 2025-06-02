@@ -4,17 +4,15 @@ import Logoo from '../assets/logoo.png';
 import LogoutButton from './LogoutButton';
 import { useAuth } from '../context/useAuth';
 import { Navigate } from 'react-router-dom';
+import NotificationsDropdown from './NotificationsDropdown';
 
 function Navbar() {
     const { user } = useAuth();
     
   
 
-    return (
-        <nav
-            className="navbar navbar-expand-lg rounded-3 py-3 px-4 shadow-sm fixed-top"
-            style={{ backgroundColor: '#004D7C', color: 'white', borderColor: '#004D7C' }}
-        >
+   return (
+        <nav className="navbar navbar-expand-lg rounded-3 py-3 px-4 shadow-sm fixed-top" style={{ backgroundColor: '#004D7C', color: 'white' }}>
             <div className="container-fluid">
                 <Link className="navbar-brand d-flex align-items-center" to="/" style={{ color: 'white', fontWeight: 'bold' }}>
                     <img src={Logoo} alt="Logoo" style={{ height: '40px', marginRight: '10px' }} />
@@ -60,6 +58,7 @@ function Navbar() {
                 </div>
 
                 <div className="d-flex align-items-center gap-3">
+                       {user && <NotificationsDropdown />}
                     {!user ? (
                         <>
                             <Link

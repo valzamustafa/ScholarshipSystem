@@ -71,6 +71,9 @@ builder.Services.AddScoped(typeof(IPasswordVerificationService<>), typeof(Passwo
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
         builder.Services.AddAuthentication(options =>
         {
