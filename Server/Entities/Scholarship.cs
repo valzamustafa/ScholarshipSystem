@@ -9,8 +9,8 @@ public class Scholarship
     public required  string ApplyLink { get; set; }
     public bool IsAvailable { get; set; }
      public  string? ImageFile { get; set; }
-    
-    public int? ProviderId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;   
+     public int? ProviderId { get; set; }
     public Provider Provider { get; set; }=null!;
    public ICollection<Application> Application { get; set; }=new List<Application>();
    public ICollection<ScholarshipAward> ScholarshipAward { get; set; }=new List<ScholarshipAward>();

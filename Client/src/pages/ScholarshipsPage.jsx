@@ -1,7 +1,9 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Button, Card, Form, InputGroup, Pagination, Badge, Alert, Spinner, Modal } from "react-bootstrap";
-import { FiSearch, FiCalendar, FiAward, FiFilter, FiX, FiEdit, FiTrash2, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiSearch, FiCalendar, FiAward, FiFilter, FiX, FiEdit, FiTrash2, FiChevronDown, FiChevronUp ,FiUser,FiMail} from "react-icons/fi";
+import { FiMessageSquare } from "react-icons/fi";
+import SendMessageModal from "../components/SendMessageModal";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useAuth } from "../context/useAuth";
@@ -11,7 +13,15 @@ function ScholarshipsPage() {
   const [scholarships, setScholarships] = useState([]);
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+const [selectedProviderId, setSelectedProviderId] = useState(null);
+const [selectedProvider, setSelectedProvider] = useState(null);
+const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
   const navigate = useNavigate();
+  const [messageContent, setMessageContent] = useState({
+  subject: '',
+  content: ''
+});
   const { user } = useAuth();
   const [loading, setLoading] = useState({
     scholarships: false,
@@ -47,6 +57,7 @@ function ScholarshipsPage() {
     AOS.init({ duration: 1000 });
     fetchInitialData();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -196,7 +207,42 @@ function ScholarshipsPage() {
     }
     return true;
   });
+const handleSendMessage = async () => {
+  const token = localStorage.getItem("token");
+  try {
+    console.log("Sending message to provider:", selectedProvider); 
+    console.log("Message content:", messageContent); 
+    console.log("Scholarship ID:", selectedScholarshipId); 
 
+    const response = await fetch('https://localhost:7255/api/message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        subject: messageContent.subject,
+        content: messageContent.content,
+        recipientId: selectedProvider.id,
+        scholarshipId: selectedScholarshipId
+      })
+    });
+
+    console.log("Message send response:", response); 
+    if (!response.ok) throw new Error('Failed to send message');
+    
+    const responseData = await response.json();
+    console.log("Message send response data:", responseData); 
+    
+    setShowMessageModal(false);
+    setMessageContent({});
+    return { success: true, message: 'Message sent successfully!' };
+  } catch (error) {
+    console.error("Error sending message:", error); 
+    setError(error.message);
+    return { success: false, message: error.message };
+  }
+};
   const indexOfLastScholarship = currentPage * scholarshipsPerPage;
   const indexOfFirstScholarship = indexOfLastScholarship - scholarshipsPerPage;
   const currentScholarships = filteredScholarships.slice(indexOfFirstScholarship, indexOfLastScholarship);
@@ -553,6 +599,36 @@ function ScholarshipsPage() {
                           {scholarship.isAvailable && new Date(scholarship.deadline) > new Date() ? "Open" : "Closed"}
                         </Badge>
                       </div>
+                       <div className="provider-info mt-3 pt-3 border-top">
+    <h6 className="mb-2">Provided by:</h6>
+    <div className="d-flex align-items-center gap-2 mb-2">
+      <FiUser className="text-primary" />
+      <span>{scholarship.providerName || 'Unknown'}</span>
+    </div>
+    <div className="d-flex align-items-center gap-2 mb-3">
+      <FiMail className="text-primary" />
+      <span>{scholarship.providerEmail || 'No email provided'}</span>
+    </div>
+    
+    {user?.role === 'student' && (
+<Button 
+  variant="outline-primary" 
+  size="sm"
+  onClick={() => {
+    setSelectedProvider({
+      id: scholarship.providerId,
+      name: scholarship.providerName,
+      email: scholarship.providerEmail
+    });
+    setSelectedScholarshipId(scholarship.id);
+    setShowMessageModal(true);
+  }}
+  className="d-flex align-items-center gap-1"
+>
+  <FiMessageSquare /> Message Provider
+</Button>
+    )}
+  </div>
                       <p className="text-muted small">{scholarship.description.substring(0, 100)}...</p>
                       <div className="mt-3 mb-2">
                         <div className="d-flex align-items-center gap-2 text-muted mb-1">
@@ -745,6 +821,9 @@ function ScholarshipsPage() {
               />
             </Form.Group>
           </Form>
+         
+
+
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => { setShowModal(false); setEditingId(null); }}>
@@ -757,6 +836,45 @@ function ScholarshipsPage() {
           </Button>
         </Modal.Footer>
       </Modal>
+      <Modal show={showMessageModal} onHide={() => setShowMessageModal(false)}>
+  <Modal.Header closeButton>
+    <Modal.Title>Message {selectedProvider?.name}</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    <Form.Group className="mb-3">
+      <Form.Label>Subject</Form.Label>
+      <Form.Control
+        type="text"
+        placeholder="Subject of your message"
+        value={messageContent.subject || ''}
+        onChange={(e) => setMessageContent({...messageContent, subject: e.target.value})}
+      />
+    </Form.Group>
+    <Form.Group className="mb-3">
+      <Form.Label>Message</Form.Label>
+      <Form.Control
+        as="textarea"
+        rows={5}
+        placeholder="Write your message here..."
+        value={messageContent.content || ''}
+        onChange={(e) => setMessageContent({...messageContent, content: e.target.value})}
+      />
+    </Form.Group>
+  </Modal.Body>
+ <Modal.Footer>
+  <Button variant="secondary" onClick={() => setShowMessageModal(false)}>
+    Cancel
+  </Button>
+  <Button variant="primary" onClick={async () => {
+    const result = await handleSendMessage();
+    if (result.success) {
+      alert(result.message);
+    }
+  }}>
+    Send Message
+  </Button>
+</Modal.Footer>
+</Modal>
     </div>
   );
 }

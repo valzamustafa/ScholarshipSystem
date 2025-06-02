@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Logoo from '../assets/logoo.png';
 import LogoutButton from './LogoutButton';
 import { useAuth } from '../context/useAuth';
@@ -7,11 +7,9 @@ import { Navigate } from 'react-router-dom';
 
 function Navbar() {
     const { user } = useAuth();
-    const handleLogout = () => {
-        if (window.confirm('Are you sure you want to log out?')) {
-            logout();
-        }
-    };
+    
+  
+
     return (
         <nav
             className="navbar navbar-expand-lg rounded-3 py-3 px-4 shadow-sm fixed-top"

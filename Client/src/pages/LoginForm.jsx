@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 
@@ -14,98 +15,82 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, logout } = useAuth();
 
- const refreshToken = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    if (!token || !refreshToken) {
+  const refreshToken = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (!token || !refreshToken) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        return null;
+      }
+
+      const response = await originalFetch('https://localhost:7255/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, refreshToken })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      login(user, data.token, data.refreshToken);
+      
+      return data.token;
+    } catch (error) {
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       return null;
     }
+  }, [login]);
 
-    const response = await originalFetch('https://localhost:7255/api/auth/refresh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, refreshToken })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to refresh token');
-    }
-
-    const data = await response.json();
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    
-
-    const { login } = useAuth();
-   const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-    login(user, data.token, data.refreshToken);
-    
-    return data.token;
-  } catch (err) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    return null;
-  }
-};
-  const handleLogout = async () => {
-  try {
-    const { logout } = useAuth();
-    await logout();
-    navigate('/login');
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
-};
-const { login } = useAuth(); 
-
-
- useEffect(() => {
-  const fetchInterceptor = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      options.headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${token}`
-      };
-    }
-
-     let response = await originalFetch(url, options);
-    
-    if (response.status === 401) {
-      const newToken = await refreshToken();
-      if (newToken) {
+  useEffect(() => {
+    const fetchInterceptor = async (url, options = {}) => {
+      const token = localStorage.getItem('token');
+      if (token) {
         options.headers = {
           ...options.headers,
-          'Authorization': `Bearer ${newToken}`
+          'Authorization': `Bearer ${token}`
         };
-        response = await originalFetch(url, options);
-      } else {
-        // If refresh fails, force logout
-        const { logout } = useAuth();
-        await logout();
-        navigate('/login');
-        return response;
       }
-    }
-    
-    return response;
-  };
 
-  window.fetch = fetchInterceptor;
+      let response = await originalFetch(url, options);
+      
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          options.headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${newToken}`
+          };
+          response = await originalFetch(url, options);
+        } else {
+          await logout();
+          navigate('/login');
+          return response;
+        }
+      }
+      
+      return response;
+    };
 
-  return () => {
-    window.fetch = originalFetch;
-  };
-}, [navigate]);
+    window.fetch = fetchInterceptor;
 
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [navigate, refreshToken, logout]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -170,11 +155,13 @@ const handleSubmit = async (e) => {
       data.refreshToken
     );
 
-    localStorage.setItem("user", JSON.stringify({
-      ...data.user,
-      role: role.toLowerCase(),
-      approved
-    }));
+    localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("user", JSON.stringify({
+        ...data.user,
+        role: role.toLowerCase(),
+        approved
+      }));
 
     console.log('User role:', role, 'Approved:', approved);
 

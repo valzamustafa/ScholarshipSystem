@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Data;
 
@@ -10,9 +11,11 @@ using Server.Data;
 namespace Server.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250602061701_ProvAdmin")]
+    partial class ProvAdmin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
@@ -278,46 +281,6 @@ namespace Server.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Feedback");
-                });
-
-            modelBuilder.Entity("Server.Entities.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RecipientId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("ScholarshipId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SenderId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecipientId");
-
-                    b.HasIndex("ScholarshipId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("Message");
                 });
 
             modelBuilder.Entity("Server.Entities.Notification", b =>
@@ -822,32 +785,6 @@ namespace Server.Data.Migrations
                     b.Navigation("Scholarship");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Server.Entities.Message", b =>
-                {
-                    b.HasOne("Server.Entities.User", "Recipient")
-                        .WithMany()
-                        .HasForeignKey("RecipientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Server.Entities.Scholarship", "Scholarship")
-                        .WithMany()
-                        .HasForeignKey("ScholarshipId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Server.Entities.User", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Recipient");
-
-                    b.Navigation("Scholarship");
-
-                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Server.Entities.Notification", b =>

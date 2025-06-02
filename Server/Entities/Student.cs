@@ -5,7 +5,7 @@ public class Student:User{
     public required string StudyField { get; set; }
 public string? ProfilePictureUrl { get; set; }
 
-
+ public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int StudentLevelId { get; set; }
     public StudentLevel StudentLevel { get; set; }=null!;
 

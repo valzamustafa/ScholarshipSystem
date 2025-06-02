@@ -4,6 +4,7 @@ namespace Server.Entities
     {
         public int Id { get; set; }
         public DateTime ApplicationDate { get; set; }
+         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public int ApplicationStatusId { get; set; }  
         public ApplicationStatus ApplicationStatus { get; set; } = null!;
         public int StudentId { get; set; }
@@ -20,3 +21,4 @@ namespace Server.Entities
       
     }
 }
+ 

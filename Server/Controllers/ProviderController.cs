@@ -90,44 +90,97 @@ public async Task<ActionResult<Provider>> CreateProvider([FromBody] CreateProvid
 
     return CreatedAtAction(nameof(GetProvider), new { id = provider.Id }, provider);
 }
-       
-       [HttpPut("{id}")]
-public async Task<IActionResult> UpdateProvider(int id, [FromBody] UpdateProviderDto providerDto)
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<UpdateProviderDto>> UpdateProvider(int id, [FromBody] UpdateProviderDto providerDto)
+        {
+            if (id != providerDto.Id)
+            {
+                return BadRequest();
+            }
+
+            var provider = await _context.Provider.FindAsync(id);
+            if (provider == null)
+            {
+                return NotFound();
+            }
+
+            
+            provider.FullName = providerDto.FullName;
+            provider.Email = providerDto.Email;
+            provider.OrganizationName = providerDto.OrganizationName;
+            provider.PhoneNumber = providerDto.PhoneNumber;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProviderExists(id))
+                {
+                    return NotFound();
+                }
+                throw;
+            }
+
+           
+            return Ok(new UpdateProviderDto
+            {
+                Id = provider.Id,
+                FullName = provider.FullName,
+                Email = provider.Email,
+                OrganizationName = provider.OrganizationName,
+                PhoneNumber = provider.PhoneNumber,
+                RoleId = provider.RoleId
+            });
+        }
+       [HttpGet("stats/{providerId}")]
+public async Task<ActionResult<object>> GetProviderStats(int providerId)
 {
-    if (id != providerDto.Id)
+    var stats = new
     {
-        return BadRequest();
-    }
+        ScholarshipCount = await _context.Scholarship
+            .CountAsync(s => s.ProviderId == providerId),
+        AwardedCount = await _context.ScholarshipAward
+            .CountAsync(a => a.Scholarship.ProviderId == providerId),
+        RecentApplications = await _context.Application
+            .Where(a => a.Scholarship.ProviderId == providerId)
+            .OrderByDescending(a => a.ApplicationDate)
+            .Take(5)
+            .Select(a => new 
+            {
+                StudentName = a.Student.FullName,
+                ScholarshipTitle = a.Scholarship.Title,
+                Status = a.ApplicationStatus.StatusName,
+                ApplicationDate = a.ApplicationDate,
+                StatusColor = a.ApplicationStatusId == 1 ? "warning" : 
+                             a.ApplicationStatusId == 2 ? "danger" : "success"
+            })
+            .ToListAsync()
+    };
 
-    var provider = await _context.Provider.FindAsync(id);
-    if (provider == null)
-    {
-        return NotFound();
-    }
-
-    provider.FullName = providerDto.FullName;
-    provider.Email = providerDto.Email;
-    provider.OrganizationName = providerDto.OrganizationName;
-    provider.PhoneNumber = providerDto.PhoneNumber;
-   
-
-    try
-    {
-        await _context.SaveChangesAsync();
-    }
-    catch (DbUpdateConcurrencyException)
-    {
-        if (!ProviderExists(id))
+    return Ok(stats);
+}
+[HttpGet("recent-activity/{providerId}")]
+public async Task<ActionResult> GetRecentActivity(int providerId)
+{
+    var recentActivity = await _context.Application
+        .Where(a => a.Scholarship.ProviderId == providerId)
+        .OrderByDescending(a => a.ApplicationDate)
+        .Take(5)
+        .Select(a => new 
         {
-            return NotFound();
-        }
-        else
-        {
-            throw;
-        }
-    }
+            StudentName = a.Student.FullName,
+            ScholarshipTitle = a.Scholarship.Title,
+            Status = a.ApplicationStatus.StatusName,
+            ApplicationDate = a.ApplicationDate,
+            StatusColor = a.ApplicationStatusId == 1 ? "warning" : 
+                         a.ApplicationStatusId == 2 ? "danger" : "success"
+        })
+        .ToListAsync();
 
-    return NoContent();
+    return Ok(recentActivity);
 }
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProvider(int id)

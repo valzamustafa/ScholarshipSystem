@@ -6,6 +6,7 @@ public class StudentDto : UserDto
     public string StudyField { get; set; } = string.Empty;
     public int StudentLevelId { get; set; }
     public string? ImageUrl { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string StudentLevelName { get; set; } = string.Empty;  
     public ICollection<ApplicationDto> Applications { get; set; } = new List<ApplicationDto>();
     public int RoleId { get; internal set; }

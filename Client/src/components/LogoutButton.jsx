@@ -7,12 +7,13 @@ function LogoutButton() {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
-        const confirmLogout = window.confirm('Are you sure you want to log out?');
-        try {
-            await logout();
-            navigate('/login');
-        } catch (error) {
-            console.error('Logout error:', error);
+        if (window.confirm('Are you sure you want to log out?')) {
+            try {
+                await logout();
+                navigate('/login');
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
         }
     };
 

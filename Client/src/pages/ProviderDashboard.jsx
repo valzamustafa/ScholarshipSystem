@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { 
   FiUser, FiBriefcase, FiBookOpen, FiMail, FiBell, FiUsers, FiAward 
 } from "react-icons/fi";
+import { Spinner, Alert } from "react-bootstrap";
 import ScholarshipsSection from "../components/ScholarshipsSection";
 import ApplicationsSection from "../components/ApplicationsSection";
 import AwardedStudentsSection from "../components/AwardedStudentsSection";
-
+import ProviderProfile from "../components/ProviderProfile";
 function ProviderDashboard() {
   const [scholarships, setScholarships] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -20,6 +21,19 @@ function ProviderDashboard() {
   const [_loadingApplications, setLoadingApplications] = useState(false);
   const [_loadingAwards, setLoadingAwards] = useState(false);
   const [_error, setError] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [providerUserId, setProviderUserId] = useState(null);
+
+const [loadingMessages, setLoadingMessages] = useState(false);
+const [messageError, setMessageError] = useState(null);
+const [recentActivity, setRecentActivity] = useState([]);
+ useEffect(() => {
+ if (providerUserId && activeTab === 'messages') {
+  fetchMessages(providerUserId); 
+}
+
+}, [providerUserId, activeTab]);
+
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -28,10 +42,18 @@ function ProviderDashboard() {
         const providerRes = await fetch('https://localhost:7255/api/provider/current', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (providerRes.ok) {
-          const providerData = await providerRes.json();
-          setCurrentProvider(providerData);
-          fetchProviderScholarships(providerData.id);
+         if (providerRes.ok) {
+            const providerData = await providerRes.json();
+         setCurrentProvider(providerData);
+setProviderUserId(providerData.userId); 
+if (activeTab === 'messages') {
+  fetchMessages(providerData.userId); 
+}
+
+
+            fetchProviderScholarships(providerData.id);
+            fetchRecentActivity(providerData.id);
+            fetchProviderStats(providerData.id)
         }
         const [categoriesRes, typesRes] = await Promise.all([
           fetch("https://localhost:7255/api/scholarshipcategory"),
@@ -45,8 +67,26 @@ function ProviderDashboard() {
       }
     };
     fetchInitialData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+const [stats, setStats] = useState({
+    scholarshipCount: 0,
+    awardedCount: 0,
+    recentApplications: []
+});
+ const fetchProviderStats = async (providerId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`https://localhost:7255/api/provider/stats/${providerId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setStats(data);
+    } catch (error) {
+        console.error("Error fetching provider stats:", error);
+    }
+};
   const fetchProviderScholarships = async (providerId) => {
     try {
       const token = localStorage.getItem("token");
@@ -230,6 +270,73 @@ const fetchApplications = async (providerId) => {
       console.error("Error creating award:", error);
     }
   };
+  const fetchRecentActivity = async (providerId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`https://localhost:7255/api/provider/recent-activity/${providerId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setRecentActivity(data);
+    } catch (error) {
+        console.error("Error fetching recent activity:", error);
+    }
+};
+const fetchMessages = async (providerId) => {
+    setLoadingMessages(true);
+    try {
+        console.log("Fetching messages for provider ID:", providerId);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`https://localhost:7255/api/message/received/${providerId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("Messages API response status:", res.status);
+        
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+        }
+        
+        const data = await res.json();
+        console.log("Received messages data:", data);
+        
+    
+        const transformedData = data.map(msg => ({
+            id: msg.id,
+            senderName: msg.senderName || 'Unknown',
+            subject: msg.subject,
+            content: msg.content,
+            sentAt: msg.sentAt || msg.createdAt,
+            isRead: msg.isRead || false,
+            scholarshipTitle: msg.scholarshipTitle || '',
+            scholarshipId: msg.scholarshipId || null
+        }));
+        
+        setMessages(transformedData);
+    } catch (error) {
+        console.error("Error fetching messages:", error);
+        setMessageError(error.message || "Failed to load messages");
+    } finally {
+        setLoadingMessages(false);
+    }
+};
+const markMessageAsRead = async (messageId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`https://localhost:7255/api/message/${messageId}/read`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+            setMessages(messages.map(msg => 
+                msg.id === messageId ? { ...msg, isRead: true } : msg
+            ));
+        }
+    } catch (error) {
+        console.error("Error marking message as read:", error);
+    }
+};
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -259,6 +366,100 @@ const fetchApplications = async (providerId) => {
             onStatusChange={handleApplicationStatusChange}
           />
         );
+    case 'profile':
+ return (
+    <div className="row">
+      <div className="col-md-5">
+        <ProviderProfile 
+          provider={{...currentProvider, 
+                    scholarshipCount: stats.scholarshipCount,
+                    awardedCount: stats.awardedCount}} 
+          onUpdate={(updatedProvider) => {
+            setCurrentProvider(updatedProvider);
+          }} 
+        />
+      </div>
+      <div className="col-md-7">
+        <div className="card shadow-sm h-100">
+          <div className="card-body">
+            <h5 className="card-title">Recent Activity</h5>
+            {recentActivity.length > 0 ? (
+              <ul className="list-group list-group-flush">
+                {recentActivity.map((activity, index) => (
+                  <li key={index} className="list-group-item">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h6 className="mb-1">{activity.studentName}</h6>
+                        <small className="text-muted">{activity.scholarshipTitle}</small>
+                      </div>
+                      <span className={`badge bg-${activity.statusColor}`}>
+                        {activity.status}
+                      </span>
+                    </div>
+                    <small className="text-muted d-block mt-2">
+                      {new Date(activity.applicationDate).toLocaleString()}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-muted">No recent activity</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  case 'messages':
+    return (
+        <div className="card shadow-sm">
+            <div className="card-body">
+                <h5 className="card-title">Messages</h5>
+                {loadingMessages ? (
+                    <div className="text-center py-3">
+                        <Spinner animation="border" variant="primary" />
+                        <p className="mt-2">Loading messages...</p>
+                    </div>
+                ) : messageError ? (
+                    <Alert variant="danger">{messageError}</Alert>
+                ) : messages.length === 0 ? (
+                    <p className="text-muted">No messages yet</p>
+                ) : (
+                    <div className="list-group">
+           
+{messages.map(msg => (
+  <div 
+    key={msg.id} 
+    className={`list-group-item ${!msg.isRead ? 'border-start border-primary border-3' : ''}`}
+    onClick={() => markMessageAsRead(msg.id)}
+  >
+    <div className="d-flex justify-content-between">
+      <div>
+        <h6 className="mb-1">{msg.senderName}</h6>
+        <small className="text-muted">
+          {msg.subject}
+        </small>
+      </div>
+      <small className="text-muted">
+        {new Date(msg.sentAt).toLocaleString()}
+      </small>
+    </div>
+    <p className="mb-0 mt-2">{msg.content}</p>
+    {msg.scholarshipTitle && (
+      <small className="text-muted d-block mt-1">
+        Regarding: {msg.scholarshipTitle}
+      </small>
+    )}
+    {!msg.isRead && (
+      <span className="badge bg-primary float-end">New</span>
+    )}
+  </div>
+))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
       case 'awarded':
         return <AwardedStudentsSection awardedStudents={awardedStudents} />;
       default:
@@ -267,9 +468,9 @@ const fetchApplications = async (providerId) => {
   };
 
   return (
-    <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
+    <div className="container-fluid g-0 min-vh-100 bg-light mt-5 m-0 p-0 vw-100 overflow-x-hidden ">
       <div className="row g-0">
-        <div className="col-md-2 text-white p-3 min-vh-100" style={{ backgroundColor: '#004D7C', color: 'white' }}>
+        <div className="col-md-2 text-white p-3 min-vh-100" style={{ backgroundColor: '#004D7C', color: 'white',marginTop:'25px' }}>
           <h4 className="text-center mb-4">Provider Panel</h4>
           <ul className="nav flex-column">
             <li className="nav-item mb-3">
@@ -304,20 +505,31 @@ const fetchApplications = async (providerId) => {
                 <FiAward className="me-2" />Awarded Students
               </button>
             </li>
+           <li className="nav-item mb-3">
+    <button 
+        className={`nav-link text-white btn btn-link p-0 text-start ${activeTab === 'messages' ? 'active' : ''}`}
+        onClick={() => {
+            setActiveTab('messages');
+            if (currentProvider?.id) {
+                fetchMessages(currentProvider.id);
+            }
+        }}
+    >
+        <FiMail className="me-2" />Messages
+    </button>
+</li>
             <li className="nav-item mb-3">
-              <button className="nav-link text-white btn btn-link p-0 text-start">
-                <FiMail className="me-2" />Messages
-              </button>
-            </li>
-            <li className="nav-item mb-3">
-              <button className="nav-link text-white btn btn-link p-0 text-start">
-                <FiUser className="me-2" />Profile
-              </button>
-            </li>
+  <button 
+    className={`nav-link text-white btn btn-link p-0 text-start ${activeTab === 'profile' ? 'active' : ''}`}
+    onClick={() => setActiveTab('profile')}
+  >
+    <FiUser className="me-2" />Profile
+  </button>
+</li>
           </ul>
         </div>
         <div className="col-md-10 p-4">
-          <div className="d-flex justify-content-between align-items-center mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-4" style={{ marginTop:'25px' }}>
             <h3>Welcome, {currentProvider?.fullName || 'Provider'}!</h3>
             <div className="d-flex align-items-center">
               <FiBell className="me-3" size={20} />

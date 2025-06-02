@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Dtos;
 using Server.Entities;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,7 @@ namespace Server.Controllers
 {
     [ApiController]
     [Route("api/admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -19,99 +22,114 @@ namespace Server.Controllers
             _context = context;
         }
 
+        private int GetCurrentUserId()
+        {
+            var claim = User.Claims.FirstOrDefault(c => c.Type == "id");
+            return claim != null ? int.Parse(claim.Value) : 0;
+        }
+
         [HttpGet("statistics")]
         public async Task<IActionResult> GetStatistics()
         {
+            var now = DateTime.UtcNow;
+            var thirtyDaysAgo = now.AddDays(-30);
+
             var totalStudents = await _context.Student.CountAsync();
             var totalProviders = await _context.Provider.CountAsync();
             var totalScholarships = await _context.Scholarship.CountAsync();
             var totalApplications = await _context.Application.CountAsync();
 
-            var stats = new
-            {
+            var newStudents = await _context.Student.Where(s => s.CreatedAt >= thirtyDaysAgo).CountAsync();
+            var newProviders = await _context.Provider.Where(p => p.CreatedAt >= thirtyDaysAgo).CountAsync();
+            var newScholarships = await _context.Scholarship.Where(s => s.CreatedAt >= thirtyDaysAgo).CountAsync();
+            var newApplications = await _context.Application.Where(a => a.CreatedAt >= thirtyDaysAgo).CountAsync();
+
+            return Ok(new {
                 TotalStudents = totalStudents,
                 TotalProviders = totalProviders,
                 TotalScholarships = totalScholarships,
-                TotalApplications = totalApplications
-            };
-
-            return Ok(stats);
+                TotalApplications = totalApplications,
+                NewStudents = newStudents,
+                NewProviders = newProviders,
+                NewScholarships = newScholarships,
+                NewApplications = newApplications
+            });
         }
 
         [HttpGet("provider-requests")]
         public async Task<ActionResult<IEnumerable<Provider>>> GetPendingProviderRequests()
         {
-            var unapprovedProviders = await _context.Provider
-                .Where(p => !p.IsApproved)
-                .ToListAsync();
-
-            return Ok(unapprovedProviders);
-        }
-
-        [HttpGet("providers")]
-        public async Task<ActionResult<IEnumerable<Provider>>> GetAllProviders()
-        {
-            var providers = await _context.Provider.ToListAsync();
-            return Ok(providers);
+            return Ok(await _context.Provider.Where(p => !p.IsApproved).ToListAsync());
         }
 
         [HttpPut("provider/{id}/approve")]
         public async Task<IActionResult> ApproveProvider(int id)
         {
             var provider = await _context.Provider.FindAsync(id);
-            if (provider == null)
-                return NotFound();
+            if (provider == null) return NotFound();
 
             provider.IsApproved = true;
-            await _context.SaveChangesAsync();
+            provider.ApprovedAt = DateTime.UtcNow;
 
+            _context.AuditLog.Add(new AuditLog
+            {
+                Action = "Approved Provider",
+                Details = $"{provider.FullName} from {provider.OrganizationName}",
+                ActionDate = DateTime.UtcNow,
+                Timestamp = DateTime.UtcNow,
+                UserId = GetCurrentUserId()
+            });
+
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
+        [HttpGet("providers")]
+        public async Task<ActionResult<IEnumerable<Provider>>> GetAllProviders()
+        {
+            return Ok(await _context.Provider.ToListAsync());
+        }
+
+        [HttpGet("students")]
+        public async Task<ActionResult<IEnumerable<Student>>> GetAllStudents()
+        {
+            return Ok(await _context.Student.ToListAsync());
+        }
+
         [HttpPut("students/{id}")]
-        public async Task<IActionResult> UpdateStudent(int id, [FromBody] UpdateStudentDto updateStudentDto)
+        public async Task<IActionResult> UpdateStudent(int id, [FromBody] UpdateStudentDto dto)
         {
             var student = await _context.Student.FindAsync(id);
             if (student == null) return NotFound();
 
-            student.SchoolOrUniversityName = updateStudentDto.SchoolOrUniversityName;
-            student.StudyField = updateStudentDto.StudyField;
-            student.StudentLevelId = updateStudentDto.StudentLevelId;
+            student.SchoolOrUniversityName = dto.SchoolOrUniversityName;
+            student.StudyField = dto.StudyField;
+            student.StudentLevelId = dto.StudentLevelId;
+
+            _context.AuditLog.Add(new AuditLog
+            {
+                Action = "Updated Student",
+                Details = $"Student: {student.FullName}",
+                ActionDate = DateTime.UtcNow,
+                Timestamp = DateTime.UtcNow,
+                UserId = GetCurrentUserId()
+            });
 
             await _context.SaveChangesAsync();
             return NoContent();
-        }
-        
-        [HttpGet("students")]
-        public async Task<ActionResult<IEnumerable<Student>>> GetAllStudents()
-        {
-            var students = await _context.Student.ToListAsync();
-            return Ok(students);
         }
 
         [HttpGet("users/admins")]
         public async Task<ActionResult<IEnumerable<object>>> GetAllAdmins()
         {
             var studentAdmins = await _context.Student
-                .Where(s => s.RoleId == 3) 
-                .Select(s => new 
-                {
-                    Id = s.Id,
-                    FullName = s.FullName,
-                    Email = s.Email,
-                    Type = "Student"
-                })
+                .Where(s => s.RoleId == 3)
+                .Select(s => new { s.Id, s.FullName, s.Email, Type = "Student" })
                 .ToListAsync();
 
             var providerAdmins = await _context.Provider
-                .Where(p => p.RoleId == 3) 
-                .Select(p => new 
-                {
-                    Id = p.Id,
-                    FullName = p.FullName,
-                    Email = p.Email,
-                    Type = "Provider"
-                })
+                .Where(p => p.RoleId == 3)
+                .Select(p => new { p.Id, p.FullName, p.Email, Type = "Provider" })
                 .ToListAsync();
 
             return Ok(studentAdmins.Concat(providerAdmins));
@@ -120,29 +138,16 @@ namespace Server.Controllers
         [HttpGet("users/search")]
         public async Task<ActionResult<IEnumerable<object>>> SearchUsers([FromQuery] string term)
         {
-            if (string.IsNullOrWhiteSpace(term))
-                return BadRequest("Search term is required");
+            if (string.IsNullOrWhiteSpace(term)) return BadRequest("Search term is required");
 
             var studentResults = await _context.Student
                 .Where(s => s.FullName.Contains(term) || s.Email.Contains(term))
-                .Select(s => new 
-                {
-                    Id = s.Id,
-                    FullName = s.FullName,
-                    Email = s.Email,
-                    Type = "Student"
-                })
+                .Select(s => new { s.Id, s.FullName, s.Email, Type = "Student" })
                 .ToListAsync();
 
             var providerResults = await _context.Provider
                 .Where(p => p.FullName.Contains(term) || p.Email.Contains(term))
-                .Select(p => new 
-                {
-                    Id = p.Id,
-                    FullName = p.FullName,
-                    Email = p.Email,
-                    Type = "Provider"
-                })
+                .Select(p => new { p.Id, p.FullName, p.Email, Type = "Provider" })
                 .ToListAsync();
 
             return Ok(studentResults.Concat(providerResults));
@@ -151,11 +156,18 @@ namespace Server.Controllers
         [HttpPut("users/{id}/grant-admin")]
         public async Task<IActionResult> GrantAdminAccess(int id)
         {
-           
             var student = await _context.Student.FindAsync(id);
             if (student != null)
             {
-                student.RoleId = 3; 
+                student.RoleId = 3;
+                _context.AuditLog.Add(new AuditLog
+                {
+                    Action = "Granted Admin Access",
+                    Details = $"To Student: {student.FullName}",
+                    ActionDate = DateTime.UtcNow,
+                    Timestamp = DateTime.UtcNow,
+                    UserId = GetCurrentUserId()
+                });
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
@@ -163,7 +175,15 @@ namespace Server.Controllers
             var provider = await _context.Provider.FindAsync(id);
             if (provider != null)
             {
-                provider.RoleId = 3; 
+                provider.RoleId = 3;
+                _context.AuditLog.Add(new AuditLog
+                {
+                    Action = "Granted Admin Access",
+                    Details = $"To Provider: {provider.FullName}",
+                    ActionDate = DateTime.UtcNow,
+                    Timestamp = DateTime.UtcNow,
+                    UserId = GetCurrentUserId()
+                });
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
@@ -174,25 +194,105 @@ namespace Server.Controllers
         [HttpPut("users/{id}/revoke-admin")]
         public async Task<IActionResult> RevokeAdminAccess(int id)
         {
-            
             var student = await _context.Student.FindAsync(id);
             if (student != null)
             {
-                student.RoleId = 1; 
+                student.RoleId = 1;
+                _context.AuditLog.Add(new AuditLog
+                {
+                    Action = "Revoked Admin Access",
+                    Details = $"From Student: {student.FullName}",
+                    ActionDate = DateTime.UtcNow,
+                    Timestamp = DateTime.UtcNow,
+                    UserId = GetCurrentUserId()
+                });
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
 
-           
             var provider = await _context.Provider.FindAsync(id);
             if (provider != null)
             {
-                provider.RoleId = 2; 
+                provider.RoleId = 2;
+                _context.AuditLog.Add(new AuditLog
+                {
+                    Action = "Revoked Admin Access",
+                    Details = $"From Provider: {provider.FullName}",
+                    ActionDate = DateTime.UtcNow,
+                    Timestamp = DateTime.UtcNow,
+                    UserId = GetCurrentUserId()
+                });
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
 
             return NotFound();
+        }
+
+        [HttpGet("logs")]
+        public async Task<ActionResult<IEnumerable<AuditLog>>> GetAuditLogs()
+        {
+            var logs = await _context.AuditLog
+                .Include(l => l.User)
+                .OrderByDescending(l => l.Timestamp)
+                .Take(100)
+                .ToListAsync();
+
+            return Ok(logs);
+        }
+
+        [HttpGet("recent-activity")]
+        public async Task<ActionResult<IEnumerable<object>>> GetRecentActivity()
+        {
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+
+           var providerApprovals = await _context.Provider
+    .Where(p => p.IsApproved && p.ApprovedAt >= thirtyDaysAgo)
+    .OrderByDescending(p => p.ApprovedAt)
+    .Take(10)
+    .Select(p => new AuditLogDto
+    {
+        Action = "Provider Approved",
+        Details = $"{p.FullName} from {p.OrganizationName}",
+        Timestamp = p.ApprovedAt ?? DateTime.UtcNow
+    })
+    .ToListAsync();
+
+var newScholarships = await _context.Scholarship
+    .Where(s => s.CreatedAt >= thirtyDaysAgo)
+    .OrderByDescending(s => s.CreatedAt)
+    .Take(10)
+    .Select(s => new AuditLogDto
+    {
+        Action = "New Scholarship",
+        Details = $"{s.Title} by {s.Provider.FullName}",
+        Timestamp = s.CreatedAt
+    })
+    .ToListAsync();
+
+var newApplications = await _context.Application
+    .Where(a => a.CreatedAt >= thirtyDaysAgo)
+    .OrderByDescending(a => a.CreatedAt)
+    .Take(10)
+    .Select(a => new AuditLogDto
+    {
+        Action = "New Application",
+        Details = $"{a.Student.FullName} applied for {a.Scholarship.Title}",
+        Timestamp = a.CreatedAt
+    })
+    .ToListAsync();
+
+var all = new List<AuditLogDto>();
+all.AddRange(providerApprovals);
+all.AddRange(newScholarships);
+all.AddRange(newApplications);
+
+var ordered = all.OrderByDescending(a => a.Timestamp).Take(10).ToList();
+return Ok(ordered);
+
+
+
+           
         }
     }
 }

@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Country> Country { get; set; }
     public DbSet<EligibilityCriteria> EligibilityCriteria { get; set; }
     public DbSet<Feedback> Feedback { get; set; }
+    public DbSet<Message> Message { get; set; }
     public DbSet<Notification> Notification { get; set; }
     public DbSet<Provider> Provider { get; set; }
     public DbSet<Role> Role { get; set; }
@@ -77,13 +78,30 @@ public class AppDbContext : DbContext
             new ScholarshipType { Id = 4, Name = "Partial 25%", Description = "25% coverage" }
         );
 
-  
-  
-         modelBuilder.Entity<ApplicationStatus>().HasData(
-    new ApplicationStatus { Id = 1, StatusName = "Pending" },
-    new ApplicationStatus { Id = 2, StatusName = "Declined" },
-    new ApplicationStatus { Id = 3, StatusName = "Approved" }
+
+
+        modelBuilder.Entity<ApplicationStatus>().HasData(
+   new ApplicationStatus { Id = 1, StatusName = "Pending" },
+   new ApplicationStatus { Id = 2, StatusName = "Declined" },
+   new ApplicationStatus { Id = 3, StatusName = "Approved" }
 );
+ modelBuilder.Entity<Message>()
+        .HasOne(m => m.Sender)
+        .WithMany()
+        .HasForeignKey(m => m.SenderId)
+        .OnDelete(DeleteBehavior.Restrict);
+        
+    modelBuilder.Entity<Message>()
+        .HasOne(m => m.Recipient)
+        .WithMany()
+        .HasForeignKey(m => m.RecipientId)
+        .OnDelete(DeleteBehavior.Restrict);
+        
+    modelBuilder.Entity<Message>()
+        .HasOne(m => m.Scholarship)
+        .WithMany()
+        .HasForeignKey(m => m.ScholarshipId)
+        .OnDelete(DeleteBehavior.Restrict);
 }
 
 

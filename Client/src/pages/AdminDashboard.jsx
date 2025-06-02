@@ -10,9 +10,8 @@ import {
   FiMail,
   FiMessageSquare,
   FiSettings,
-  FiInfo 
+  FiClock
 } from "react-icons/fi";
-
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -23,8 +22,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import AboutUsSection from "../components/AboutUsSection.jsx"
-import AboutUsManagement from "../components/AboutUsManagement.jsx";
 import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
 import StudentManager from "../components/StudentManager";
 import ProviderManager from "../components/ProviderManager.jsx";
@@ -57,6 +54,9 @@ function AdminDashboard() {
     roleId: 1,
     password: "",
   });
+     const [recentActivity, setRecentActivity] = useState([]);
+
+ 
   const [newProvider, setNewProvider] = useState({
     fullName: "",
     email: "",
@@ -95,7 +95,12 @@ function AdminDashboard() {
       fetchAdmins();
     }
   }, [activePage]);
-
+  useEffect(() => {
+    if (activePage === "dashboard") {
+      fetchRequests();
+      fetchStats();
+      fetchRecentActivity();
+    }}, [activePage]);
   useEffect(() => {
     if (activePage === "applications") {
       fetchApplications();
@@ -230,17 +235,22 @@ function AdminDashboard() {
       setLoadingApplications(false);
     }
   }
-  async function fetchStats() {
-    try {
-      const res = await fetch("https://localhost:7255/api/admin/statistics");
-      if (!res.ok) throw new Error("Gabim gjatë marrjes së statistikave");
-      const data = await res.json();
-      setStats(data);
-    } catch (error) {
-      console.error(error);
-      setStats(null);
-    }
+
+async function fetchStats() {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://localhost:7255/api/admin/statistics", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Gabim gjatë marrjes së statistikave");
+    const data = await res.json();
+    console.log("Stats data:", data);
+    setStats(data);
+  } catch (error) {
+    console.error(error);
+    setStats(null);
   }
+}
 
   async function fetchStudents() {
     try {
@@ -496,6 +506,20 @@ function AdminDashboard() {
     }
   }
 
+    async function fetchRecentActivity() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/admin/recent-activity", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch recent activity");
+      const data = await res.json();
+      setRecentActivity(data);
+    } catch (error) {
+      console.error("Fetch recent activity error:", error);
+    }
+  }
+
   async function rejectRequest(id) {
     await fetch(`https://localhost:7255/api/provider/${id}`, {
       method: "DELETE",
@@ -544,14 +568,6 @@ function AdminDashboard() {
               >
                 <FiMail className="me-2" /> Contact Messages
               </button>
-               <li className="nav-item mb-3">
-  <button 
-    className={`nav-link text-white btn btn-link text-start ${activePage === "aboutUs" ? "fw-bold" : ""}`} 
-    onClick={() => setActivePage("aboutUs")}
-  >
-    <FiInfo className="me-2" /> About Us Management
-  </button>
-</li>
             </li>
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "reports" ? "fw-bold" : ""}`} onClick={() => setActivePage("reports")}> <FiCalendar className="me-2" /> Reports </button>
@@ -566,7 +582,7 @@ function AdminDashboard() {
             </li>
           </ul>
         </div>
-        <div className="col-md-10 p-4">
+         <div className="col-md-10 p-4">
           {activePage === "dashboard" && (
             <>
               <div className="d-flex justify-content-between align-items-center mb-4">
@@ -582,51 +598,150 @@ function AdminDashboard() {
                   ))}
                 </div>
               )}
+         
               <div className="card mb-4">
                 <div className="card-header"><h5>Overview Chart</h5></div>
                 <div className="card-body">
-                  <Bar
-                    data={{
-                      labels: ["Students", "Providers", "Scholarships", "Applications"],
-                      datasets: [{
-                        label: "Total",
-                        data: [
-                          stats?.totalStudents || 0,
-                          stats?.totalProviders || 0,
-                          stats?.totalScholarships || 0,
-                          stats?.totalApplications || 0
-                        ],
-                        backgroundColor: "rgba(0,77,124,0.7)",
-                      }],
-                    }}
-                    options={{ responsive: true, plugins: { legend: { position: "top" }, title: { display: true, text: "System Overview" } } }}
-                  />
+                 <Bar
+  data={{
+    labels: ["Students", "Providers", "Scholarships", "Applications"],
+    datasets: [
+      {
+        label: "Total",
+        data: [
+          stats?.totalStudents || 0,
+          stats?.totalProviders || 0,
+          stats?.totalScholarships || 0,
+          stats?.totalApplications || 0
+        ],
+        backgroundColor: "#A78BFA",
+        borderRadius: 8
+      },
+      {
+        label: "Last Month",
+        data: [
+          stats?.newStudents || 0,
+          stats?.newProviders || 0,
+          stats?.newScholarships || 0,
+          stats?.newApplications || 0
+        ],
+        backgroundColor: "#F9A8D4",
+        borderRadius: 8
+      }
+    ],
+  }}
+  options={{
+    responsive: true,
+    plugins: {
+      legend: { position: "bottom" },
+      title: {
+        display: true,
+        text: "Overview",
+        font: { size: 18 },
+      },
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }}
+/>
+
+                </div>
+              
+               <div className="row mb-4">
+  {stats && [
+    { label: "Students", value: stats.totalStudents, monthly: stats.newStudents, color: "primary" },
+    { label: "Providers", value: stats.totalProviders, monthly: stats.newProviders, color: "success" },
+    { label: "Scholarships", value: stats.totalScholarships, monthly: stats.newScholarships, color: "warning" },
+    { label: "Applications", value: stats.totalApplications, monthly: stats.newApplications, color: "info" }
+  ].map((item, i) => (
+    <div className="col-md-3 mb-4" key={i}>
+      <div className={`card shadow-sm text-white bg-${item.color} bg-gradient rounded-4`}>
+        <div className="card-body d-flex flex-column align-items-start">
+          <span className="badge bg-light text-dark mb-2 px-3 py-2 rounded-pill">{item.label}</span>
+          <h2 className="fw-bold">{item.value ?? 0}</h2>
+          <small className="text-white-50">+{item.monthly ?? 0} this month</small>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+
+
+
+                <div className="col-md-4">
+                 <div className="card h-100 shadow-sm">
+  <div className="card-header bg-light d-flex align-items-center">
+    <FiClock className="me-2 text-primary" />
+    <h6 className="mb-0 fw-semibold">Recent Activity</h6>
+  </div>
+  <div className="card-body p-0">
+    {recentActivity.length === 0 ? (
+      <p className="p-3">No recent activity</p>
+    ) : (
+      <ul className="list-group list-group-flush">
+        {recentActivity.map((activity, index) => (
+          <li key={index} className="list-group-item">
+            <div className="d-flex justify-content-between">
+              <span className="fw-semibold">{activity.action}</span>
+              <small className="text-muted">{new Date(activity.timestamp).toLocaleTimeString()}</small>
+            </div>
+            <small className="text-muted">{activity.details}</small>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</div>
+
                 </div>
               </div>
+
+              
               <div className="card">
                 <div className="card-header"><h5>Provider Approval Requests</h5></div>
                 <div className="card-body">
-                  {requests.length === 0 ? (<p>No pending requests.</p>) : (
-                    <table className="table table-bordered">
-                      <thead><tr><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
-                      <tbody>
-                        {requests.map((req) => (
-                          <tr key={req.id}>
-                            <td>{req.fullName}</td>
-                            <td>{req.email}</td>
-                            <td>
-                              <button className="btn btn-success me-2" onClick={() => approveRequest(req.id)}>Approve</button>
-                              <button className="btn btn-danger" onClick={() => rejectRequest(req.id)}>Reject</button>
-                            </td>
+                  {requests.length === 0 ? (
+                    <p>No pending requests.</p>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-bordered">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Organization</th>
+                            <th>Request Date</th>
+                            <th>Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {requests.map((req) => (
+                            <tr key={req.id}>
+                              <td>{req.fullName}</td>
+                              <td>{req.email}</td>
+                              <td>{req.organizationName || 'N/A'}</td>
+                              <td>{new Date(req.createdAt).toLocaleDateString()}</td>
+                              <td>
+                                <button className="btn btn-success me-2" onClick={() => approveRequest(req.id)}>
+                                  Approve
+                                </button>
+                                <button className="btn btn-danger" onClick={() => rejectRequest(req.id)}>
+                                  Reject
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               </div>
             </>
           )}
+
 
           {activePage === "students" && (
             <StudentManager
@@ -646,7 +761,6 @@ function AdminDashboard() {
               onToggleFeatured={handleToggleFeatured}
             />
           )}
-          {activePage === "aboutUs" && <AboutUsManagement />}
           {activePage === "applications" && (
             <div>
               <ul className="nav nav-tabs mb-4">
@@ -668,51 +782,52 @@ function AdminDashboard() {
                 </li>
               </ul>
 
-            {selectedApplicationsTab === 'admin' ? (
- <ApplicationsSection
-  applications={applications.filter(app => 
-    selectedApplicationsTab === 'admin' ? app.providerId === null : app.providerId !== null
-  )}
-  scholarships={scholarships.filter(s => 
-    selectedApplicationsTab === 'admin' ? s.providerId === null : s.providerId !== null
-  )}
-  selectedScholarshipId={selectedScholarshipId}
-  setSelectedScholarshipId={setSelectedScholarshipId}
-  onStatusChange={async (applicationId, newStatusId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `https://localhost:7255/api/application/${applicationId}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ statusId: newStatusId }),
-        }
-      );
-      if (!res.ok) throw new Error("Failed to update status");
-      fetchApplications();
-    } catch (error) {
-      console.error("Error updating status:", error);
-      alert(`Error: ${error.message}`);
-    }
-  }}
-  showActions={selectedApplicationsTab === 'admin'}
-  showDocuments={selectedApplicationsTab === 'admin'}
-/>
-) : (
-  <ApplicationsSection
-    applications={applications.filter(app => app.providerId !== null)}
-    scholarships={scholarships.filter(s => s.providerId !== null)}
-    selectedScholarshipId={selectedScholarshipId}
-    setSelectedScholarshipId={setSelectedScholarshipId}
-    showActions={false}
-    showDocuments={false}
-    showStatusOnly={true} 
-  />
-)}
+              {selectedApplicationsTab === 'admin' ? (
+                <ApplicationsSection
+                  applications={applications.filter(app => {
+                    const s = scholarships.find(s => s.id === app.scholarshipId);
+                    return !s?.providerId; 
+                  })}
+                  scholarships={scholarships.filter(s => !s.providerId)}
+                  selectedScholarshipId={selectedScholarshipId}
+                  setSelectedScholarshipId={setSelectedScholarshipId}
+                  onStatusChange={async (applicationId, newStatusId) => {
+                    try {
+                      const token = localStorage.getItem("token");
+                      const res = await fetch(
+                        `https://localhost:7255/api/application/${applicationId}/status`,
+                        {
+                          method: "PUT",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({ statusId: newStatusId }),
+                        }
+                      );
+                      if (!res.ok) throw new Error("Failed to update status");
+                      fetchApplications();
+                    } catch (error) {
+                      console.error("Error updating status:", error);
+                      alert(`Error: ${error.message}`);
+                    }
+                  }}
+                  showActions={true}
+                  showDocuments={true}
+                />
+              ) : (
+                <ApplicationsSection
+                  applications={applications.filter(app => {
+                    const s = scholarships.find(s => s.Id === app.ScholarshipId);
+                    return s && s.ProviderId !== null;
+                  })}
+                  scholarships={scholarships.filter(s => s.ProviderId !== null)}
+                  selectedScholarshipId={selectedScholarshipId}
+                  setSelectedScholarshipId={setSelectedScholarshipId}
+                  showActions={false}
+                  showDocuments={false}
+                />
+              )}
             </div>
           )}
 
@@ -856,4 +971,4 @@ function AdminDashboard() {
   );
 }
 
-export default AdminDashboard;
+export default AdminDashboard; 
