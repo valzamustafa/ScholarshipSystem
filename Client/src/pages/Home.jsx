@@ -46,37 +46,35 @@ const fetchFeedbacks = async () => {
 
   fetchFeedbacks();
 }, []);
-  const handleSubmitFeedback = async (feedbackData) => {
+ const handleSubmitFeedback = async (feedbackData) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("https://localhost:7255/api/feedback", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
-        body: JSON.stringify({
-          comment: feedbackData.comment,
-          rating: feedbackData.rating,
-          userId: user?.id || null,
-          scholarshipId: feedbackData.scholarshipId
-        }),
-      });
+        const token = localStorage.getItem("token");
+        const response = await fetch("https://localhost:7255/api/feedback", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": token ? `Bearer ${token}` : ""
+            },
+            body: JSON.stringify({
+                comment: feedbackData.comment,
+                rating: feedbackData.rating,
+                scholarshipId: feedbackData.scholarshipId
+            }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to submit feedback");
-      }
-      
-      alert("Feedback submitted successfully!");
-      setShowFeedbackForm(false);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to submit feedback");
+        }
+        
+        const data = await response.json();
+        setShowFeedbackForm(false);
+        
     } catch (error) {
-      console.error("Error submitting feedback:", error);
-      alert(error.message);
+        console.error("Error submitting feedback:", error);
+        alert(error.message);
     }
-  };
-
- 
+}; 
   const universityLogos = [
     { name: 'Harvard', country: 'USA' },
     { name: 'Oxford', country: 'UK' },
@@ -142,11 +140,10 @@ const fetchFeedbacks = async () => {
           </button>
         </div>
 
-       <FeedbackForm 
+      <FeedbackForm 
   show={showFeedbackForm}
   onClose={() => setShowFeedbackForm(false)}
   onSubmit={handleSubmitFeedback}
-  scholarships={scholarships}
 />
         
 
@@ -169,7 +166,15 @@ const fetchFeedbacks = async () => {
               className={`btn btn-outline-light btn-lg px-4 py-3 fw-bold ${hoveredBtn === 'learn' ? 'animate__animated animate__pulse' : ''}`}
               onMouseEnter={() => setHoveredBtn('learn')}
               onMouseLeave={() => setHoveredBtn(null)}
-              style={{ transition: 'all 0.3s ease' }}
+              style={{
+          backgroundColor: '#0077b6',
+          color: 'white',
+          border: 'none',
+          transition: 'all 0.3s ease',
+          ':hover': {
+            backgroundColor: '#005f92'
+          }
+        }}
               onClick={() => navigate('/about')}
             >
               Learn More
@@ -241,6 +246,15 @@ const fetchFeedbacks = async () => {
               </ul>
               <button 
                 className="btn btn-primary btn-lg mt-3 px-4"
+                style={{
+          backgroundColor: '#0077b6',
+          color: 'white',
+          border: 'none',
+          transition: 'all 0.3s ease',
+          ':hover': {
+            backgroundColor: '#005f92'
+          }
+        }}
                 onClick={() => navigate('/about')}
               >
                 Learn More 
@@ -395,6 +409,15 @@ const fetchFeedbacks = async () => {
     <div className="text-center mt-4">
       <button 
         className="btn btn-primary"
+        style={{
+          backgroundColor: '#0077b6',
+          color: 'white',
+          border: 'none',
+          transition: 'all 0.3s ease',
+          ':hover': {
+            backgroundColor: '#005f92'
+          }
+        }}
         onClick={() => setShowFeedbackForm(true)}
       >
        Give Feedback
@@ -403,28 +426,48 @@ const fetchFeedbacks = async () => {
   </div>
 </section>
       
-      <section className="py-5 bg-primary text-white">
-        <div className="container text-center">
-          <h2 className="display-5 fw-bold mb-4">Ready to Apply for your Scholarship?</h2>
-          <p className="lead mb-5">Register now and start your academic journey with us</p>
-          <div className="d-flex justify-content-center gap-3">
-            <button
-              className="btn btn-light btn-lg px-4 py-3 fw-bold shadow-lg"
-              style={{ transition: 'all 0.3s ease' }}
-              onClick={() => navigate('/register')}
-            >
-             Register for free
-            </button>
-            <button
-              className="btn btn-outline-light btn-lg px-4 py-3 fw-bold"
-              style={{ transition: 'all 0.3s ease' }}
-              onClick={() => navigate('/contact')}
-            >
-              Talk with Us
-            </button>
-          </div>
-        </div>
-      </section>
+     <section className="py-5" style={{ backgroundColor: '#dbefff' }}>
+  <div className="container text-center">
+    <h2 className="display-5 fw-bold mb-4" style={{ color: '#004D7C' }}>
+      Ready to Apply for your Scholarship?
+    </h2>
+    <p className="lead mb-5 text-muted">
+      Register now and start your academic journey with us
+    </p>
+    <div className="d-flex justify-content-center gap-3">
+      <button
+        className="btn btn-lg px-4 py-3 fw-bold shadow-sm"
+        style={{
+          backgroundColor: '#0077b6',
+          color: 'white',
+          border: 'none',
+          transition: 'all 0.3s ease',
+          ':hover': {
+            backgroundColor: '#005f92'
+          }
+        }}
+        onClick={() => navigate('/register')}
+      >
+        Register for free
+      </button>
+      <button
+        className="btn btn-outline-primary btn-lg px-4 py-3 fw-bold"
+        style={{
+          backgroundColor: '#0077b6',
+          color: 'white',
+          border: 'none',
+          transition: 'all 0.3s ease',
+          ':hover': {
+            backgroundColor: '#005f92'
+          }
+        }}
+        onClick={() => navigate('/contactus')}
+      >
+        Talk with Us
+      </button>
+    </div>
+  </div>
+</section>
     </div>
   );
 };

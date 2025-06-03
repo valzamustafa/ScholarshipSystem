@@ -149,54 +149,59 @@ public async Task<IActionResult> GetByProvider(int providerId)
 
 
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromForm] CreateScholarshipDto dto)
+       [HttpPut("{id}")]
+public async Task<IActionResult> Update(int id, [FromForm] CreateScholarshipDto dto)
+{
+    var existing = await _context.Scholarship.FindAsync(id);
+    if (existing == null)
+        return NotFound();
+
+   
+    if (dto.ProviderId.HasValue && !await _context.Provider.AnyAsync(p => p.Id == dto.ProviderId))
+        return BadRequest("ProviderId nuk ekziston.");
+
+    if (!await _context.ScholarshipCategory.AnyAsync(c => c.Id == dto.ScholarshipCategoryId))
+        return BadRequest("ScholarshipCategoryId nuk ekziston.");
+
+    if (!await _context.ScholarshipType.AnyAsync(t => t.Id == dto.ScholarshipTypeId))
+        return BadRequest("ScholarshipTypeId nuk ekziston.");
+
+    existing.Title = dto.Title;
+    existing.Description = dto.Description;
+    existing.ApplyLink = dto.ApplyLink;
+    existing.IsAvailable = dto.IsAvailable;
+    existing.Deadline = dto.Deadline;
+    
+ 
+    if (dto.ProviderId.HasValue)
+    {
+        existing.ProviderId = dto.ProviderId;
+    }
+
+    existing.ScholarshipCategoryId = dto.ScholarshipCategoryId;
+    existing.ScholarshipTypeId = dto.ScholarshipTypeId;
+
+    if (dto.ImageFile != null)
+    {
+        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Uploads");
+
+        if (!Directory.Exists(uploadsFolder))
+            Directory.CreateDirectory(uploadsFolder);
+
+        string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.ImageFile.FileName);
+        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
         {
-            var existing = await _context.Scholarship.FindAsync(id);
-            if (existing == null)
-                return NotFound();
-
-            if (!await _context.Provider.AnyAsync(p => p.Id == dto.ProviderId))
-                return BadRequest("ProviderId nuk ekziston.");
-
-            if (!await _context.ScholarshipCategory.AnyAsync(c => c.Id == dto.ScholarshipCategoryId))
-                return BadRequest("ScholarshipCategoryId nuk ekziston.");
-
-            if (!await _context.ScholarshipType.AnyAsync(t => t.Id == dto.ScholarshipTypeId))
-                return BadRequest("ScholarshipTypeId nuk ekziston.");
-
-            existing.Title = dto.Title;
-            existing.Description = dto.Description;
-            existing.ApplyLink = dto.ApplyLink;
-            existing.IsAvailable = dto.IsAvailable;
-            existing.Deadline = dto.Deadline;
-           
-            existing.ProviderId = dto.ProviderId;
-            existing.ScholarshipCategoryId = dto.ScholarshipCategoryId;
-            existing.ScholarshipTypeId = dto.ScholarshipTypeId;
-
-            if (dto.ImageFile != null)
-            {
-                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Uploads");
-
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.ImageFile.FileName);
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await dto.ImageFile.CopyToAsync(stream);
-                }
-
-                existing.ImageFile = "/Uploads/" + uniqueFileName;
-            }
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            await dto.ImageFile.CopyToAsync(stream);
         }
 
+        existing.ImageFile = "/Uploads/" + uniqueFileName;
+    }
+
+    await _context.SaveChangesAsync();
+    return NoContent();
+}
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)

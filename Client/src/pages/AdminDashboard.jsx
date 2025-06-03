@@ -78,25 +78,34 @@ const [adminUnreadCount, setAdminUnreadCount] = useState(0);
   const [admins, setAdmins] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
- useEffect(() => {
-  const loadAdminNotifications = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("https://localhost:7255/api/notification/admin", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch admin notifications");
-      const data = await res.json();
-      setAdminNotifications(Array.isArray(data) ? data : []);
-      setAdminUnreadCount(data.filter(n => !n.isRead).length);
-    } catch (err) {
-      console.error("Error fetching admin notifications:", err);
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!feedbackData.scholarshipId) {
+        alert("Please select a scholarship");
+        return;
     }
-  };
 
-  loadAdminNotifications();
-}, []);
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/feedback`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(feedbackData)
+        });
+
+        if (!response.ok) throw new Error("Failed to submit feedback");
+        
+        // Nëse dëshiron të tregosh një mesazh suksesi
+        alert("Feedback submitted successfully!");
+        onClose();
+    } catch (error) {
+        console.error("Error submitting feedback:", error);
+        alert(`Error: ${error.message}`);
+    }
+};
 
 
 
@@ -141,6 +150,25 @@ const [adminUnreadCount, setAdminUnreadCount] = useState(0);
       fetchContactMessage();
     }
   }, [activePage]);
+  useEffect(() => {
+    const loadAdminNotifications = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch("https://localhost:7255/api/notification/admin", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error("Failed to fetch admin notifications");
+            const data = await res.json();
+            setAdminNotifications(Array.isArray(data) ? data : []);
+            setAdminUnreadCount(data.filter(n => !n.isRead).length);
+        } catch (err) {
+            console.error("Error fetching admin notifications:", err);
+        }
+    };
+
+    loadAdminNotifications();
+}, []);
 
   async function fetchAdmins() {
     try {
@@ -703,19 +731,7 @@ async function fetchStats() {
     </div>
   ))}
 </div>
-{adminNotifications.length > 0 && (
-  <div className="card mt-3">
-    <div className="card-header">Recent Notifications</div>
-    <ul className="list-group list-group-flush">
-      {adminNotifications.slice(0, 5).map((n, i) => (
-        <li key={i} className="list-group-item d-flex justify-content-between">
-          <span>{n.message}</span>
-          <small className="text-muted">{new Date(n.timestamp).toLocaleString()}</small>
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
+
 
 
 

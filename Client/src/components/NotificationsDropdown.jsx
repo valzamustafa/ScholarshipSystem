@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FiBell, FiCheck, FiTrash2 } from 'react-icons/fi';
-import { Dropdown } from 'react-bootstrap';
+import { FiBell, FiCheck, FiTrash2, FiCheckCircle } from 'react-icons/fi';
+import { Dropdown, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { fetchUserNotifications,  markAsRead,markAllAsRead } from '../services/notificationService';
+import { fetchUserNotifications, markAsRead, markAllAsRead } from '../services/notificationService';
+
 function NotificationsDropdown() {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -12,50 +13,42 @@ function NotificationsDropdown() {
     const navigate = useNavigate();
 
     useEffect(() => {
-      const loadNotifications = async () => {
-    try {
-        setLoading(true);
-        setError(null);
-        
-        const data = await fetchUserNotifications();
-        setNotifications(Array.isArray(data) ? data : []);
-        setUnreadCount(data.filter(n => !n.isRead).length);
-    } catch (error) {
-        console.error("Error loading notifications:", error);
-        setError(error.message || "Failed to load notifications");
-        setNotifications([]);
-        setUnreadCount(0);
-    } finally {
-        setLoading(false);
-    }
-};
+        const loadNotifications = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                const data = await fetchUserNotifications();
+                setNotifications(Array.isArray(data) ? data : []);
+                setUnreadCount(data.filter(n => !n.isRead).length);
+            } catch (error) {
+                console.error("Error loading notifications:", error);
+                setError(error.message || "Failed to load notifications");
+                setNotifications([]);
+                setUnreadCount(0);
+            } finally {
+                setLoading(false);
+            }
+        };
 
         loadNotifications();
- const interval = setInterval(loadNotifications, 30000);
+        const interval = setInterval(loadNotifications, 30000);
         return () => clearInterval(interval);
     }, []);
 
-    const handleMarkAsRead = async (id) => {
+    const handleMarkAllAsRead = async () => {
         try {
-            await markAsRead(id);
-            setNotifications(notifications.map(n => 
-                n.id === id ? { ...n, isRead: true } : n
-            ));
-            setUnreadCount(prev => prev - 1);
+            await markAllAsRead();
+            setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0);
         } catch (error) {
-            console.error("Error marking notification as read:", error);
+            console.error("Error marking all notifications as read:", error);
         }
     };
-
-     
-    
-
-    
 
     const handleNotificationClick = (notification) => {
         markAsRead(notification.id);
         
-       
         if (notification.relatedEntityType === "Application") {
             navigate(`/applications/${notification.relatedEntityId}`);
         } else if (notification.relatedEntityType === "Scholarship") {
@@ -77,11 +70,27 @@ function NotificationsDropdown() {
             </Dropdown.Toggle>
 
             <Dropdown.Menu className="p-0" style={{ width: '350px', maxHeight: '400px', overflowY: 'auto' }}>
-                <div className="d-flex justify-content-between p-3 border-bottom">
-                    <h6 className="mb-0">Notifications</h6>
-                    <small className="text-muted">{notifications.length} total</small>
+                <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <div>
+                        <h6 className="mb-0">Notifications</h6>
+                        <small className="text-muted">{notifications.length} total</small>
+                    </div>
+                    {unreadCount > 0 && (
+                        <Button 
+                            variant="link" 
+                            size="sm" 
+                            className="text-primary p-0"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAllAsRead();
+                            }}
+                            title="Mark all as read"
+                        >
+                            <FiCheckCircle size={16} className="me-1" />
+                            Mark all
+                        </Button>
+                    )}
                 </div>
-
                 {loading ? (
                     <Dropdown.Item className="text-center py-3">
                         Loading notifications...

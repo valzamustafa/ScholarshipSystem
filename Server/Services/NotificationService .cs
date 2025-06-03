@@ -34,14 +34,76 @@ public class NotificationService : INotificationService
         await _context.Notification.AddAsync(notification);
         await _context.SaveChangesAsync();
     }
+    public async Task CreateNewFeedbackNotificationForAdmin(int adminId, int feedbackId)
+{
+    var feedback = await _context.Feedback
+        .Include(f => f.User)
+        .Include(f => f.Scholarship)
+        .FirstOrDefaultAsync(f => f.Id == feedbackId);
+
+    if (feedback == null) return;
+
+    string studentName = feedback.User?.FullName ?? "A student";
+    string scholarshipName = feedback.Scholarship?.Title ?? "a scholarship";
+
+    await CreateNotification(
+        adminId,
+        $"New feedback received from {studentName} for {scholarshipName}",
+        "NewFeedback",
+        "Feedback",
+        feedbackId
+    );
+}
+
+public async Task CreateNewFeedbackNotificationForProvider(int providerId, int feedbackId)
+{
+    var feedback = await _context.Feedback
+        .Include(f => f.User)
+        .Include(f => f.Scholarship)
+        .FirstOrDefaultAsync(f => f.Id == feedbackId);
+
+    if (feedback == null) return;
+
+    string studentName = feedback.User?.FullName ?? "A student";
+    string scholarshipName = feedback.Scholarship?.Title ?? "your scholarship";
+
+    await CreateNotification(
+        providerId,
+        $"New feedback received from {studentName} for {scholarshipName}",
+        "NewFeedback",
+        "Feedback",
+        feedbackId
+    );
+}
+    public async Task CreateNewFeedbackNotification(int adminId, int feedbackId)
+    {
+        var feedback = await _context.Feedback
+           .Include(f => f.User)
+            .Include(f => f.Scholarship)
+            .FirstOrDefaultAsync(f => f.Id == feedbackId);
+
+        if (feedback == null) return;
+
+        string studentName = feedback.User?.FullName ?? "A user";
+
+        string scholarshipName = feedback.Scholarship?.Title ?? "a scholarship";
+
+        await CreateNotification(
+            adminId,
+            $"New feedback received from {studentName} for {scholarshipName}",
+            "NewFeedback",
+            "Feedback",
+            feedbackId
+        );
+    }
 
 public async Task CreateApplicationSubmittedNotification(int studentId, int applicationId)
-{
-    await CreateNotification(studentId,
-        "Your scholarship application was submitted successfully",
-        "ApplicationSubmitted",
-        "Application", applicationId);
-}
+    {
+        await CreateNotification(studentId,
+            "Your scholarship application was submitted successfully",
+            "ApplicationSubmitted",
+            "Application", applicationId);
+    }
 
     public async Task CreateApplicationAcceptedNotification(int studentId, int applicationId)
     {
@@ -205,6 +267,8 @@ public async Task CreateApplicationSubmittedNotification(int studentId, int appl
             "NewScholarshipAdded" => "🏆",
             "NewStudentRegistered" => "👨‍🎓",
             "UserReport" => "🚨",
+            "NewFeedback" => "💬",
+             "FeedbackSubmitted" => "✅",
             "MonthlyStatistics" => "📊",
             _ => "🔔"
         };

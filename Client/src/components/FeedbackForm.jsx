@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import { Form, Button, Modal } from "react-bootstrap";
 import { FiX } from "react-icons/fi";
 
-function FeedbackForm({ show, onClose, onSubmit, scholarships }) {
+function FeedbackForm({ show, onClose, onSubmit }) {
   const [feedbackData, setFeedbackData] = useState({
     comment: "",
     rating: 0,
-    scholarshipId: "",
   });
 
   const handleChange = (e) => {
@@ -14,13 +13,31 @@ function FeedbackForm({ show, onClose, onSubmit, scholarships }) {
     setFeedbackData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!feedbackData.scholarshipId) {
-      alert("Please select a scholarship");
-      return;
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://localhost:7255/api/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(feedbackData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to submit feedback");
+      }
+      
+      const data = await response.json();
+      alert("Feedback submitted successfully!");
+      onClose();
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      alert(`Error: ${error.message}`);
     }
-    onSubmit(feedbackData);
   };
 
   return (
@@ -30,23 +47,6 @@ function FeedbackForm({ show, onClose, onSubmit, scholarships }) {
       </Modal.Header>
       <Modal.Body>
         <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Scholarship *</Form.Label>
-            <Form.Select
-              name="scholarshipId"
-              value={feedbackData.scholarshipId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select a scholarship</option>
-              {scholarships.map(scholarship => (
-                <option key={scholarship.id} value={scholarship.id}>
-                  {scholarship.title}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-
           <Form.Group className="mb-3">
             <Form.Label>Rating *</Form.Label>
             <Form.Select
