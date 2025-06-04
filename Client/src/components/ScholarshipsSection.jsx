@@ -47,7 +47,7 @@ function ScholarshipsSection({
               <tr>
                 <th>Title</th>
                 <th>Description</th>
-                
+                <th>Study Field</th>
                 <th>Deadline</th>
                 <th>Available</th>
                 <th>Provider</th>
@@ -66,16 +66,16 @@ function ScholarshipsSection({
                       ? `${scholarship.description.substring(0, 50)}...`
                       : scholarship.description}
                   </td>
-                  
-               <td>
-  {scholarship.deadline && !isNaN(new Date(scholarship.deadline).getTime())
-    ? new Date(scholarship.deadline).toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      })
-    : 'Deadline not available'}
-</td>
+                  <td>{scholarship.studyField || 'N/A'}</td>
+                  <td>
+                    {scholarship.deadline && !isNaN(new Date(scholarship.deadline).getTime())
+                      ? new Date(scholarship.deadline).toLocaleDateString('en-GB', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric' 
+                        })
+                      : 'N/A'}
+                  </td>
                   <td>
                     <span className={`badge ${scholarship.isAvailable ? "bg-success" : "bg-secondary"}`}>
                       {scholarship.isAvailable ? "Yes" : "No"}
@@ -104,7 +104,8 @@ function ScholarshipsSection({
                           onEdit({
                             ...scholarship,
                             scholarshipCategoryId: scholarship.scholarshipCategory?.id,
-                            scholarshipTypeId: scholarship.scholarshipType?.id
+                            scholarshipTypeId: scholarship.scholarshipType?.id,
+                            studyField: scholarship.studyField || ''
                           });
                           onShowForm(true);
                         }}

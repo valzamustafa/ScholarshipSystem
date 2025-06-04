@@ -8,6 +8,7 @@ public class ScholarshipDto
      public string? ImageFile { get; set; } 
          public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
       public DateTime? Deadline { get; set; } 
+       public string? StudyField { get; set; }
     public int? ProviderId { get; set; }
     public string ProviderName { get; set; } = string.Empty;  
      public string ProviderEmail { get; set; } = string.Empty;  

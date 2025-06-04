@@ -479,6 +479,20 @@ useEffect(() => {
                     </label>
                   </div>
                 </div>
+                <div className="col-md-6">
+    <div className="form-floating">
+        <input
+            type="text"
+            className="form-control"
+            id="studyField"
+            placeholder="Study Field"
+            name="studyField"
+            value={formData.studyField || ''}
+            onChange={handleInputChange}
+        />
+        <label htmlFor="studyField">Study Field</label>
+    </div>
+</div>
 
                 <div className="col-md-12">
                   <label htmlFor="imageFile" className="form-label">
@@ -544,6 +558,7 @@ useEffect(() => {
                   <th>Category</th>
                   <th>Deadline</th>
 
+                   <th>Study Field</th>
                   <th>Type</th>
                   <th>Image</th>
                   <th style={{ width: "110px" }}>Actions</th>
@@ -583,6 +598,7 @@ useEffect(() => {
                         </a>
                       </td>
                       <td className="text-center">{scholarship.isAvailable ? "Yes" : "No"}</td>
+                      <td>{scholarship.studyField || 'N/A'}</td>
                       <td>{getProviderName(scholarship.providerId)}</td>
                       <td>{getCategoryName(scholarship.scholarshipCategoryId)}</td>
                       <td>{getTypeName(scholarship.scholarshipTypeId)}</td>

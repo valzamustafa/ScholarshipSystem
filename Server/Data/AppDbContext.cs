@@ -13,7 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<ApplicationDocument> ApplicationDocument { get; set; }
     public DbSet<ApplicationStatus> ApplicationStatus { get; set; }
     public DbSet<AuditLog> AuditLog { get; set; }
-    public DbSet<Country> Country { get; set; }
+
     public DbSet<EligibilityCriteria> EligibilityCriteria { get; set; }
     public DbSet<Feedback> Feedback { get; set; }
     public DbSet<Message> Message { get; set; }

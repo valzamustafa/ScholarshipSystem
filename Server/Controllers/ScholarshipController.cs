@@ -31,7 +31,7 @@ public async Task<IActionResult> GetByProvider(int providerId)
             s.Id,
             s.Title,
             s.Description,
-        
+         s.StudyField,
             s.Deadline, 
             s.IsAvailable,
             s.ImageFile,
@@ -54,7 +54,7 @@ public async Task<IActionResult> GetAllScholarships()
             Id = s.Id,
             Title = s.Title,
             Description = s.Description,
-            
+            StudyField = s.StudyField,
             IsAvailable = s.IsAvailable,
             Deadline = s.Deadline,
             ImageFile = s.ImageFile,
@@ -119,6 +119,7 @@ var scholarship = new Scholarship
     IsAvailable = dto.IsAvailable,
     Deadline = dto.Deadline,
     ProviderId = dto.ProviderId,
+     StudyField = dto.StudyField,
     ScholarshipCategoryId = dto.ScholarshipCategoryId,
     ScholarshipTypeId = dto.ScholarshipTypeId
 };
@@ -170,7 +171,7 @@ public async Task<IActionResult> Update(int id, [FromForm] CreateScholarshipDto 
 
     existing.Title = dto.Title;
     existing.Description = dto.Description;
-   
+   existing.StudyField = dto.StudyField;
     existing.IsAvailable = dto.IsAvailable;
     existing.Deadline = dto.Deadline;
     

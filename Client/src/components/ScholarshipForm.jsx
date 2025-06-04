@@ -9,16 +9,16 @@ function ScholarshipForm({
   onClose, 
   onSubmit 
 }) {
-const [formData, setFormData] = useState({
-  title: scholarship?.title || "",
-  description: scholarship?.description || "",
-  
-  deadline: scholarship?.deadline || "",
-  isAvailable: scholarship?.isAvailable || true,
-  scholarshipCategoryId: scholarship?.scholarshipCategory?.id || "",
-  scholarshipTypeId: scholarship?.scholarshipType?.id || "",
-  imageFile: null
-});
+  const [formData, setFormData] = useState({
+    title: scholarship?.title || "",
+    description: scholarship?.description || "",
+    studyField: scholarship?.studyField || "",
+    deadline: scholarship?.deadline || "",
+    isAvailable: scholarship?.isAvailable || true,
+    scholarshipCategoryId: scholarship?.scholarshipCategory?.id || "",
+    scholarshipTypeId: scholarship?.scholarshipType?.id || "",
+    imageFile: null
+  });
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -29,53 +29,54 @@ const [formData, setFormData] = useState({
               value
     }));
   };
-const handleSubmit = (e) => {
-  e.preventDefault();
-  e.stopPropagation(); 
 
-  if (!formData.title || !formData.description || 
-      !formData.scholarshipCategoryId || !formData.scholarshipTypeId) {
-    alert("Please fill all required fields");
-    return;
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation(); 
 
-  const formDataToSend = new FormData();
-  formDataToSend.append("Title", formData.title);
-  formDataToSend.append("Description", formData.description);
-
-  formDataToSend.append("Deadline", formData.deadline || "");
-  formDataToSend.append("IsAvailable", formData.isAvailable);
-  formDataToSend.append("ScholarshipCategoryId", formData.scholarshipCategoryId);
-  formDataToSend.append("ScholarshipTypeId", formData.scholarshipTypeId);
-  formDataToSend.append("ProviderId", providerId);
-  
-  if (formData.imageFile) {
-    formDataToSend.append("ImageFile", formData.imageFile);
-  }
-
-  onSubmit(formDataToSend);
-};
-  return (
-    <div  className="modal-backdrop" 
-  style={{
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000
-  }}
-  onClick={(e) => {
-   
-    if (e.target === e.currentTarget) {
-      onClose();
+    if (!formData.title || !formData.description || 
+        !formData.scholarshipCategoryId || !formData.scholarshipTypeId) {
+      alert("Please fill all required fields");
+      return;
     }
-  }}
->
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("Title", formData.title);
+    formDataToSend.append("Description", formData.description);
+    formDataToSend.append("StudyField", formData.studyField);
+    formDataToSend.append("Deadline", formData.deadline || "");
+    formDataToSend.append("IsAvailable", formData.isAvailable);
+    formDataToSend.append("ScholarshipCategoryId", formData.scholarshipCategoryId);
+    formDataToSend.append("ScholarshipTypeId", formData.scholarshipTypeId);
+    formDataToSend.append("ProviderId", providerId);
+    
+    if (formData.imageFile) {
+      formDataToSend.append("ImageFile", formData.imageFile);
+    }
+
+    onSubmit(formDataToSend);
+  };
+
+  return (
+    <div className="modal-backdrop" 
+      style={{
+        position: 'relative',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="modal-content bg-white p-4 rounded" style={{ width: '600px', maxWidth: '90%' }}>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h4>{scholarship ? "Edit Scholarship" : "Add New Scholarship"}</h4>
@@ -109,19 +110,26 @@ const handleSubmit = (e) => {
             />
           </div>
           
-          
-      
+          <div className="mb-3">
+            <label className="form-label">Study Field/University Direction</label>
+            <input
+              type="text"
+              className="form-control"
+              name="studyField"
+              value={formData.studyField}
+              onChange={handleChange}
+              placeholder="e.g. Computer Science, Medicine, etc."
+            />
+          </div>
 
           <div className="mb-3">
             <label className="form-label">Deadline</label>
-           <input 
-  type="date"
-  name="deadline"
-  value={formData.deadline || ''}
-  onChange={handleChange}
-/>
-
-
+            <input 
+              type="date"
+              name="deadline"
+              value={formData.deadline || ''}
+              onChange={handleChange}
+            />
           </div>
           
           <div className="mb-3">

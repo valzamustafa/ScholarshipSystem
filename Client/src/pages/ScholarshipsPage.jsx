@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Button, Card, Form, InputGroup, Pagination, Badge, Alert, Spinner, Modal } from "react-bootstrap";
-import { FiSearch, FiCalendar, FiAward, FiFilter, FiX, FiEdit, FiTrash2, FiChevronDown, FiChevronUp ,FiUser,FiMail} from "react-icons/fi";
+import { FiSearch, FiCalendar, FiAward, FiFilter,FiBook, FiX, FiEdit, FiTrash2, FiChevronDown, FiChevronUp ,FiUser,FiMail} from "react-icons/fi";
 import { FiMessageSquare } from "react-icons/fi";
 import herosectionscholarships from '../assets/herosectionscholarships.png';
 import SendMessageModal from "../components/SendMessageModal";
@@ -23,6 +23,7 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
   subject: '',
   content: ''
 });
+
   const { user } = useAuth();
   const [loading, setLoading] = useState({
     scholarships: false,
@@ -35,7 +36,8 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
     search: "",
     category: "all",
     type: "all",
-    status: "all"
+    status: "all",
+     studyField: "" 
   });
   const [currentPage, setCurrentPage] = useState(1);
   const scholarshipsPerPage = 6;
@@ -76,17 +78,18 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
     }
   };
 
-  const fetchScholarships = async () => {
-    try {
-      const res = await fetch("https://localhost:7255/api/scholarship", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      const data = await res.json();
-      setScholarships(data);
-    } catch (err) {
-      setError("Failed to load scholarships");
-    }
-  };
+const fetchScholarships = async () => {
+  try {
+    const res = await fetch("https://localhost:7255/api/scholarship", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    const data = await res.json();
+    console.log(data[0]); 
+    setScholarships(data);
+  } catch (err) {
+    setError("Failed to load scholarships");
+  }
+};
 
   const fetchCategories = async () => {
     try {
@@ -161,19 +164,20 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
     }
   };
 
-  const handleEdit = (scholarship) => {
-    setFormData({
-      title: scholarship.title,
-      description: scholarship.description,
-      deadline: scholarship.deadline,
-      isAvailable: scholarship.isAvailable,
-      scholarshipCategoryId: scholarship.scholarshipCategoryId,
-      scholarshipTypeId: scholarship.scholarshipTypeId,
-      applyLink: scholarship.applyLink
-    });
-    setEditingId(scholarship.id);
-    setShowModal(true);
-  };
+ const handleEdit = (scholarship) => {
+  setFormData({
+    title: scholarship.title,
+    description: scholarship.description,
+    studyField: scholarship.studyField || '',
+    deadline: scholarship.deadline,
+    isAvailable: scholarship.isAvailable,
+    scholarshipCategoryId: scholarship.scholarshipCategoryId,
+    scholarshipTypeId: scholarship.scholarshipTypeId,
+    applyLink: scholarship.applyLink
+  });
+  setEditingId(scholarship.id);
+  setShowModal(true);
+};
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this scholarship?")) return;
@@ -206,8 +210,11 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
       if (filters.status === "active" && !isActive) return false;
       if (filters.status === "expired" && isActive) return false;
     }
+   if (filters.studyField && !scholarship.studyField?.toLowerCase().includes(filters.studyField.toLowerCase())) {
+        return false;
+    }
     return true;
-  });
+});
 const handleSendMessage = async () => {
   if (!messageContent.content?.trim()) {
     setError('Message content is required');
@@ -322,6 +329,13 @@ const handleSendMessage = async () => {
         value={filters.search}
         onChange={handleFilterChange}
       />
+      <Form.Control
+    placeholder="Filter by study field..."
+    name="studyField"
+    value={filters.studyField}
+    onChange={handleFilterChange}
+    style={{ width: '200px', flex: '1 0 auto' }}
+/>
     </InputGroup>
 
    
@@ -509,6 +523,13 @@ const handleSendMessage = async () => {
                           <small>Deadline: {new Date(scholarship.deadline).toLocaleDateString()}</small>
                         </div>
                       </div>
+                    
+<div className="mb-2">
+  <div className="d-flex align-items-center gap-2 text-muted">
+    <FiBook size={16} /> 
+    <small>Study Field: {scholarship.studyField || 'Not specified'}</small>
+  </div>
+</div> 
                       <div className="mt-auto pt-3">
                         <div className="d-flex justify-content-between align-items-center">
                           {(role === "admin" || role === "provider") && (
@@ -680,6 +701,17 @@ const handleSendMessage = async () => {
                 required
               />
             </Form.Group>
+      
+<Form.Group className="mb-3">
+  <Form.Label>Study Field</Form.Label>
+  <Form.Control
+    type="text"
+    name="studyField"
+    value={formData.studyField || ''}
+    onChange={handleInputChange}
+    placeholder="e.g. Computer Science, Medicine"
+  />
+</Form.Group>
             <Form.Group className="mb-3">
               <Form.Check
                 type="checkbox"
