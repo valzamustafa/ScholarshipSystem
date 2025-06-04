@@ -11,53 +11,88 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 using Server.DTOs;
+
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
 public class MessageController : ControllerBase
 {
     private readonly AppDbContext _context;
- private readonly INotificationService _notificationService;
+    private readonly INotificationService _notificationService;
+    
     public MessageController(AppDbContext context, INotificationService notificationService)
     {
         _context = context;
-          _notificationService = notificationService;
+        _notificationService = notificationService;
     }
-
-  [HttpPost]
+[HttpPost]
 public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDto)
 {
-    if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var senderId))
+    
+    var recipientExists = await _context.Student.AnyAsync(s => s.Id == messageDto.RecipientId)
+        || await _context.Provider.AnyAsync(p => p.Id == messageDto.RecipientId)
+        || await _context.Admin.AnyAsync(a => a.Id == messageDto.RecipientId);
+
+    if (!recipientExists)
     {
-        return Unauthorized("Invalid user ID");
+        return BadRequest("Recipient does not exist.");
     }
 
-    if (string.IsNullOrEmpty(messageDto.Content))
+  
+    if (messageDto.ScholarshipId.HasValue)
     {
-        return BadRequest("Message content is required");
+        var scholarshipExists = await _context.Scholarship.AnyAsync(s => s.Id == messageDto.ScholarshipId);
+        if (!scholarshipExists)
+        {
+            return BadRequest("Scholarship does not exist.");
+        }
     }
 
-    var message = new Message
+    try
     {
-        Content = messageDto.Content,
-        Subject=messageDto.Subject,
-        SenderId = senderId,
-        RecipientId = messageDto.RecipientId,
-        ScholarshipId = messageDto.ScholarshipId
-    };
+        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var senderId))
+        {
+            return Unauthorized("Invalid user ID");
+        }
 
-    _context.Message.Add(message);
-    await _context.SaveChangesAsync();
+        if (string.IsNullOrEmpty(messageDto.Content))
+        {
+            return BadRequest("Message content is required");
+        }
+
+        var message = new Message
+        {
+            Content = messageDto.Content,
+            Subject = messageDto.Subject,
+            SenderId = senderId,
+            RecipientId = messageDto.RecipientId,
+            ScholarshipId = messageDto.ScholarshipId,
+            ParentMessageId = messageDto.ParentMessageId
+        };
+
+        _context.Message.Add(message);
+        await _context.SaveChangesAsync();
+
+        var senderName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
         await _notificationService.CreateNotification(
-           messageDto.RecipientId,
-           $"New message from {User.FindFirst(ClaimTypes.Name)?.Value}",
-           "NewMessage",
-           "Message",
-           message.Id
+            messageDto.RecipientId,
+            $"New message from {senderName}",
+            "NewMessage",
+            "Message",
+            message.Id
         );
 
-    return Ok(new { message.Id });
+        return Ok(new { message.Id });
+    }
+    catch (Exception ex)
+    {
+        var inner = ex.InnerException?.Message ?? "No inner exception";
+        Console.WriteLine($"SendMessage failed: {ex.Message} | Inner: {inner}");
+        return StatusCode(500, $"Error: {ex.Message} | Inner: {inner}");
+    }
 }
+
+
 
     [HttpGet("received/{recipientId}")]
     public async Task<ActionResult<IEnumerable<MessageDto>>> GetReceivedMessages(int recipientId)
@@ -71,17 +106,61 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
             {
                 Id = m.Id,
                 Content = m.Content,
-                  Subject=m.Subject,
+                Subject = m.Subject,
                 SentAt = m.SentAt,
                 IsRead = m.IsRead,
-                SenderName = m.Sender.FullName,
-               ScholarshipTitle = m.Scholarship != null ? m.Scholarship.Title : string.Empty
+                SenderId = m.SenderId,
+                SenderName = m.Sender.FullName ?? "Unknown",
+                RecipientId = m.RecipientId,
+                RecipientName = m.Recipient.FullName ?? "Unknown",
+                ScholarshipId = m.ScholarshipId,
+                ScholarshipTitle = m.Scholarship != null ? m.Scholarship.Title : string.Empty,
+                ParentMessageId = m.ParentMessageId,
+                HasReplies = m.Replies.Any()
             })
             .ToListAsync();
 
         return Ok(messages);
     }
+[HttpGet("sent/{userId}")]
+public async Task<ActionResult<IEnumerable<MessageDto>>> GetSentMessages(int userId)
+{
+    var messages = await _context.Message
+        .Where(m => m.SenderId == userId)
+        .Include(m => m.Recipient)
+        .Include(m => m.Scholarship)
+        .OrderByDescending(m => m.SentAt)
+        .Select(m => new MessageDto
+        {
+            Id = m.Id,
+            Content = m.Content,
+            Subject = m.Subject,
+            SentAt = m.SentAt,
+            IsRead = m.IsRead,
+            SenderId = m.SenderId,
+            SenderName = m.Sender.FullName ?? "Unknown",
+            RecipientId = m.RecipientId,
+            RecipientName = m.Recipient.FullName ?? "Unknown",
+            ScholarshipId = m.ScholarshipId,
+            ScholarshipTitle = m.Scholarship != null ? m.Scholarship.Title : string.Empty,
+            ParentMessageId = m.ParentMessageId,
+            HasReplies = m.Replies.Any()
+        })
+        .ToListAsync();
 
+    return Ok(messages);
+}
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteMessage(int id)
+{
+    var message = await _context.Message.FindAsync(id);
+    if (message == null) return NotFound();
+
+    _context.Message.Remove(message);
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
     [HttpPut("{id}/read")]
     public async Task<IActionResult> MarkAsRead(int id)
     {
@@ -94,4 +173,3 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
         return NoContent();
     }
 }
-

@@ -29,7 +29,7 @@ namespace Server.Controllers
         }
 [HttpGet("current")]
 [Authorize]
-public async Task<ActionResult<Provider>> GetCurrentProvider()
+public async Task<ActionResult<object>> GetCurrentProvider()
 {
     var email = User.FindFirstValue(ClaimTypes.Email);
     if (string.IsNullOrEmpty(email))
@@ -41,8 +41,19 @@ public async Task<ActionResult<Provider>> GetCurrentProvider()
     if (provider == null)
         return NotFound();
 
-    return provider;
+    return Ok(new
+    {
+        id = provider.Id,
+        fullName = provider.FullName,
+        email = provider.Email,
+        organizationName = provider.OrganizationName,
+        phoneNumber = provider.PhoneNumber,
+        isApproved = provider.IsApproved,
+        roleId = provider.RoleId,
+        userId = provider.Id 
+    });
 }
+
         
         [HttpGet("{id}")]
         public async Task<ActionResult<Provider>> GetProvider(int id)

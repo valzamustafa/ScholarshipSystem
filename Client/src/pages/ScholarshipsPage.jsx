@@ -209,12 +209,13 @@ const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
     return true;
   });
 const handleSendMessage = async () => {
+  if (!messageContent.content?.trim()) {
+    setError('Message content is required');
+    return;
+  }
+
   const token = localStorage.getItem("token");
   try {
-    console.log("Sending message to provider:", selectedProvider); 
-    console.log("Message content:", messageContent); 
-    console.log("Scholarship ID:", selectedScholarshipId); 
-
     const response = await fetch('https://localhost:7255/api/message', {
       method: 'POST',
       headers: {
@@ -222,24 +223,20 @@ const handleSendMessage = async () => {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        subject: messageContent.subject,
+        subject: messageContent.subject || 'Question about scholarship', 
         content: messageContent.content,
         recipientId: selectedProvider.id,
-        scholarshipId: selectedScholarshipId
+        scholarshipId: selectedScholarshipId || null
       })
     });
 
-    console.log("Message send response:", response); 
     if (!response.ok) throw new Error('Failed to send message');
-    
-    const responseData = await response.json();
-    console.log("Message send response data:", responseData); 
     
     setShowMessageModal(false);
     setMessageContent({});
     return { success: true, message: 'Message sent successfully!' };
   } catch (error) {
-    console.error("Error sending message:", error); 
+    console.error("Error sending message:", error);
     setError(error.message);
     return { success: false, message: error.message };
   }

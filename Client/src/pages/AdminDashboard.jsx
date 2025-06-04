@@ -625,9 +625,7 @@ async function fetchStats() {
                 <FiMail className="me-2" /> Contact Messages
               </button>
             </li>
-            <li className="nav-item mb-3">
-              <button className={`nav-link text-white btn btn-link text-start ${activePage === "reports" ? "fw-bold" : ""}`} onClick={() => setActivePage("reports")}> <FiCalendar className="me-2" /> Reports </button>
-            </li>
+            
             <li className="nav-item mb-3">
               <button 
                 className={`nav-link text-white btn btn-link text-start ${activePage === "settings" ? "fw-bold" : ""}`} 
@@ -1029,9 +1027,7 @@ async function fetchStats() {
             </div>
           )}
 
-          {activePage === "reports" && (
-            <div><h3>Reports Page</h3><p>Coming soon...</p></div>
-          )}
+         
         </div>
       </div>
     </div>
