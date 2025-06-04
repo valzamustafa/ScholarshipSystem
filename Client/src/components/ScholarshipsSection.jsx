@@ -47,7 +47,7 @@ function ScholarshipsSection({
               <tr>
                 <th>Title</th>
                 <th>Description</th>
-                <th>Application Link</th>
+                
                 <th>Deadline</th>
                 <th>Available</th>
                 <th>Provider</th>
@@ -66,15 +66,7 @@ function ScholarshipsSection({
                       ? `${scholarship.description.substring(0, 50)}...`
                       : scholarship.description}
                   </td>
-                  <td>
-                    <a
-                      href={scholarship.applyLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Apply Link
-                    </a>
-                  </td>
+                  
                <td>
   {scholarship.deadline && !isNaN(new Date(scholarship.deadline).getTime())
     ? new Date(scholarship.deadline).toLocaleDateString('en-GB', { 

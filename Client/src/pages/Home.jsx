@@ -2,34 +2,21 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import fotorrethnesh from '../assets/fotorrethnesh.jpg';
 import FeedbackForm from "../components/FeedbackForm";
-import { useAuth } from "../context/useAuth";
+
 import { useNavigate } from 'react-router-dom';
 import heroBg from '../assets/hero-bg.jpg';
+import AdminLogin from "./AdminLogin";
 import fotostatistics from '../assets/fotostatistics.jpg';
 const HomePage = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-  const [scholarships, setScholarships] = useState([]);
-  const { user } = useAuth();
+
+ 
   const navigate = useNavigate();
 const [feedbacks, setFeedbacks] = useState([]);
 
-  useEffect(() => {
-    const fetchScholarships = async () => {
-      try {
-        const response = await fetch("https://localhost:7255/api/scholarship/available");
-        if (response.ok) {
-          const data = await response.json();
-          setScholarships(data);
-        }
-      } catch (error) {
-        console.error("Error fetching scholarships:", error);
-      }
-    };
 
-    fetchScholarships();
-  }, []);
 useEffect(() => {
 
 const fetchFeedbacks = async () => {
@@ -67,7 +54,6 @@ const fetchFeedbacks = async () => {
             throw new Error(errorData.message || "Failed to submit feedback");
         }
         
-        const data = await response.json();
         setShowFeedbackForm(false);
         
     } catch (error) {
@@ -76,12 +62,12 @@ const fetchFeedbacks = async () => {
     }
 }; 
   const universityLogos = [
-    { name: 'Harvard', country: 'USA' },
-    { name: 'Oxford', country: 'UK' },
-    { name: 'ETH Zurich', country: 'Switzerland' },
-    { name: 'University of Tokyo', country: 'Japan' },
+    { name: 'Hungarian', country: 'Hungary' },
+    { name: 'Chevening', country: 'UK' },
+    { name: 'Turkiye Burslari', country: 'Turkiye' },
+    { name: 'Cacttus', country: 'Kosovo' },
     { name: 'Sorbonne', country: 'France' },
-    { name: 'University of Toronto', country: 'Canada' }
+    { name: ' British Council', country: 'UK' }
   ];
 
 
@@ -180,6 +166,7 @@ const fetchFeedbacks = async () => {
               Learn More
             </button>
           </div>
+            
         </div>
       </section>
 

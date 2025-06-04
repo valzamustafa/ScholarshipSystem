@@ -197,29 +197,30 @@ const fetchApplications = async (providerId) => {
 
   const handleSubmitScholarship = async (formData) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
-      const url = editingScholarship 
-        ? `https://localhost:7255/api/scholarship/${editingScholarship.id}`
-        : "https://localhost:7255/api/scholarship";
-      const method = editingScholarship ? "PUT" : "POST";
-      const response = await fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to save scholarship");
-      }
-      await fetchProviderScholarships(currentProvider.id);
-      setShowForm(false);
-      setEditingScholarship(null);
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("No authentication token found");
+        const url = editingScholarship 
+            ? `https://localhost:7255/api/scholarship/${editingScholarship.id}`
+            : "https://localhost:7255/api/scholarship";
+        const method = editingScholarship ? "PUT" : "POST";
+        const response = await fetch(url, {
+            method,
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to save scholarship");
+        }
+       
+        await fetchProviderScholarships(currentProvider.id);
+        setShowForm(false);
+        setEditingScholarship(null);
     } catch (error) {
-      console.error("Error saving scholarship:", error);
-      setError(error.message || "Failed to save scholarship. Please try again.");
+        console.error("Error saving scholarship:", error);
+        setError(error.message || "Failed to save scholarship. Please try again.");
     }
-  };
+};
 
   const handleApplicationStatusChange = async (applicationId, newStatusId) => {
     try {

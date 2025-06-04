@@ -54,6 +54,17 @@ export default function LoginForm() {
       return null;
     }
   }, [login]);
+useEffect(() => {
+  const handleKeyCombo = (e) => {
+    if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'a') {
+      setFormData(prev => ({ ...prev, role: 'Admin' }));
+      alert("Admin login activated!");
+    }
+  };
+
+  window.addEventListener('keydown', handleKeyCombo);
+  return () => window.removeEventListener('keydown', handleKeyCombo);
+}, []);
 
   useEffect(() => {
     const fetchInterceptor = async (url, options = {}) => {
@@ -223,19 +234,21 @@ const handleSubmit = async (e) => {
 
     
         <div className="d-flex justify-content-center mb-3">
-          {['Student', 'Provider', 'Admin'].map((role) => (
-            <button
-              key={role}
-              type="button"
-              className={`btn mx-1 rounded-pill px-3 fw-semibold ${
-                formData.role === role ? 'btn-primary text-white' : 'btn-outline-secondary'
-              }`}
-              style={formData.role === role ? { backgroundColor: '#004D7C', borderColor: '#004D7C' } : {}}
-              onClick={() => handleRoleChange(role)}
-            >
-              {role}
-            </button>
-          ))}
+          {formData.role !== 'Admin' && ['Student', 'Provider'].map((role) => (
+  <button
+    key={role}
+    type="button"
+    className={`btn mx-1 rounded-pill px-3 fw-semibold ${
+      formData.role === role ? 'btn-primary text-white' : 'btn-outline-secondary'
+    }`}
+    style={formData.role === role ? { backgroundColor: '#004D7C', borderColor: '#004D7C' } : {}}
+    onClick={() => handleRoleChange(role)}
+  >
+    {role}
+  </button>
+))}
+
+         
         </div>
 
         {error && <div className="alert alert-danger">{error}</div>}
@@ -279,6 +292,11 @@ const handleSubmit = async (e) => {
             </button>
           </div>
         </form>
+{formData.role === 'Admin' && (
+  <div className="text-center mt-3">
+    <span className="badge bg-danger">Admin Mode Activated</span>
+  </div>
+)}
 
         <p className="text-center mt-4 text-muted">
           Don't have an account?{' '}

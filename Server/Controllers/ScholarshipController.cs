@@ -31,7 +31,7 @@ public async Task<IActionResult> GetByProvider(int providerId)
             s.Id,
             s.Title,
             s.Description,
-            s.ApplyLink,
+        
             s.Deadline, 
             s.IsAvailable,
             s.ImageFile,
@@ -42,34 +42,34 @@ public async Task<IActionResult> GetByProvider(int providerId)
 
     return Ok(scholarships);
 }
-        [HttpGet]
-        public async Task<IActionResult> GetAllScholarships()
+       [HttpGet]
+public async Task<IActionResult> GetAllScholarships()
+{
+    var scholarships = await _context.Scholarship
+        .Include(s => s.Provider)
+        .Include(s => s.ScholarshipCategory)
+        .Include(s => s.ScholarshipType)
+        .Select(s => new ScholarshipDto
         {
-            var scholarships = await _context.Scholarship
-                .Include(s => s.Provider)
-                .Include(s => s.ScholarshipCategory)
-                .Include(s => s.ScholarshipType)
-                .Select(s => new ScholarshipDto
-                {
-                    Id = s.Id,
-                    Title = s.Title,
-                    Description = s.Description,
-                    ApplyLink = s.ApplyLink,
-                    IsAvailable = s.IsAvailable,
-                    Deadline=s.Deadline,
-                    ImageFile = s.ImageFile,
-                    ProviderId = s.ProviderId,
-                    ProviderName = s.Provider.FullName,
-                    ScholarshipCategoryId = s.ScholarshipCategoryId,
-                    ScholarshipCategoryName = s.ScholarshipCategory.Name,
-                    ScholarshipTypeId = s.ScholarshipTypeId,
-                    ScholarshipTypeName = s.ScholarshipType.Name
-                })
-                .ToListAsync();
+            Id = s.Id,
+            Title = s.Title,
+            Description = s.Description,
+            
+            IsAvailable = s.IsAvailable,
+            Deadline = s.Deadline,
+            ImageFile = s.ImageFile,
+            ProviderId = s.ProviderId,
+            ProviderName = s.Provider != null ? s.Provider.FullName : "Unknown",
+            ProviderEmail = s.Provider != null ? s.Provider.Email : "No email provided",  
+            ScholarshipCategoryId = s.ScholarshipCategoryId,
+            ScholarshipCategoryName = s.ScholarshipCategory.Name,
+            ScholarshipTypeId = s.ScholarshipTypeId,
+            ScholarshipTypeName = s.ScholarshipType.Name
+        })
+        .ToListAsync();
 
-            return Ok(scholarships);
-        }
-
+    return Ok(scholarships);
+}
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Scholarship>> GetById(int id)
@@ -109,18 +109,20 @@ public async Task<IActionResult> GetByProvider(int providerId)
             if (!await _context.ScholarshipType.AnyAsync(t => t.Id == dto.ScholarshipTypeId))
                 return BadRequest("ScholarshipTypeId nuk ekziston.");
 
-            var scholarship = new Scholarship
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                ApplyLink = dto.ApplyLink,
-                IsAvailable = dto.IsAvailable,
-                Deadline = dto.Deadline,
+           if (dto.ProviderId.HasValue && !await _context.Provider.AnyAsync(p => p.Id == dto.ProviderId.Value))
+    return BadRequest("ProviderId nuk ekziston.");
 
-                ProviderId = null,
-                ScholarshipCategoryId = dto.ScholarshipCategoryId,
-                ScholarshipTypeId = dto.ScholarshipTypeId
-            };
+var scholarship = new Scholarship
+{
+    Title = dto.Title,
+    Description = dto.Description,
+    IsAvailable = dto.IsAvailable,
+    Deadline = dto.Deadline,
+    ProviderId = dto.ProviderId,
+    ScholarshipCategoryId = dto.ScholarshipCategoryId,
+    ScholarshipTypeId = dto.ScholarshipTypeId
+};
+
 
             if (dto.ImageFile != null)
             {
@@ -168,7 +170,7 @@ public async Task<IActionResult> Update(int id, [FromForm] CreateScholarshipDto 
 
     existing.Title = dto.Title;
     existing.Description = dto.Description;
-    existing.ApplyLink = dto.ApplyLink;
+   
     existing.IsAvailable = dto.IsAvailable;
     existing.Deadline = dto.Deadline;
     

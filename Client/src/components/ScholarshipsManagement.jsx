@@ -23,12 +23,13 @@ const [isAdminScholarship, setIsAdminScholarship] = useState(true);
 
   const [imageFile, setImageFile] = useState(null);
 
-  useEffect(() => {
-    fetchScholarships();
-    fetchCategories();
-    fetchTypes();
-    fetchProviders();
-  }, []);
+
+useEffect(() => {
+  fetchScholarships();
+  fetchCategories();
+  fetchTypes();
+  fetchProviders();
+}, [isAdminScholarship]); 
 
   async function fetchScholarships() {
     try {
@@ -157,13 +158,11 @@ const [isAdminScholarship, setIsAdminScholarship] = useState(true);
     formToSend.append("applyLink", formData.applyLink);
     formToSend.append("isAvailable", formData.isAvailable);
      formToSend.append("deadline", formData.deadline || null); 
-    // Only append providerId if it's not an admin scholarship
-    if (!isAdminScholarship && formData.providerId) {
-      formToSend.append("providerId", formData.providerId);
-    } else {
-      // For admin scholarships, don't send providerId at all
-      // Or send it as null (but not as string "null")
-    }
+  
+ if (!isAdminScholarship && formData.providerId) {
+  formToSend.append("providerId", formData.providerId);
+}
+
     
     formToSend.append("scholarshipCategoryId", parseInt(formData.scholarshipCategoryId));
     formToSend.append("scholarshipTypeId", parseInt(formData.scholarshipTypeId));
@@ -195,13 +194,15 @@ const [isAdminScholarship, setIsAdminScholarship] = useState(true);
             errorMessage = errorData.message;
           }
         } catch {
-          try {
-            const textResponse = await response.text();
-            errorMessage = textResponse || errorMessage;
-          } catch {
-            // ignore parsing error
-          }
-        }
+ try {
+  const textResponse = await response.text();
+  errorMessage = textResponse || errorMessage;
+} catch (innerErr) {
+  console.error("Failed to parse error response:", innerErr);
+}
+
+}
+
         throw new Error(errorMessage);
       }
 
@@ -219,7 +220,7 @@ const [isAdminScholarship, setIsAdminScholarship] = useState(true);
     description: "",
     applyLink: "",
     isAvailable: true,
-    providerId: "", // Keep as empty string for the form
+    providerId: "", 
     scholarshipCategoryId: "",
     scholarshipTypeId: "",
   });

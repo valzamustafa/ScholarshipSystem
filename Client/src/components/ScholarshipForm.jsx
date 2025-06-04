@@ -12,7 +12,7 @@ function ScholarshipForm({
 const [formData, setFormData] = useState({
   title: scholarship?.title || "",
   description: scholarship?.description || "",
-  applyLink: scholarship?.applyLink || "",
+  
   deadline: scholarship?.deadline || "",
   isAvailable: scholarship?.isAvailable || true,
   scholarshipCategoryId: scholarship?.scholarshipCategory?.id || "",
@@ -31,8 +31,9 @@ const [formData, setFormData] = useState({
   };
 const handleSubmit = (e) => {
   e.preventDefault();
+  e.stopPropagation(); 
 
-  if (!formData.title || !formData.description || !formData.applyLink || 
+  if (!formData.title || !formData.description || 
       !formData.scholarshipCategoryId || !formData.scholarshipTypeId) {
     alert("Please fill all required fields");
     return;
@@ -41,7 +42,7 @@ const handleSubmit = (e) => {
   const formDataToSend = new FormData();
   formDataToSend.append("Title", formData.title);
   formDataToSend.append("Description", formData.description);
-  formDataToSend.append("ApplyLink", formData.applyLink);
+
   formDataToSend.append("Deadline", formData.deadline || "");
   formDataToSend.append("IsAvailable", formData.isAvailable);
   formDataToSend.append("ScholarshipCategoryId", formData.scholarshipCategoryId);
@@ -55,18 +56,26 @@ const handleSubmit = (e) => {
   onSubmit(formDataToSend);
 };
   return (
-    <div className="modal-backdrop" style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
+    <div  className="modal-backdrop" 
+  style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000
+  }}
+  onClick={(e) => {
+   
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }}
+>
       <div className="modal-content bg-white p-4 rounded" style={{ width: '600px', maxWidth: '90%' }}>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h4>{scholarship ? "Edit Scholarship" : "Add New Scholarship"}</h4>
@@ -100,17 +109,8 @@ const handleSubmit = (e) => {
             />
           </div>
           
-          <div className="mb-3">
-            <label className="form-label">Apply Link</label>
-            <input
-              type="url"
-              className="form-control"
-              name="applyLink"
-              value={formData.applyLink}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          
+      
 
           <div className="mb-3">
             <label className="form-label">Deadline</label>
