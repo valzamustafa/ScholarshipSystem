@@ -20,6 +20,7 @@ namespace Server.Controllers
        public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IEmailService _emailService;
     private readonly IPasswordHasher<Student> _studentPasswordHasher;
     private readonly IPasswordHasher<Provider> _providerPasswordHasher;
@@ -31,16 +32,19 @@ namespace Server.Controllers
 
     public AuthController(
         AppDbContext context,
+         ICurrentUserService currentUserService,
         IPasswordHasher<Student> studentPasswordHasher,
         IPasswordHasher<Provider> providerPasswordHasher,
         IPasswordHasher<Admin> adminPasswordHasher,
         ITokenService tokenService,
         IEmailService emailService,
+
         IRefreshTokenService refreshTokenService,
         IConfiguration configuration,
         ILogger<AuthController> logger)
     {
         _context = context;
+         _currentUserService = currentUserService;
         _studentPasswordHasher = studentPasswordHasher;
         _providerPasswordHasher = providerPasswordHasher;
         _adminPasswordHasher = adminPasswordHasher;
@@ -178,6 +182,87 @@ namespace Server.Controllers
                 return StatusCode(500, new { error = "Gabim i brendshëm", message = ex.Message });
             }
         }
+      [HttpPost("change-password")]
+[Authorize]
+public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+{
+    try
+    {
+        var userId = _currentUserService.UserId;
+        var role = _currentUserService.Role;
+
+        if (userId == null)
+        {
+            return Unauthorized(new { message = "User not authenticated" });
+        }
+
+        if (dto.NewPassword != dto.ConfirmNewPassword)
+        {
+            return BadRequest(new { message = "New passwords do not match" });
+        }
+
+        if (role == "Student")
+        {
+            var student = await _context.Student.FindAsync(userId);
+            if (student == null)
+                return BadRequest(new { message = "User not found" });
+
+         if (string.IsNullOrEmpty(student.PasswordHash))
+{
+    return BadRequest(new { message = "User has no password set" });
+}
+            var result = _studentPasswordHasher.VerifyHashedPassword(student, student.PasswordHash, dto.CurrentPassword);
+            if (result != PasswordVerificationResult.Success)
+            {
+                return BadRequest(new { message = "Current password is incorrect" });
+            }
+
+           
+            student.PasswordHash = _studentPasswordHasher.HashPassword(student, dto.NewPassword);
+            await _context.SaveChangesAsync();
+        }
+        else if (role == "Provider")
+        {
+            
+            var provider = await _context.Provider.FindAsync(userId);
+            if (provider == null)
+                return BadRequest(new { message = "User not found" });
+
+         if (string.IsNullOrEmpty(provider.PasswordHash))
+{
+    return BadRequest(new { message = "User has no password set" });
+}
+            var result = _providerPasswordHasher.VerifyHashedPassword(provider, provider.PasswordHash, dto.CurrentPassword);
+            
+            if (result != PasswordVerificationResult.Success)
+                    {
+                        return BadRequest(new { message = "Current password is incorrect" });
+                    }
+
+          
+            provider.PasswordHash = _providerPasswordHasher.HashPassword(provider, dto.NewPassword);
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            return BadRequest(new { message = "Invalid user role" });
+        }
+
+        return Ok(new { message = "Password changed successfully" });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error changing password");
+        return StatusCode(500, new { error = "Internal Server Error", message = ex.Message });
+    }
+}
+
+public class ChangePasswordDto
+{
+    public string CurrentPassword { get; set; } = null!;
+    public string NewPassword { get; set; } = null!;
+    public string ConfirmNewPassword { get; set; } = null!;
+}
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {

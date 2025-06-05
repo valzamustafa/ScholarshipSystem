@@ -7,6 +7,7 @@ public class Scholarship
     public required string Title { get; set; }
     public required string Description { get; set; }
    public string? StudyField { get; set; }
+     public bool IsApproved { get; set; } 
     public bool IsAvailable { get; set; }
      public  string? ImageFile { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;   

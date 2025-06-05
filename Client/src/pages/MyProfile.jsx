@@ -9,6 +9,12 @@ const MyProfile = () => {
   const [activeTab, setActiveTab] = useState('info');
   const navigate = useNavigate();
   const inputRef = useRef();
+  const [currentPassword, setCurrentPassword] = useState('');
+const [newPassword, setNewPassword] = useState('');
+const [confirmPassword, setConfirmPassword] = useState('');
+const [passwordError, setPasswordError] = useState('');
+const [passwordSuccess, setPasswordSuccess] = useState('');
+const [changingPassword, setChangingPassword] = useState(false);
   const [messages, setMessages] = useState([]);
 const [loadingMessages, setLoadingMessages] = useState(false);
 const [messageError, setMessageError] = useState(null);
@@ -23,10 +29,35 @@ const [replyContent, setReplyContent] = useState({
     parentMessageId: null
 });
 useEffect(() => {
-    if (activeTab === 'messages' && profile?.id) {
-        fetchMessages(profile.id);
-    }
-}, [activeTab, profile?.id]);
+  if (activeTab === 'messages' && profile?.id) {
+    const token = localStorage.getItem("token");
+    const endpoint = activeMessageTab === 'received' 
+      ? `received/${profile.id}`
+      : `sent/${profile.id}`;
+      
+    const fetchWrapper = async () => {
+      setLoadingMessages(true);
+      try {
+        const res = await fetch(`https://localhost:7255/api/message/${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error("Failed to load messages");
+
+        const data = await res.json();
+        setMessages(data);
+      } catch (error) {
+        setMessageError(error.message);
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
+
+    fetchWrapper();
+  }
+}, [activeTab, profile?.id, activeMessageTab]);
+
+
 
 const fetchMessages = async (userId) => {
     setLoadingMessages(true);
@@ -162,7 +193,47 @@ const handleSendReply = async () => {
       console.error("Gabim në ngarkim:", error);
     }
   };
+const handlePasswordChange = async (e) => {
+  e.preventDefault();
+  setPasswordError('');
+  setPasswordSuccess('');
+  
+  if (newPassword !== confirmPassword) {
+    setPasswordError('Fjalëkalimet nuk përputhen');
+    return;
+  }
+  
+  try {
+    setChangingPassword(true);
+    const token = localStorage.getItem("token");
+    const response = await fetch("https://localhost:7255/api/auth/change-password", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+        confirmNewPassword: confirmPassword
+      })
+    });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to change password");
+    }
+
+    setPasswordSuccess('Fjalëkalimi u ndryshua me sukses');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  } catch (error) {
+    setPasswordError(error.message);
+  } finally {
+    setChangingPassword(false);
+  }
+};
   const handleIconClick = () => {
     inputRef.current.click();
   };
@@ -225,6 +296,7 @@ const handleSendReply = async () => {
 >
     ✉️ Messages
 </button>
+
               </div>
             </div>
           </div>
@@ -234,15 +306,58 @@ const handleSendReply = async () => {
         <div className="col-md-9">
           <div className="card shadow-sm border-0">
             <div className="card-body">
-              {activeTab === 'info' && (
-                <>
-                  <h5 className="mb-3">📄 Të Dhënat Personale</h5>
-                  <div className="row mb-2"><div className="col-5 fw-semibold">Emri:</div><div className="col-7">{profile.fullName}</div></div>
-                  <div className="row mb-2"><div className="col-5 fw-semibold">Email:</div><div className="col-7">{profile.email}</div></div>
-                  <div className="row mb-2"><div className="col-5 fw-semibold">Shkolla:</div><div className="col-7">{profile.schoolOrUniversityName}</div></div>
-                  <div className="row mb-2"><div className="col-5 fw-semibold">Drejtimi:</div><div className="col-7">{profile.studyField}</div></div>
-                  <div className="row"><div className="col-5 fw-semibold">Niveli:</div><div className="col-7">{profile.studentLevelName}</div></div>
-                </>
+             {activeTab === 'info' && (
+  <>
+    <h5 className="mb-3">📄 Të Dhënat Personale</h5>
+    <div className="row mb-2"><div className="col-5 fw-semibold">Emri:</div><div className="col-7">{profile.fullName}</div></div>
+    <div className="row mb-2"><div className="col-5 fw-semibold">Email:</div><div className="col-7">{profile.email}</div></div>
+    <div className="row mb-2"><div className="col-5 fw-semibold">Shkolla:</div><div className="col-7">{profile.schoolOrUniversityName}</div></div>
+    <div className="row mb-2"><div className="col-5 fw-semibold">Drejtimi:</div><div className="col-7">{profile.studyField}</div></div>
+    <div className="row"><div className="col-5 fw-semibold">Niveli:</div><div className="col-7">{profile.studentLevelName}</div></div>
+                 <div className="mt-4">
+      <h5>Ndrysho Fjalëkalimin</h5>
+      <form onSubmit={handlePasswordChange}>
+        <div className="mb-3">
+          <label htmlFor="currentPassword" className="form-label">Fjalëkalimi Aktual</label>
+          <input 
+            type="password" 
+            className="form-control" 
+            id="currentPassword" 
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="newPassword" className="form-label">Fjalëkalimi i Ri</label>
+          <input 
+            type="password" 
+            className="form-control" 
+            id="newPassword" 
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="confirmPassword" className="form-label">Konfirmo Fjalëkalimin e Ri</label>
+          <input 
+            type="password" 
+            className="form-control" 
+            id="confirmPassword" 
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+        {passwordError && <div className="alert alert-danger">{passwordError}</div>}
+        {passwordSuccess && <div className="alert alert-success">{passwordSuccess}</div>}
+        <button type="submit" className="btn btn-primary" disabled={changingPassword}>
+          {changingPassword ? 'Duke ndryshuar...' : 'Ndrysho Fjalëkalimin'}
+        </button>
+      </form>
+    </div>
+  </>
               )}
               {activeTab === 'messages' && (
     <div className="mt-4">

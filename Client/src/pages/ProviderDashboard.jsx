@@ -12,14 +12,19 @@ import ApplicationsSection from "../components/ApplicationsSection";
 import AwardedStudentsSection from "../components/AwardedStudentsSection";
 import ProviderProfile from "../components/ProviderProfile";
 function ProviderDashboard() {
-  const [loadingMessageDetails, setLoadingMessageDetails] = useState(false);
+  
  const [scholarships, setScholarships] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingScholarship, setEditingScholarship] = useState(null);
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
   const [showSendModal, setShowSendModal] = useState(false);
-
+const [currentPassword, setCurrentPassword] = useState('');
+const [newPassword, setNewPassword] = useState('');
+const [confirmPassword, setConfirmPassword] = useState('');
+const [passwordError, setPasswordError] = useState('');
+const [passwordSuccess, setPasswordSuccess] = useState('');
+const [changingPassword, setChangingPassword] = useState(false);
   const [currentProvider, setCurrentProvider] = useState(null);
   const [applications, setApplications] = useState([]);
   const [awardedStudents, setAwardedStudents] = useState([]);
@@ -349,7 +354,7 @@ const fetchMessages = async (providerId) => {
     }
 };
 const handleReply = async (message) => {
-    setLoadingMessageDetails(true);
+    
     try {
       
         if (!message.senderId) {
@@ -367,8 +372,6 @@ const handleReply = async (message) => {
         setShowReplyModal(true);
     } catch (error) {
         setMessageError(error.message);
-    } finally {
-        setLoadingMessageDetails(false);
     }
 };
 
@@ -395,23 +398,7 @@ const handleDeleteMessage = async (messageId) => {
         setMessageError(error.message || "Failed to delete message");
     }
 };
-const fetchMessageDetails = async (messageId) => {
-    try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`https://localhost:7255/api/message/${messageId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (!res.ok) {
-            throw new Error(`Failed to fetch message details: ${res.status}`);
-        }
-        
-        return await res.json();
-    } catch (error) {
-        console.error("Error fetching message details:", error);
-        throw error;
-    }
-};
+
 const handleSendReply = async () => {
     try {
       
@@ -464,7 +451,50 @@ const handleSendReply = async () => {
         console.error("Error sending reply:", error);
         setMessageError(error.message);
     }
-};const markMessageAsRead = async (messageId) => {
+};
+const handlePasswordChange = async (e) => {
+  e.preventDefault();
+  setPasswordError('');
+  setPasswordSuccess('');
+  
+  if (newPassword !== confirmPassword) {
+    setPasswordError('Passwords do not match');
+    return;
+  }
+  
+  try {
+    setChangingPassword(true);
+    const token = localStorage.getItem("token");
+    const response = await fetch("https://localhost:7255/api/auth/change-password", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+        confirmNewPassword: confirmPassword
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to change password");
+    }
+
+    setPasswordSuccess('Password changed successfully');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  } catch (error) {
+    setPasswordError(error.message);
+  } finally {
+    setChangingPassword(false);
+  }
+};
+
+const markMessageAsRead = async (messageId) => {
     try {
         const token = localStorage.getItem("token");
         const res = await fetch(`https://localhost:7255/api/message/${messageId}/read`, {
@@ -521,6 +551,52 @@ const handleSendReply = async () => {
             setCurrentProvider(updatedProvider);
           }} 
         />
+     
+        <div className="card shadow-sm mt-4">
+          <div className="card-body">
+            <h5 className="card-title">Change Password</h5>
+            <form onSubmit={handlePasswordChange}>
+              <div className="mb-3">
+                <label htmlFor="currentPassword" className="form-label">Current Password</label>
+                <input 
+                  type="password" 
+                  className="form-control" 
+                  id="currentPassword" 
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="newPassword" className="form-label">New Password</label>
+                <input 
+                  type="password" 
+                  className="form-control" 
+                  id="newPassword" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="confirmPassword" className="form-label">Confirm New Password</label>
+                <input 
+                  type="password" 
+                  className="form-control" 
+                  id="confirmPassword" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+              {passwordError && <div className="alert alert-danger">{passwordError}</div>}
+              {passwordSuccess && <div className="alert alert-success">{passwordSuccess}</div>}
+              <button type="submit" className="btn btn-primary" disabled={changingPassword}>
+                {changingPassword ? 'Changing...' : 'Change Password'}
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
       <div className="col-md-7">
         <div className="card shadow-sm h-100">
@@ -686,13 +762,7 @@ const handleSendReply = async () => {
 >
     <FiMail className="me-2" />Messages
 </button>
-    <Button 
-    variant="outline-success" 
-    size="sm"
-    onClick={() => markMessageAsRead(msg.id)}
->
-    Mark as Read
-</Button>
+
 </li>
             <li className="nav-item mb-3">
   <button 

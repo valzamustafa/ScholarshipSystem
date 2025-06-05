@@ -3,14 +3,12 @@ import {
   FiUser,
   FiBarChart2,
   FiBell,
-  FiCalendar,
   FiUsers,
   FiAward,
   FiFileText,
   FiMail,
   FiMessageSquare,
   FiSettings,
-  FiClock,
   FiInfo
 } from "react-icons/fi";
 import { Bar } from "react-chartjs-2";
@@ -23,7 +21,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import AboutUsSection from "../components/AboutUsSection.jsx";
 import AboutUsManagement from "../components/AboutUsManagement.jsx";
 import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
 import StudentManager from "../components/StudentManager";
@@ -31,19 +28,15 @@ import ProviderManager from "../components/ProviderManager.jsx";
 import ScholarshipsManagement from "../components/ScholarshipsManagement";
 import ContactMessages from "../components/ContactMessages";
 import FeedbackComponent from "../components/FeedbackComponent";
-import NotificationsDropdown from "../components/NotificationsDropdown.jsx";
 import NotificationsPanel from "../components/NotificationsPanel.jsx";
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function AdminDashboard() {
- 
-
   const [activePage, setActivePage] = useState("dashboard");
   const [requests, setRequests] = useState([]);
-  const [adminNotifications, setAdminNotifications] = useState([]);
-const [adminUnreadCount, setAdminUnreadCount] = useState(0);
-
-
+  const [, setAdminNotifications] = useState([]);
+  const [adminUnreadCount, setAdminUnreadCount] = useState(0);
   const [stats, setStats] = useState(null);
   const [students, setStudents] = useState([]);
   const [contactMessage, setContactMessage] = useState([]);
@@ -64,9 +57,11 @@ const [adminUnreadCount, setAdminUnreadCount] = useState(0);
     roleId: 1,
     password: "",
   });
-     const [recentActivity, setRecentActivity] = useState([]);
-
- 
+  const [feedbackData, setFeedbackData] = useState({
+    scholarshipId: null,
+    content: ""
+  });
+  const [recentActivity, setRecentActivity] = useState([]);
   const [newProvider, setNewProvider] = useState({
     fullName: "",
     email: "",
@@ -81,41 +76,53 @@ const [adminUnreadCount, setAdminUnreadCount] = useState(0);
   const [admins, setAdmins] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-const handleSubmit = async (e) => {
+
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://localhost:7255/api/admin/statistics", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Gabim gjatë marrjes së statistikave");
+      const data = await res.json();
+      setStats(data);
+    } catch (error) {
+      console.error(error);
+      setStats(null);
+    }
+  };
+
+  // eslint-disable-next-line no-unused-vars
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!feedbackData.scholarshipId) {
-        alert("Please select a scholarship");
-        return;
+      alert("Please select a scholarship");
+      return;
     }
-
     try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/feedback`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(feedbackData)
-        });
-
-        if (!response.ok) throw new Error("Failed to submit feedback");
-        
-        // Nëse dëshiron të tregosh një mesazh suksesi
-        alert("Feedback submitted successfully!");
-        onClose();
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://localhost:7255/api/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(feedbackData)
+      });
+      if (!response.ok) throw new Error("Failed to submit feedback");
+      alert("Feedback submitted successfully!");
+      setFeedbackData({ scholarshipId: null, content: "" });
     } catch (error) {
-        console.error("Error submitting feedback:", error);
-        alert(`Error: ${error.message}`);
+      console.error("Error submitting feedback:", error);
+      alert(`Error: ${error.message}`);
     }
-};
-
-
+  };
 
   useEffect(() => {
     if (activePage === "dashboard") {
-      fetchRequests();
       fetchStats();
+      fetchRecentActivity();
+      fetchRequests();
     }
     if (activePage === "students") {
       fetchStudents();
@@ -134,44 +141,32 @@ const handleSubmit = async (e) => {
     if (activePage === "settings") {
       fetchAdmins();
     }
-  }, [activePage]);
-  useEffect(() => {
-    if (activePage === "dashboard") {
-      fetchRequests();
-      fetchStats();
-      fetchRecentActivity();
-    }}, [activePage]);
-  useEffect(() => {
     if (activePage === "applications") {
       fetchApplications();
       fetchScholarships();
     }
-  }, [activePage]);
-
-  useEffect(() => {
     if (activePage === "contactMessages") {
       fetchContactMessage();
     }
   }, [activePage]);
+
   useEffect(() => {
     const loadAdminNotifications = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const res = await fetch("https://localhost:7255/api/notification/admin", {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (!res.ok) throw new Error("Failed to fetch admin notifications");
-            const data = await res.json();
-            setAdminNotifications(Array.isArray(data) ? data : []);
-            setAdminUnreadCount(data.filter(n => !n.isRead).length);
-        } catch (err) {
-            console.error("Error fetching admin notifications:", err);
-        }
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("https://localhost:7255/api/notification/admin", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Failed to fetch admin notifications");
+        const data = await res.json();
+        setAdminNotifications(Array.isArray(data) ? data : []);
+        setAdminUnreadCount(data.filter(n => !n.isRead).length);
+      } catch (err) {
+        console.error("Error fetching admin notifications:", err);
+      }
     };
-
     loadAdminNotifications();
-}, []);
+  }, []);
 
   async function fetchAdmins() {
     try {
@@ -295,21 +290,7 @@ const handleSubmit = async (e) => {
     }
   }
 
-async function fetchStats() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch("https://localhost:7255/api/admin/statistics", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Gabim gjatë marrjes së statistikave");
-    const data = await res.json();
-    console.log("Stats data:", data);
-    setStats(data);
-  } catch (error) {
-    console.error(error);
-    setStats(null);
-  }
-}
+
 
   async function fetchStudents() {
     try {
@@ -628,14 +609,6 @@ async function fetchStats() {
                 <FiMail className="me-2" /> Contact Messages
               </button>
             </li>
-            <li className="nav-item mb-3">
-  <button 
-    className={`nav-link text-white btn btn-link text-start ${activePage === "aboutUs" ? "fw-bold" : ""}`} 
-    onClick={() => setActivePage("aboutUs")}
-  >
-    <FiInfo className="me-2" /> About Us Management
-  </button>
-</li>
             
             <li className="nav-item mb-3">
               <button 
@@ -837,7 +810,6 @@ async function fetchStats() {
               onToggleFeatured={handleToggleFeatured}
             />
           )}
-          {activePage ==="aboutUs" && <AboutUsManagement />}
           {activePage === "applications" && (
             <div>
               <ul className="nav nav-tabs mb-4">
@@ -907,7 +879,6 @@ async function fetchStats() {
               )}
             </div>
           )}
-
 
           {activePage === "providers" && (
             <ProviderManager
