@@ -106,6 +106,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
        builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
         builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
   builder.Services.AddScoped<IContactService, ContactService>();
+   builder.Services.AddScoped<IEmailService, EmailService>();
    builder.Services.AddAutoMapper(typeof(AutoMapperProfile).Assembly);
 builder.Services.AddScoped<IAboutUsService, AboutUsService>();
         builder.Services.AddAuthorization(options =>

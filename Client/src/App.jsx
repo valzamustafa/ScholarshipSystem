@@ -18,7 +18,8 @@ import Unauthorized from './pages/Unauthorized';
 import PendingApproval from './pages/PendingApproval';
 import MyProfile from './pages/MyProfile';
 import ScholarshipsPage from './pages/ScholarshipsPage';
-
+import ResetPasswordForm from './components/ResetPasswordForm';
+import ForgotPasswordForm from './components/ForgotPasswordForm';
 function App() {
   return (
     <AuthProvider>
@@ -35,7 +36,8 @@ function App() {
           <Route path="/pending-approval" element={<PendingApproval />} />
           <Route path="/contactus" element={<ContactUsPage />} />
           <Route path="/about" element={<AboutUsSection />} />
-          
+             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+<Route path="/reset-password" element={<ResetPasswordForm />} />
           {/* Semi-protected route (viewable by all but actions protected) */}
           <Route path="/scholarships" element={<ScholarshipsPage />} />
           

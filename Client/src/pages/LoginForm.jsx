@@ -277,7 +277,7 @@ const handleSubmit = async (e) => {
               required
             />
             <div className="text-end small mt-1">
-              <a href="#" className="text-decoration-none text-secondary">Forgot your password?</a>
+              <Link to="/forgot-password" className="text-decoration-none text-secondary">Forgot your password?</Link> 
             </div>
           </div>
 

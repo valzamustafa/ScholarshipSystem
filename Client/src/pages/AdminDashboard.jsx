@@ -10,7 +10,8 @@ import {
   FiMail,
   FiMessageSquare,
   FiSettings,
-  FiClock
+  FiClock,
+  FiInfo
 } from "react-icons/fi";
 import { Bar } from "react-chartjs-2";
 import {
@@ -22,6 +23,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import AboutUsSection from "../components/AboutUsSection.jsx";
+import AboutUsManagement from "../components/AboutUsManagement.jsx";
 import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
 import StudentManager from "../components/StudentManager";
 import ProviderManager from "../components/ProviderManager.jsx";
@@ -625,6 +628,14 @@ async function fetchStats() {
                 <FiMail className="me-2" /> Contact Messages
               </button>
             </li>
+            <li className="nav-item mb-3">
+  <button 
+    className={`nav-link text-white btn btn-link text-start ${activePage === "aboutUs" ? "fw-bold" : ""}`} 
+    onClick={() => setActivePage("aboutUs")}
+  >
+    <FiInfo className="me-2" /> About Us Management
+  </button>
+</li>
             
             <li className="nav-item mb-3">
               <button 
@@ -826,6 +837,7 @@ async function fetchStats() {
               onToggleFeatured={handleToggleFeatured}
             />
           )}
+          {activePage ==="aboutUs" && <AboutUsManagement />}
           {activePage === "applications" && (
             <div>
               <ul className="nav nav-tabs mb-4">
@@ -895,6 +907,7 @@ async function fetchStats() {
               )}
             </div>
           )}
+
 
           {activePage === "providers" && (
             <ProviderManager

@@ -34,7 +34,61 @@ namespace Server.Services
         {
             return GenerateTokenInternal(admin.Id, admin.Email, admin.FullName, admin.Role?.Emri ?? "Admin");
         }
+ public string GeneratePasswordResetToken(int userId, string email, string role)
+{
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, email),
+        new Claim(ClaimTypes.Role, role),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim("Purpose", "PasswordReset")
+    };
 
+    var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        issuer: _configuration["Jwt:Issuer"],
+        audience: _configuration["Jwt:Audience"],
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(1), 
+        signingCredentials: creds
+    );
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
+public ClaimsPrincipal? ValidatePasswordResetToken(string token)
+{
+    try
+    {
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = _key,
+            ValidateLifetime = true
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+        
+        if (securityToken is not JwtSecurityToken jwtSecurityToken || 
+            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            return null;
+
+        var purposeClaim = principal.FindFirst("Purpose");
+        if (purposeClaim == null || purposeClaim.Value != "PasswordReset")
+            return null;
+
+        return principal;
+    }
+    catch
+    {
+        return null;
+    }
+}
         public string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
