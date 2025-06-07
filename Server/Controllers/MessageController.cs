@@ -28,7 +28,7 @@ public class MessageController : ControllerBase
 [HttpPost]
 public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDto)
 {
-    
+
     var recipientExists = await _context.Student.AnyAsync(s => s.Id == messageDto.RecipientId)
         || await _context.Provider.AnyAsync(p => p.Id == messageDto.RecipientId)
         || await _context.Admin.AnyAsync(a => a.Id == messageDto.RecipientId);
@@ -38,7 +38,6 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
         return BadRequest("Recipient does not exist.");
     }
 
-  
     if (messageDto.ScholarshipId.HasValue)
     {
         var scholarshipExists = await _context.Scholarship.AnyAsync(s => s.Id == messageDto.ScholarshipId);
@@ -60,6 +59,27 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
             return BadRequest("Message content is required");
         }
 
+object? sender = null;
+
+var admin = await _context.Admin.FindAsync(senderId);
+if (admin != null)
+    sender = admin;
+else
+{
+    var provider = await _context.Provider.FindAsync(senderId);
+    if (provider != null)
+        sender = provider;
+    else
+    {
+        var student = await _context.Student.FindAsync(senderId);
+        if (student != null)
+            sender = student;
+    }
+}
+
+
+var senderName = (sender as dynamic)?.FullName ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
+
         var message = new Message
         {
             Content = messageDto.Content,
@@ -73,7 +93,7 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
         _context.Message.Add(message);
         await _context.SaveChangesAsync();
 
-        var senderName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
+      
         await _notificationService.CreateNotification(
             messageDto.RecipientId,
             $"New message from {senderName}",
@@ -93,13 +113,12 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
 }
 
 
-
     [HttpGet("received/{recipientId}")]
     public async Task<ActionResult<IEnumerable<MessageDto>>> GetReceivedMessages(int recipientId)
     {
         var messages = await _context.Message
             .Where(m => m.RecipientId == recipientId)
-            .Include(m => m.Sender)
+             .Include(m => m.Sender) 
             .Include(m => m.Scholarship)
             .OrderByDescending(m => m.SentAt)
             .Select(m => new MessageDto
@@ -110,7 +129,7 @@ public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDt
                 SentAt = m.SentAt,
                 IsRead = m.IsRead,
                 SenderId = m.SenderId,
-                SenderName = m.Sender.FullName ?? "Unknown",
+                SenderName = m.Sender != null ? m.Sender.FullName : "Unknown",
                 RecipientId = m.RecipientId,
                 RecipientName = m.Recipient.FullName ?? "Unknown",
                 ScholarshipId = m.ScholarshipId,

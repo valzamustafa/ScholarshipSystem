@@ -11,6 +11,7 @@ function ApplicationsSection({
   showActions = false,
   showDocuments = false,
   showStatusOnly = false,
+  selectedApplicationsTab, 
 }) {
   const [filterType, setFilterType] = useState("all");
 
@@ -20,13 +21,18 @@ function ApplicationsSection({
     return true;
   });
 
-  const filteredApplications = applications.filter((app) => {
-    const scholarshipMatch = selectedScholarshipId ? app.scholarshipId === parseInt(selectedScholarshipId) : true;
-    const typeMatch = 
-      filterType === "all" ? true :
-      filterType === "admin" ? scholarships.find(s => s.id === app.scholarshipId)?.providerId === null :
-      scholarships.find(s => s.id === app.scholarshipId)?.providerId !== null;
-    return scholarshipMatch && typeMatch;
+const handleDownload = (filePath, fileName) => {
+ 
+  const encodedPath = encodeURI(filePath);
+  window.open(`https://localhost:7255${encodedPath}`, '_blank');
+};
+ const filteredApplications = applications.filter((app) => {
+    const scholarship = scholarships.find(s => s.id === app.scholarshipId);
+    if (selectedApplicationsTab === 'admin') {
+      return scholarship && scholarship.providerId === null;
+    } else {
+      return scholarship && scholarship.providerId !== null;
+    }
   });
 
   const getStatusBadge = (statusId) => {
@@ -81,38 +87,38 @@ function ApplicationsSection({
                     <td>{app.scholarshipTitle || "N/A"}</td>
                     <td>{formatDate(app.applicationDate)}</td>
                     <td>{getStatusBadge(app.applicationStatusId)}</td>
-                    {showDocuments && (
-                      <td>
-                        {app.ApplicationDocument?.length > 0 ? (
-                          <div className="dropdown">
-                            <button
-                              className="btn btn-sm btn-outline-primary dropdown-toggle"
-                              type="button"
-                              data-bs-toggle="dropdown"
-                            >
-                              <FiFileText /> View ({app.ApplicationDocument.length})
-                            </button>
-                            <ul className="dropdown-menu">
-                              {app.ApplicationDocument.map((doc, index) => (
-                                <li key={index}>
-                                  <a
-                                    className="dropdown-item"
-                                    href={`https://localhost:7255${doc.filePath}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    {doc.fileName}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : (
-                          "No documents"
-                        )}
-                      </td>
-                    )}
-                    {showActions && (
+                   
+                   {showDocuments && (
+  <td>
+    {app.ApplicationDocument?.length > 0 || app.applicationDocument?.length > 0 ? (
+      <div className="dropdown">
+        <button
+          className="btn btn-sm btn-outline-primary dropdown-toggle"
+          type="button"
+          data-bs-toggle="dropdown"
+        >
+          <FiFileText /> View ({(app.ApplicationDocument || app.applicationDocument).length})
+        </button>
+        <ul className="dropdown-menu">
+          {(app.ApplicationDocument || app.applicationDocument).map((doc, index) => (
+            <li key={index}>
+              <a
+                className="dropdown-item"
+                href={`https://localhost:7255${doc.filePath}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {doc.fileName}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : (
+      "No documents"
+    )}
+  </td>
+)}                    {showActions && (
                       <td>
                         <div className="d-flex gap-2">
                           {app.applicationStatusId !== 3 && (

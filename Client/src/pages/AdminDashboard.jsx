@@ -9,7 +9,8 @@ import {
   FiMail,
   FiMessageSquare,
   FiSettings,
-  FiInfo
+  FiInfo,
+  FiClock
 } from "react-icons/fi";
 import { Bar } from "react-chartjs-2";
 import {
@@ -22,7 +23,7 @@ import {
   Legend,
 } from "chart.js";
 import AboutUsManagement from "../components/AboutUsManagement.jsx";
-import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx";
+import ApplicationsSection from "../components/ApplicationsSectionAdmin.jsx"
 import StudentManager from "../components/StudentManager";
 import ProviderManager from "../components/ProviderManager.jsx";
 import ScholarshipsManagement from "../components/ScholarshipsManagement";
@@ -44,7 +45,7 @@ function AdminDashboard() {
   const [_loadingApplications, setLoadingApplications] = useState(false);
   const [_errorApplications, setErrorApplications] = useState(null);
   const [providers, setProviders] = useState([]);
-  const [selectedApplicationsTab, setSelectedApplicationsTab] = useState('all');
+ const [selectedApplicationsTab, setSelectedApplicationsTab] = useState('admin');
   const [scholarships, setScholarships] = useState([]);
   const [applications, setApplications] = useState([]);
   const [selectedScholarshipId, setSelectedScholarshipId] = useState(null);
@@ -167,7 +168,27 @@ function AdminDashboard() {
     };
     loadAdminNotifications();
   }, []);
-
+const handleStatusChange = async (applicationId, newStatusId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(
+      `https://localhost:7255/api/application/${applicationId}/status`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ statusId: newStatusId }),
+      }
+    );
+    if (!res.ok) throw new Error("Failed to update status");
+    fetchApplications(); 
+  } catch (error) {
+    console.error("Error updating status:", error);
+    alert(`Error: ${error.message}`);
+  }
+};
   async function fetchAdmins() {
     try {
       const token = localStorage.getItem("token");
@@ -271,25 +292,30 @@ function AdminDashboard() {
     }
   }
 
-  async function fetchApplications() {
-    setLoadingApplications(true);
-    setErrorApplications(null);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("https://localhost:7255/api/application/admin", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch applications");
-      const data = await res.json();
-      setApplications(data);
-    } catch (error) {
-      console.error("Fetch applications error:", error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setLoadingApplications(false);
-    }
-  }
+async function fetchApplications() {
+  setLoadingApplications(true);
+  setErrorApplications(null);
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch("https://localhost:7255/api/application/admin", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to fetch applications");
+    const data = await res.json();
 
+    const normalizedData = data.map(app => ({
+      ...app,
+      ApplicationDocument: app.ApplicationDocument || app.applicationDocument || []
+    }));
+    
+    setApplications(normalizedData);
+  } catch (error) {
+    console.error("Fetch applications error:", error);
+    setErrorApplications(error.message);
+  } finally {
+    setLoadingApplications(false);
+  }
+}
 
 
   async function fetchStudents() {
@@ -810,77 +836,43 @@ function AdminDashboard() {
               onToggleFeatured={handleToggleFeatured}
             />
           )}
-          {activePage === "applications" && (
-            <div>
-              <ul className="nav nav-tabs mb-4">
-                <li className="nav-item">
-                  <button 
-                    className={`nav-link ${selectedApplicationsTab === 'admin' ? 'active' : ''}`}
-                    onClick={() => setSelectedApplicationsTab('admin')}
-                  >
-                    Admin Scholarships Applications
-                  </button>
-                </li>
-                <li className="nav-item">
-                  <button 
-                    className={`nav-link ${selectedApplicationsTab === 'providers' ? 'active' : ''}`}
-                    onClick={() => setSelectedApplicationsTab('providers')}
-                  >
-                    Providers' Applications
-                  </button>
-                </li>
-              </ul>
+    
+{activePage === "applications" && (
+  <div style={{ marginTop: '100px' }}>
+    <div className="mb-4">
+      <h5 className="mb-3">Select application type:</h5>
+      <div className="d-flex flex-column flex-md-row gap-2">
+        <button 
+          className={`btn ${selectedApplicationsTab === 'admin' ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => setSelectedApplicationsTab('admin')}
+        >
+          Admin Scholarships Applications
+        </button>
+        <button 
+          className={`btn ${selectedApplicationsTab === 'providers' ? 'btn-success' : 'btn-outline-success'}`}
+          onClick={() => setSelectedApplicationsTab('providers')}
+        >
+          Providers' Applications
+        </button>
+      </div>
+    </div>
 
-              {selectedApplicationsTab === 'admin' ? (
-                <ApplicationsSection
-                  applications={applications.filter(app => {
-                    const s = scholarships.find(s => s.id === app.scholarshipId);
-                    return !s?.providerId; 
-                  })}
-                  scholarships={scholarships.filter(s => !s.providerId)}
-                  selectedScholarshipId={selectedScholarshipId}
-                  setSelectedScholarshipId={setSelectedScholarshipId}
-                  onStatusChange={async (applicationId, newStatusId) => {
-                    try {
-                      const token = localStorage.getItem("token");
-                      const res = await fetch(
-                        `https://localhost:7255/api/application/${applicationId}/status`,
-                        {
-                          method: "PUT",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                          },
-                          body: JSON.stringify({ statusId: newStatusId }),
-                        }
-                      );
-                      if (!res.ok) throw new Error("Failed to update status");
-                      fetchApplications();
-                    } catch (error) {
-                      console.error("Error updating status:", error);
-                      alert(`Error: ${error.message}`);
-                    }
-                  }}
-                  showActions={true}
-                  showDocuments={true}
-                />
-              ) : (
-                <ApplicationsSection
-                  applications={applications.filter(app => {
-                    const s = scholarships.find(s => s.Id === app.ScholarshipId);
-                    return s && s.ProviderId !== null;
-                  })}
-                  scholarships={scholarships.filter(s => s.ProviderId !== null)}
-                  selectedScholarshipId={selectedScholarshipId}
-                  setSelectedScholarshipId={setSelectedScholarshipId}
-                  showActions={false}
-                  showDocuments={false}
-                />
-              )}
-            </div>
-          )}
+    <ApplicationsSection
+      applications={applications}
+      scholarships={scholarships}
+      selectedScholarshipId={selectedScholarshipId}
+      setSelectedScholarshipId={setSelectedScholarshipId}
+      onStatusChange={handleStatusChange}
+      showActions={selectedApplicationsTab === 'admin'}
+      showDocuments={selectedApplicationsTab === 'admin'}
+      showStatusOnly={selectedApplicationsTab === 'providers'}
+      selectedApplicationsTab={selectedApplicationsTab}
+    />
+  </div>
+)}
 
-          {activePage === "providers" && (
+
+   {activePage === "providers" && (
             <ProviderManager
               providers={providers}
               newProvider={newProvider}

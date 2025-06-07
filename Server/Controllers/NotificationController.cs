@@ -74,6 +74,7 @@ public async Task<ActionResult<IEnumerable<NotificationDto>>> GetNotificationsFo
 
         var notifications = await _context.Notification
             .Where(n => n.UserId == userId.Value)
+                  .Include(n => n.User)
             .OrderByDescending(n => n.DateSent)
             .Select(n => new NotificationDto
             {
@@ -84,7 +85,10 @@ public async Task<ActionResult<IEnumerable<NotificationDto>>> GetNotificationsFo
                 NotificationType = n.NotificationType,
                 RelatedEntityType = n.RelatedEntityType,
                 RelatedEntityId = n.RelatedEntityId,
-                Icon = GetNotificationIcon(n.NotificationType)
+                Icon = GetNotificationIcon(n.NotificationType),
+                SenderName = n.User != null ? n.User.FullName : "System"
+
+                
             })
             .ToListAsync();
 

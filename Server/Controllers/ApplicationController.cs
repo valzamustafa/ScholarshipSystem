@@ -52,30 +52,35 @@ namespace Server.Controllers
       [HttpGet("admin")]
 public async Task<IActionResult> GetApplicationsForAdmin()
 {
-    var applications = await _context.Application
+     var applications = await _context.Application
         .Include(a => a.Student)
-            .ThenInclude(s => s.StudentLevel)
+        .ThenInclude(s => s.StudentLevel)
         .Include(a => a.Scholarship)
-            .ThenInclude(s => s.Provider)
+        .ThenInclude(s => s.Provider)
         .Include(a => a.ApplicationStatus)
         .Include(a => a.ApplicationDocument)
         .Select(a => new
         {
-            a.Id,
-            Student = a.Student,
-            StudentName = a.Student.FullName,
-            SchoolOrUniversityName = a.Student.SchoolOrUniversityName,
-            StudyField = a.Student.StudyField,
-            StudentLevelName = a.Student.StudentLevel.Level,
-            ScholarshipTitle = a.Scholarship.Title,
-            ProviderName = a.Scholarship.Provider.FullName,
-            ProviderId = a.Scholarship.ProviderId,
-            a.ApplicationDate,
-            a.ApplicationStatusId,
+
+    a.Id,
+    Student = a.Student,
+    StudentName = a.Student.FullName,
+    SchoolOrUniversityName = a.Student.SchoolOrUniversityName,
+    StudyField = a.Student.StudyField,
+    StudentLevelName = a.Student.StudentLevel.Level,
+    ScholarshipTitle = a.Scholarship.Title,
+    ProviderName = a.Scholarship.Provider.FullName,
+    ProviderId = a.Scholarship.ProviderId,
+    ScholarshipId = a.Scholarship.Id,
+    
+
+    ApplicationDate = a.ApplicationDate,
+            ApplicationStatusId = a.ApplicationStatusId,
             ApplicationDocument = a.ApplicationDocument
-                .Select(d => new {
+         .Select(d => new {
                     d.FileName,
-                    d.FilePath
+                    FilePath = d.FilePath,
+                    d.DocumentType
                 }).ToList()
         })
         .ToListAsync();
@@ -189,27 +194,30 @@ public async Task<ActionResult<Application>> PostApplication([FromForm] CreateAp
     return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
 }
 
- private async Task<ApplicationDocument> SaveDocument(IFormFile file, string documentType, int applicationId)
-        {
-            var uploadsPath = Path.Combine(_env.WebRootPath, "Uploads");
-            Directory.CreateDirectory(uploadsPath);
+private async Task<ApplicationDocument> SaveDocument(IFormFile file, string documentType, int applicationId)
+{
 
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            var filePath = Path.Combine(uploadsPath, uniqueFileName);
-            
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
+    var uploadsPath = Path.Combine(_env.WebRootPath, "Uploads");
+    Directory.CreateDirectory(uploadsPath);
 
-            return new ApplicationDocument
-            {
-                FileName = file.FileName,
-                FilePath = $"/Uploads/{uniqueFileName}",
-                DocumentType = documentType,
-                ApplicationId = applicationId
-            };
-        }
+   
+    var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+    var filePath = Path.Combine(uploadsPath, uniqueFileName);
+
+    using (var stream = new FileStream(filePath, FileMode.Create))
+    {
+        await file.CopyToAsync(stream);
+    }
+
+   
+    return new ApplicationDocument
+    {
+        FileName = file.FileName,
+        FilePath = $"/Uploads/{uniqueFileName}",
+        DocumentType = documentType,
+        ApplicationId = applicationId
+    };
+}
 
 
 [HttpGet("download/{documentId}")]

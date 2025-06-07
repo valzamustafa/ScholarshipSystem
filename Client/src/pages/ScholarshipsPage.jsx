@@ -319,25 +319,29 @@ const handleSendMessage = async () => {
 >
   <div className="d-flex align-items-center gap-3 flex-wrap">
     {/* Search Input */}
-    <InputGroup style={{ width: '250px', flex: '1 0 auto' }}>
-      <InputGroup.Text>
-        <FiSearch />
-      </InputGroup.Text>
-      <Form.Control
-        placeholder="Search scholarships..."
-        name="search"
-        value={filters.search}
-        onChange={handleFilterChange}
-      />
-      <Form.Control
+   <InputGroup style={{ width: '250px', flex: '1 0 auto' }}>
+  <InputGroup.Text>
+    <FiSearch />
+  </InputGroup.Text>
+  <Form.Control
+    placeholder="Search scholarships..."
+    name="search"
+    value={filters.search}
+    onChange={handleFilterChange}
+  />
+</InputGroup>
+
+<InputGroup style={{ width: '250px', flex: '1 0 auto' }}>
+  <InputGroup.Text>
+    <FiBook /> 
+  </InputGroup.Text>
+  <Form.Control
     placeholder="Filter by study field..."
     name="studyField"
     value={filters.studyField}
     onChange={handleFilterChange}
-    style={{ width: '200px', flex: '1 0 auto' }}
-/>
-    </InputGroup>
-
+  />
+</InputGroup>
    
     <Form.Select 
       name="category"
