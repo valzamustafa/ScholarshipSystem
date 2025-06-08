@@ -21,7 +21,7 @@ const AboutUsSection = () => {
       <div className="container-fluid px-5">
 
         <div className="text-center mb-5">
-          <h1 className="fw-bold display-2 text-primary mb-3">
+          <h1 className="fw-bold display-2 text-primary mb-3 mt-5">
             Who We Are
           </h1>
           <p className="fs-4 text-secondary w-75 mx-auto">

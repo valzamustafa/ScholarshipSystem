@@ -118,6 +118,7 @@ var senderName = (sender as dynamic)?.FullName ?? User.FindFirst(ClaimTypes.Name
     {
         var messages = await _context.Message
             .Where(m => m.RecipientId == recipientId)
+            .Where(m => m.RecipientId == recipientId && !m.IsDeletedForRecipient)
              .Include(m => m.Sender) 
             .Include(m => m.Scholarship)
             .OrderByDescending(m => m.SentAt)
@@ -146,6 +147,7 @@ public async Task<ActionResult<IEnumerable<MessageDto>>> GetSentMessages(int use
 {
     var messages = await _context.Message
         .Where(m => m.SenderId == userId)
+         .Where(m => m.SenderId == userId && !m.IsDeletedForSender)
         .Include(m => m.Recipient)
         .Include(m => m.Scholarship)
         .OrderByDescending(m => m.SentAt)
@@ -169,26 +171,40 @@ public async Task<ActionResult<IEnumerable<MessageDto>>> GetSentMessages(int use
 
     return Ok(messages);
 }
-[HttpDelete("{id}")]
+ [HttpDelete("{id}")]
+[Authorize]
 public async Task<IActionResult> DeleteMessage(int id)
 {
+    var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+    if (claim == null || !int.TryParse(claim.Value, out var userId))
+    {
+        return Unauthorized("User ID claim is missing or invalid.");
+    }
+
     var message = await _context.Message.FindAsync(id);
-    if (message == null) return NotFound();
+    if (message == null)
+    {
+        return NotFound("Message not found.");
+    }
 
-    _context.Message.Remove(message);
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+   
+    if (userRole == "Student" && message.SenderId == userId)
+    {
+        message.IsDeletedForSender = true;
+    }
+ 
+    else if (userRole == "Provider" && message.RecipientId == userId)
+    {
+        message.IsDeletedForRecipient = true;
+    }
+    else
+    {
+        return Forbid("You are not authorized to delete this message.");
+    }
+
     await _context.SaveChangesAsync();
-
     return NoContent();
 }
-    [HttpPut("{id}/read")]
-    public async Task<IActionResult> MarkAsRead(int id)
-    {
-        var message = await _context.Message.FindAsync(id);
-        if (message == null) return NotFound();
-
-        message.IsRead = true;
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
 }

@@ -259,7 +259,7 @@ const handleSendMessage = async () => {
   };
 
   return (
-    <div className="scholarships-page m-0 p-0 vw-100 overflow-x-hidden" style={{ background: '#f8fafc', display: 'flex' }}>
+     <div className="scholarships-page w-100"  style={{ background: '#f8fafc', display: 'flex' }}>
      
   
       <div className="main-content" style={{ flex: 1, padding: '20px' }}>
@@ -318,7 +318,7 @@ const handleSendMessage = async () => {
   transition={{ delay: 0.3 }}
 >
   <div className="d-flex align-items-center gap-3 flex-wrap">
-    {/* Search Input */}
+  
    <InputGroup style={{ width: '250px', flex: '1 0 auto' }}>
   <InputGroup.Text>
     <FiSearch />

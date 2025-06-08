@@ -635,6 +635,15 @@ async function fetchApplications() {
                 <FiMail className="me-2" /> Contact Messages
               </button>
             </li>
+
+             <li className="nav-item mb-3">
+  <button 
+    className={`nav-link text-white btn btn-link text-start ${activePage === "aboutUs" ? "fw-bold" : ""}`} 
+    onClick={() => setActivePage("aboutUs")}
+  >
+    <FiInfo className="me-2" /> About Us Management
+  </button>
+</li>
             
             <li className="nav-item mb-3">
               <button 
@@ -903,7 +912,9 @@ async function fetchApplications() {
               fetchMessages={fetchContactMessage}
             />
           )}
-
+         {activePage === "aboutUs" && (
+  <AboutUsManagement />
+)}
           {activePage === "settings" && (
             <div>
               <h3>Admin Access Management</h3>

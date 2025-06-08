@@ -429,6 +429,12 @@ const handlePasswordChange = async (e) => {
                                 variant="outline-danger" 
                                 size="sm"
                                 onClick={() => handleDeleteMessage(msg.id)}
+                                 style={{
+        
+        display: (activeMessageTab === 'sent' || 
+                 (activeMessageTab === 'received' && profile.role === 'Provider')) 
+                 ? 'block' : 'none'
+    }} 
                             >
                                 Delete
                             </Button>
@@ -443,7 +449,7 @@ const handlePasswordChange = async (e) => {
     </div>
 )}
 
-{/* Reply Modal */}
+
 <Modal show={showMessageModal} onHide={() => setShowMessageModal(false)}>
     <Modal.Header closeButton>
         <Modal.Title>Reply to {selectedMessage?.senderName || selectedMessage?.recipientName}</Modal.Title>

@@ -16,7 +16,8 @@ const [isAdminScholarship, setIsAdminScholarship] = useState(true);
     description: "",
     applyLink: "",
     isAvailable: true,
-
+      deadline:"",
+    studyField:"",
     scholarshipCategoryId: "",
     scholarshipTypeId: "",
   });
@@ -158,7 +159,7 @@ useEffect(() => {
     formToSend.append("applyLink", formData.applyLink);
     formToSend.append("isAvailable", formData.isAvailable);
      formToSend.append("deadline", formData.deadline || null); 
-  
+  formToSend.append("studyField", formData.studyField || "");
  if (!isAdminScholarship && formData.providerId) {
   formToSend.append("providerId", formData.providerId);
 }
@@ -378,7 +379,15 @@ useEffect(() => {
       placeholder="Deadline"
       name="deadline"
       value={formData.deadline || ''}
-      onChange={handleInputChange}
+      onChange={(e) => {
+    const selectedDate = new Date(e.target.value);
+    const today = new Date();
+    if (selectedDate < today) {
+      alert("Deadline must be in the future!");
+      return;
+    }
+    handleInputChange(e);
+  }}
     />
     <label htmlFor="deadline">Deadline</label>
   </div>
@@ -550,17 +559,16 @@ useEffect(() => {
             <table className="table table-striped table-hover align-middle mb-0">
               <thead className="table-primary text-center">
                 <tr>
-                  <th>Title</th>
-                  <th>Description</th>
-                  <th>Application Link</th>
-                  <th>Available</th>
-                  <th>Provider</th>
-                  <th>Category</th>
-                  <th>Deadline</th>
-
-                   <th>Study Field</th>
-                  <th>Type</th>
-                  <th>Image</th>
+                    <th>Title</th>
+    <th>Description</th>
+    <th>Deadline</th>
+    <th>Apply Link</th>
+    <th>Available</th>
+    <th> Study Field </th>
+    <th>Provider</th>
+    <th>Category</th>
+    <th>Type</th>
+    <th>Image</th>
                   <th style={{ width: "110px" }}>Actions</th>
                 </tr>
               </thead>
@@ -579,14 +587,14 @@ useEffect(() => {
                         {scholarship.description}
                       </td>
                       <td>
-  {scholarship.deadline ? 
-    new Date(scholarship.deadline).toLocaleDateString('en-GB', {
+   {scholarship.deadline && !isNaN(new Date(scholarship.deadline).getTime())
+    ? new Date(scholarship.deadline).toLocaleDateString('en-GB', { 
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
-    }) : 
-    'No deadline'}
-</td>
+     })
+    : 'No deadline'}
+</td>   
                       <td className="text-center">
                         <a
                           href={scholarship.applyLink}
