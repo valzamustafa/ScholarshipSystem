@@ -121,12 +121,13 @@ function ScholarshipsSection({
                       <button
                         className={`btn btn-sm ${
                           scholarship.isAvailable
-                            ? "btn-outline-warning"
-                            : "btn-outline-success"
+                             ?"btn-outline-success"
+                            : "btn-outline-warning"
+                           
                         }`}
                         onClick={() => onToggleAvailability(scholarship.id, scholarship.isAvailable)}
                       >
-                        {scholarship.isAvailable ? <FiX /> : <FiCheck />}
+                        {scholarship.isAvailable ? <FiCheck /> : <FiX />}
                       </button>
                     </div>
                   </td>

@@ -39,7 +39,6 @@ function ContactMessages({ messages, fetchMessages }) {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Subject</th>
                   <th>Message</th>
                   <th>Actions</th>
                 </tr>
@@ -49,7 +48,6 @@ function ContactMessages({ messages, fetchMessages }) {
                   <tr key={msg.id}>
                     <td>{msg.name}</td>
                     <td>{msg.email}</td>
-                    <td>{msg.subject || "-"}</td>
                     <td>{msg.message}</td>
                     <td>
                       <button 

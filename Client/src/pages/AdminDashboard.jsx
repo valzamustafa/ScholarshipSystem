@@ -596,8 +596,8 @@ async function fetchApplications() {
   return (
     <div className="container-fluid g-0 min-vh-100 bg-light m-0 p-0 vw-100 overflow-x-hidden">
       <div className="row g-0">
-        <div className="col-md-2 text-white p-3 min-vh-100" style={{ backgroundColor: "#004D7C" }}>
-          <h4 className="text-center mb-4">Admin Panel</h4>
+        <div className="col-md-2 text-white p-3 min-vh-100" style={{ backgroundColor: "#004D7C" , marginTop: '80px'}}>
+          <h4 className="text-center mb-4">Admin Panel</h4 >
           <ul className="nav flex-column">
             <li className="nav-item mb-3">
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "dashboard" ? "fw-bold" : ""}`} onClick={() => setActivePage("dashboard")}> <FiBarChart2 className="me-2" /> Dashboard </button>

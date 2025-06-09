@@ -138,7 +138,6 @@ const handleSubmit = async (e) => {
       throw new Error(data.message || `Login failed with status: ${response.status}`);
     }
 
-   
     const roleRaw = data.user?.Role || data.user?.role || null;
     const approved = data.user?.approved ?? true;
 
@@ -155,11 +154,15 @@ const handleSubmit = async (e) => {
       throw new Error('User role is not a string or valid object');
     }
 
+  
+    if (role.toLowerCase() !== formData.role.toLowerCase()) {
+      throw new Error(`You can only login as ${formData.role}`);
+    }
 
     login(
       {
         ...data.user,
-        role: role.toLowerCase(), 
+        role: role.toLowerCase(),
         approved
       },
       data.token,
@@ -167,33 +170,22 @@ const handleSubmit = async (e) => {
     );
 
     localStorage.setItem("token", data.token);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      localStorage.setItem("user", JSON.stringify({
-        ...data.user,
-        role: role.toLowerCase(),
-        approved
-      }));
-
-    console.log('User role:', role, 'Approved:', approved);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem("user", JSON.stringify({
+      ...data.user,
+      role: role.toLowerCase(),
+      approved
+    }));
 
     if (role === 'Admin') {
       navigate('/admin');
     } else if (role === 'Provider') {
       navigate(approved ? '/provider' : '/pending-approval');
     } else if (role === 'Student') {
-      let studentId =
-        data.user?.id ||
-        data.user?.studentId ||
-        data.user?.student?.id ||
-        data.user?.StudentId ||
-        data.user?.Student?.id;
-
+      let studentId = data.user?.id || data.user?.studentId;
       if (studentId) {
         localStorage.setItem("studentId", studentId);
-      } else {
-        console.warn("Nuk u gjet studentId në objektin e userit:", data.user);
       }
-
       navigate('/home');
     } else {
       throw new Error('Unknown user role');
@@ -205,7 +197,6 @@ const handleSubmit = async (e) => {
     setLoading(false);
   }
 };
-
  return (
   <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light m-0 p-0 vw-100 overflow-x-hidden pt-5">
     <div className="row shadow-lg" style={{ maxWidth: '900px', width: '100%', borderRadius: '15px', overflow: 'hidden' }}>
