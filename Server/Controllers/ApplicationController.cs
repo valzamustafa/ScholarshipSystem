@@ -4,6 +4,7 @@ using Server.Data;
 using Server.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Server.Services;
+using Microsoft.AspNetCore.StaticFiles;
 namespace Server.Controllers
 {
     [ApiController]
@@ -226,14 +227,15 @@ public async Task<IActionResult> DownloadDocument(int documentId)
     var document = await _context.ApplicationDocument.FindAsync(documentId);
     if (document == null)
     {
-        return NotFound();
+        return NotFound("Document not found in database");
     }
 
-    var filePath = Path.Combine(Directory.GetCurrentDirectory(), document.FilePath.TrimStart('/'));
+   
+    var filePath = Path.Combine(_env.WebRootPath, document.FilePath.TrimStart('/'));
     
     if (!System.IO.File.Exists(filePath))
     {
-        return NotFound();
+        return NotFound($"File not found at: {filePath}");
     }
 
     var memory = new MemoryStream();
@@ -243,7 +245,17 @@ public async Task<IActionResult> DownloadDocument(int documentId)
     }
     memory.Position = 0;
 
-    return File(memory, "application/octet-stream", document.FileName);
+    return File(memory, GetContentType(filePath), document.FileName);
+}
+
+private string GetContentType(string path)
+{
+    var provider = new FileExtensionContentTypeProvider();
+    if (!provider.TryGetContentType(path, out var contentType))
+    {
+        contentType = "application/octet-stream";
+    }
+    return contentType;
 }
         
         [HttpPut("{id}")]

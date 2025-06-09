@@ -11,6 +11,7 @@ function StudentManager({
   handleAddStudent,
   deleteStudent,
 }) {
+
   const [editingStudentId, setEditingStudentId] = useState(null);
   const [editStudentData, setEditStudentData] = useState({
     fullName:"",
@@ -40,29 +41,36 @@ function StudentManager({
     setEditStudentData(prev => ({ ...prev, [name]: value }));
   };
 
-  const saveEdit = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`https://localhost:7255/api/admin/students/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(editStudentData),
-      });
+const saveEdit = async (id) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`https://localhost:7255/api/student/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(editStudentData),
+    });
 
-      if (!res.ok) throw new Error("Failed to update student");
-     
-      setStudents(prev => prev.map(s => 
-        s.id === id ? { ...s, ...editStudentData } : s
-      ));
-      setEditingStudentId(null);
-    } catch (error) {
-      console.error("Error updating student:", error);
-      alert(`Error: ${error.message}`);
-    }
-  };
+    if (!res.ok) throw new Error("Failed to update student");
+
+    
+    setStudents((prevStudents) =>
+      prevStudents.map((student) =>
+        student.id === id ? { ...student, ...editStudentData } : student
+      )
+    );
+
+    alert("Student updated successfully!");
+    setEditingStudentId(null);
+  } catch (error) {
+    console.error("Error updating student:", error);
+    alert(`Error: ${error.message}`);
+  }
+};
+
+
 
   return (
     <div className="card shadow-lg rounded-4 border border-primary mb-4" style={{ marginTop: '100px' }}>

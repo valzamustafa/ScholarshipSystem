@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types';
 
 function ScholarshipApply() {
   const { id: scholarshipId } = useParams();
@@ -14,7 +13,7 @@ function ScholarshipApply() {
   const [files, setFiles] = useState({
     motivationLetter: null,
     cv: null,
-    portfolio: null
+    portfolio: null,
   });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,11 +28,11 @@ function ScholarshipApply() {
       setIsLoading(true);
       try {
         const res = await fetch(`https://localhost:7255/api/scholarship/${scholarshipId}`);
-        
+
         if (!res.ok) {
           throw new Error(`Failed to fetch scholarship (Status: ${res.status})`);
         }
-        
+
         const data = await res.json();
         setScholarship(data);
         setError(null);
@@ -52,14 +51,14 @@ function ScholarshipApply() {
   const handleFileChange = (e) => {
     setFiles({
       ...files,
-      [e.target.name]: e.target.files[0]
+      [e.target.name]: e.target.files[0],
     });
   };
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -68,22 +67,18 @@ function ScholarshipApply() {
       setError('Ju lutem shkruani një GPA të vlefshme');
       return false;
     }
-
     if (!formData.studyYear) {
       setError('Ju lutem shkruani vitin tuaj të studimeve');
       return false;
     }
-
     if (!formData.studyField) {
       setError('Ju lutem shkruani fushën tuaj të studimeve');
       return false;
     }
-
     if (!files.motivationLetter || !files.cv) {
-      setError("Letra e motivimit dhe CV janë të detyrueshme");
+      setError('Letra e motivimit dhe CV janë të detyrueshme');
       return false;
     }
-
     return true;
   };
 
@@ -94,10 +89,10 @@ function ScholarshipApply() {
     if (!validateForm()) return;
 
     const token = localStorage.getItem('token');
-    const studentId = localStorage.getItem("studentId");
+    const studentId = localStorage.getItem('studentId');
 
     if (!studentId || isNaN(parseInt(studentId))) {
-      setError("Nuk u gjet studenti. Ju lutem hyni në llogari.");
+      setError('Nuk u gjet studenti. Ju lutem hyni në llogari.');
       return;
     }
 
@@ -105,14 +100,12 @@ function ScholarshipApply() {
       const formPayload = new FormData();
       formPayload.append('StudentId', studentId);
       formPayload.append('ScholarshipId', scholarshipId);
-      formPayload.append('ApplicationStatusId', 1); 
+      formPayload.append('ApplicationStatusId', 1);
       formPayload.append('Gpa', formData.gpa);
       formPayload.append('StudyYear', formData.studyYear);
       formPayload.append('StudyField', formData.studyField);
-      
       formPayload.append('MotivationLetterFile', files.motivationLetter);
       formPayload.append('CvFile', files.cv);
-      
       if (files.portfolio) {
         formPayload.append('PortfolioFile', files.portfolio);
       }
@@ -120,9 +113,9 @@ function ScholarshipApply() {
       const response = await fetch('https://localhost:7255/api/application', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: formPayload
+        body: formPayload,
       });
 
       if (!response.ok) {
@@ -132,18 +125,16 @@ function ScholarshipApply() {
 
       alert('Aplikimi u dorëzua me sukses!');
       navigate('/scholarships');
-  
-    
-      
+
       setFormData({
         gpa: '',
         studyYear: '',
-        studyField: ''
+        studyField: '',
       });
       setFiles({
         motivationLetter: null,
         cv: null,
-        portfolio: null
+        portfolio: null,
       });
     } catch (err) {
       console.error('Submission error:', err);
@@ -156,11 +147,13 @@ function ScholarshipApply() {
   }
 
   if (isLoading) {
-    return <div className="d-flex justify-content-center">
-      <div className="spinner-border" role="status">
-        <span className="visually-hidden">Loading...</span>
+    return (
+      <div className="d-flex justify-content-center">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   if (error) {
@@ -172,98 +165,104 @@ function ScholarshipApply() {
   }
 
   return (
-<div className="container mt-5 vw-100 overflow-x-hidden">
+  
+    <div className="container-fluid vh-100 d-flex align-items-start justify-content-center bg-light m-0 p-0 vw-100 overflow-x-hidden pt-5 mt-5" style={{ paddingTop: '100px' }}>
 
-  <div className="mt-5">
-    <h2>Apliko për: {scholarship.title}</h2>
-    <p>{scholarship.description}</p>
-  </div>
+      <div className="col-12 col-md-10 col-lg-8 col-xl-6">
+        <div className="p-4 bg-white shadow border border-2 rounded-5 w-100">
+          <div className="mb-4 mt-2">
+            <h2 className="text-center">Apliko për: {scholarship.title}</h2>
+            <p className="text-muted text-center">{scholarship.description}</p>
+          </div>
 
+          {error && <div className="alert alert-danger">{error}</div>}
 
-      {error && <div className="alert alert-danger">{error}</div>}
+          <form onSubmit={handleSubmit} encType="multipart/form-data" className="d-grid gap-4">
+            <div>
+              <label className="form-label fw-semibold">Letra e motivimit (e detyrueshme):</label>
+              <input
+                type="file"
+                className="form-control"
+                name="motivationLetter"
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx"
+                required
+              />
+              <small className="text-muted">Formate të pranuara: PDF, Word</small>
+            </div>
 
-      <form onSubmit={handleSubmit} encType="multipart/form-data  m-0 p-0 vw-100 overflow-x-hidden">
-        <div className="mb-3">
-          <label className="form-label">Letra e motivimit (e detyrueshme):</label>
-          <input
-            type="file"
-            className="form-control"
-            name="motivationLetter"
-            onChange={handleFileChange}
-            accept=".pdf,.doc,.docx"
-            required
-          />
-          <small className="text-muted">Formate të pranuara: PDF, Word</small>
+            <div>
+              <label className="form-label fw-semibold">CV (e detyrueshme):</label>
+              <input
+                type="file"
+                className="form-control"
+                name="cv"
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx"
+                required
+              />
+              <small className="text-muted">Formate të pranuara: PDF, Word</small>
+            </div>
+
+            <div>
+              <label className="form-label fw-semibold">Portfolio (opsionale):</label>
+              <input
+                type="file"
+                className="form-control"
+                name="portfolio"
+                onChange={handleFileChange}
+                accept=".pdf,.zip,.rar"
+              />
+              <small className="text-muted">Formate të pranuara: PDF, ZIP, RAR</small>
+            </div>
+
+            <div>
+              <label className="form-label fw-semibold">Nota mesatare (GPA):</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="10"
+                className="form-control"
+                name="gpa"
+                value={formData.gpa}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="form-label fw-semibold">Viti i studimeve:</label>
+              <input
+                type="text"
+                className="form-control"
+                name="studyYear"
+                placeholder="p.sh. Viti i dytë Bachelor"
+                value={formData.studyYear}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="form-label fw-semibold">Fusha e studimeve:</label>
+              <input
+                type="text"
+                className="form-control"
+                name="studyField"
+                placeholder="p.sh. Inxhinieri Kompjuterike"
+                value={formData.studyField}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <button className="btn btn-primary w-100 py-2 fs-5 rounded-3" type="submit">
+              Apliko
+            </button>
+          </form>
         </div>
-
-        <div className="mb-3">
-          <label className="form-label">CV (e detyrueshme):</label>
-          <input
-            type="file"
-            className="form-control"
-            name="cv"
-            onChange={handleFileChange}
-            accept=".pdf,.doc,.docx"
-            required
-          />
-          <small className="text-muted">Formate të pranuara: PDF, Word</small>
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Portfolio (opsionale):</label>
-          <input
-            type="file"
-            className="form-control"
-            name="portfolio"
-            onChange={handleFileChange}
-            accept=".pdf,.zip,.rar"
-          />
-          <small className="text-muted">Formate të pranuara: PDF, ZIP, RAR</small>
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Nota mesatare (GPA):</label>
-          <input
-            type="number"
-            step="0.1"
-            min="0"
-            max="10"
-            className="form-control"
-            name="gpa"
-            value={formData.gpa}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Viti i studimeve:</label>
-          <input
-            type="text"
-            className="form-control"
-            name="studyYear"
-            placeholder="p.sh. Viti i dytë Bachelor"
-            value={formData.studyYear}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Fusha e studimeve:</label>
-          <input
-            type="text"
-            className="form-control"
-            name="studyField"
-            placeholder="p.sh. Inxhinieri Kompjuterike"
-            value={formData.studyField}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-
-        <button className="btn btn-primary" type="submit">Apliko</button>
-      </form>
+      </div>
     </div>
   );
 }

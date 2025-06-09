@@ -101,45 +101,39 @@ public async Task<ActionResult<Student>> CreateStudent([FromBody] CreateStudentD
 
     return CreatedAtAction(nameof(GetStudentById), new { id = student.Id }, student);
 }
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateStudent(int id, Student student)
-        {
-            if (id != student.Id)
-            {
-                _logger.LogWarning("ID mismatch in student update. Route ID: {RouteId}, Student ID: {StudentId}", id, student.Id);
-                return BadRequest();
-            }
+     [HttpPut("{id}")]
+[Authorize(Roles = "Admin")]
+public async Task<IActionResult> UpdateStudent(int id, [FromBody] UpdateStudentDto dto)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
 
-            _logger.LogInformation("Updating student with ID: {StudentId}", id);
-            
-            try
-            {
-                _context.Entry(student).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-                
-                _logger.LogInformation("Successfully updated student with ID: {StudentId}", id);
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                if (!StudentExists(id))
-                {
-                    _logger.LogWarning("Student with ID {StudentId} not found for update", id);
-                    return NotFound();
-                }
-                else
-                {
-                    _logger.LogError(ex, "Concurrency error while updating student with ID: {StudentId}", id);
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while updating student with ID: {StudentId}", id);
-                return StatusCode(500, "Internal server error");
-            }
-        }
+    var student = await _context.Student.FindAsync(id);
+    if (student == null)
+    {
+        _logger.LogWarning("Student with ID {StudentId} not found for update", id);
+        return NotFound();
+    }
+
+    try
+    {
+        student.FullName = dto.FullName;
+        student.Email = dto.Email;
+        student.PhoneNumber = dto.PhoneNumber;
+        student.SchoolOrUniversityName = dto.SchoolOrUniversityName;
+        student.StudyField = dto.StudyField;
+        student.StudentLevelId = dto.StudentLevelId;
+
+        await _context.SaveChangesAsync();
+        return Ok(student);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error occurred while updating student with ID: {StudentId}", id);
+        return StatusCode(500, "Internal server error");
+    }
+}
+
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]

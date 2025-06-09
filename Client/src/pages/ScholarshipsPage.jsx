@@ -258,8 +258,8 @@ const handleSendMessage = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return (
-     <div className="scholarships-page w-100"  style={{ background: '#f8fafc', display: 'flex' }}>
+   return (
+    <div className="scholarships-page m-0 p-0 vw-100 overflow-x-hidden" style={{ background: '#f8fafc', display: 'flex' }}>
      
   
       <div className="main-content" style={{ flex: 1, padding: '20px' }}>

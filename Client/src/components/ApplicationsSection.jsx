@@ -17,6 +17,10 @@ useEffect(() => {
 const handleDownload = async (docId, fileName) => {
   try {
     const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
     const response = await fetch(`https://localhost:7255/api/application/download/${docId}`, {
       headers: {
         Authorization: `Bearer ${token}`
@@ -24,7 +28,10 @@ const handleDownload = async (docId, fileName) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to download file');
+     
+      const errorData = await response.json().catch(() => null);
+      const errorMessage = errorData?.message || `Server responded with status ${response.status}`;
+      throw new Error(`Download failed: ${errorMessage}`);
     }
 
     const blob = await response.blob();
@@ -38,7 +45,7 @@ const handleDownload = async (docId, fileName) => {
     window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Download error:', error);
-    alert('Failed to download document. Please try again.');
+    alert(`Failed to download document: ${error.message}`);
   }
 };
 

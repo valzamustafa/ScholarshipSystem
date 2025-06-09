@@ -827,17 +827,18 @@ async function fetchApplications() {
           )}
 
 
-          {activePage === "students" && (
-            <StudentManager
-              students={students}
-              newStudent={newStudent}
-              setNewStudent={setNewStudent}
-              showAddStudentForm={showAddStudentForm}
-              setShowAddStudentForm={setShowAddStudentForm}
-              handleAddStudent={handleAddStudent}
-              deleteStudent={deleteStudent}
-            />
-          )}
+        {activePage === "students" && (
+  <StudentManager
+    students={students}
+    setStudents={setStudents} 
+    newStudent={newStudent}
+    setNewStudent={setNewStudent}
+    showAddStudentForm={showAddStudentForm}
+    setShowAddStudentForm={setShowAddStudentForm}
+    handleAddStudent={handleAddStudent}
+    deleteStudent={deleteStudent}
+  />
+)}
           {activePage === "feedback" && (
             <FeedbackComponent 
               feedbacks={feedbacks}
@@ -898,6 +899,7 @@ async function fetchApplications() {
               deleteProvider={deleteProvider}
             />
           )}
+          
 
           {activePage === "scholarships" && (
             <ScholarshipsManagement 

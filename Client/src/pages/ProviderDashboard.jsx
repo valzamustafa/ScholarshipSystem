@@ -494,6 +494,7 @@ const handlePasswordChange = async (e) => {
   }
 };
 
+// eslint-disable-next-line no-unused-vars
 const markMessageAsRead = async (messageId) => {
     try {
         const token = localStorage.getItem("token");
@@ -688,16 +689,28 @@ const markMessageAsRead = async (messageId) => {
                   >
                     Delete
                   </Button>
-                  {!msg.isRead && (
-                    <Button 
-                      variant="outline-success" 
-                      size="sm"
-                      onClick={() => markMessageAsRead(msg.id)}
-                      className="ms-auto"
-                    >
-                      Mark as Read
-                    </Button>
-                  )}
+                <Button 
+  variant={msg.isRead ? "success" : "outline-primary"}
+  size="sm"
+  className="ms-auto d-flex align-items-center gap-2"
+  onClick={() => {
+    setMessages(prev =>
+      prev.map(m =>
+        m.id === msg.id ? { ...m, isRead: !msg.isRead } : m
+      )
+    );
+  }}
+>
+  {msg.isRead ? (
+    <>
+      ✅ Read
+    </>
+  ) : (
+    <>
+      📩 Mark as Read
+    </>
+  )}
+</Button>
                 </div>
               </div>
             ))}

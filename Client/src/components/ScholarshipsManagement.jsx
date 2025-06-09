@@ -379,15 +379,9 @@ useEffect(() => {
       placeholder="Deadline"
       name="deadline"
       value={formData.deadline || ''}
-      onChange={(e) => {
-    const selectedDate = new Date(e.target.value);
-    const today = new Date();
-    if (selectedDate < today) {
-      alert("Deadline must be in the future!");
-      return;
-    }
-    handleInputChange(e);
-  }}
+      min={new Date().toISOString().split('T')[0]} 
+      onChange={handleInputChange}
+      required
     />
     <label htmlFor="deadline">Deadline</label>
   </div>
@@ -586,15 +580,15 @@ useEffect(() => {
                       <td className="text-truncate" style={{ maxWidth: "200px" }}>
                         {scholarship.description}
                       </td>
-                      <td>
-   {scholarship.deadline && !isNaN(new Date(scholarship.deadline).getTime())
-    ? new Date(scholarship.deadline).toLocaleDateString('en-GB', { 
+                    <td>
+  {scholarship.deadline ? 
+    new Date(scholarship.deadline).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
-     })
+    }) 
     : 'No deadline'}
-</td>   
+</td>
                       <td className="text-center">
                         <a
                           href={scholarship.applyLink}

@@ -25,6 +25,7 @@ public class MessageController : ControllerBase
         _context = context;
         _notificationService = notificationService;
     }
+    
 [HttpPost]
 public async Task<IActionResult> SendMessage([FromBody] SendMessageDto messageDto)
 {
@@ -112,7 +113,34 @@ var senderName = (sender as dynamic)?.FullName ?? User.FindFirst(ClaimTypes.Name
     }
 }
 
+[HttpPut("{id}/read")]
+public async Task<IActionResult> MarkAsRead(int id)
+{
+    try
+    {
+        var message = await _context.Message.FindAsync(id);
+        if (message == null)
+        {
+            return NotFound("Message not found.");
+        }
 
+        
+        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) || 
+            message.RecipientId != userId)
+        {
+            return Forbid("You can only mark your own messages as read.");
+        }
+
+        message.IsRead = true;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Error marking message as read: {ex.Message}");
+    }
+}
     [HttpGet("received/{recipientId}")]
     public async Task<ActionResult<IEnumerable<MessageDto>>> GetReceivedMessages(int recipientId)
     {
