@@ -29,7 +29,7 @@ function App() {
           {/* Public routes */}
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<LoginForm />} />
-              <Route path="/admin" element={<AdminDashboard />} />
+           
           <Route path="/register" element={<RegisterStudentForm />} />
           <Route path="/register/provider" element={<RegisterProviderForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
