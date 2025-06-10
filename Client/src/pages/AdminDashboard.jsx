@@ -219,22 +219,35 @@ const handleStatusChange = async (applicationId, newStatusId) => {
     }
   }
 
-  async function grantAdminAccess(id) {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`https://localhost:7255/api/admin/users/${id}/grant-admin`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to grant admin access");
-      fetchAdmins();
-      searchUsers();
-    } catch (error) {
-      console.error("Grant admin error:", error);
-      alert(`Error: ${error.message}`);
-    }
+async function grantAdminAccess(id /*, type */) {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(
+  `https://localhost:7255/api/admin/users/${id}/grant-admin`,
+  {
+    method: "PUT",
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}` 
+    },
   }
+);
 
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to grant admin access");
+    }
+    
+    fetchAdmins();
+    searchUsers();
+    return true;
+  } catch (error) {
+    console.error("Grant admin error:", error);
+    alert(`Error: ${error.message}`);
+    return false;
+  }
+}
   async function revokeAdminAccess(id) {
     try {
       const token = localStorage.getItem("token");
@@ -957,12 +970,12 @@ async function fetchApplications() {
                               <td>{user.email}</td>
                               <td>{user.type}</td>
                               <td>
-                                <button 
-                                  className="btn btn-success"
-                                  onClick={() => grantAdminAccess(user.id)}
-                                >
-                                  Grant Admin
-                                </button>
+                            <button 
+  className="btn btn-success"
+  onClick={() => grantAdminAccess(user.id, user.type)}
+>
+  Grant Admin
+</button>
                               </td>
                             </tr>
                           ))}
@@ -1015,6 +1028,7 @@ async function fetchApplications() {
               </div>
             </div>
           )}
+          
 
          
         </div>

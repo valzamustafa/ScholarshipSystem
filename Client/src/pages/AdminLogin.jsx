@@ -19,10 +19,9 @@ const AdminLogin = () => {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Login failed");
-
-      if (!data.user || !data.token || data.user.role) {
-        throw new Error("You are not authorized as admin");
-      }
+if (!data.user || !data.token || data.user.role !== "Admin") {
+    throw new Error("You are not authorized as admin");
+}
 
       localStorage.setItem("token", data.token);
       navigate("/admin");

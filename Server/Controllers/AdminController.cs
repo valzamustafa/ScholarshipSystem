@@ -118,18 +118,29 @@ namespace Server.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
-        [HttpGet("users/admins")]
+  [HttpGet("users/admins")]
         public async Task<ActionResult<IEnumerable<object>>> GetAllAdmins()
         {
             var studentAdmins = await _context.Student
-                .Where(s => s.RoleId == 3)
-                .Select(s => new { s.Id, s.FullName, s.Email, Type = "Student" })
+                .Where(s => s.RoleId == 3) 
+                .Select(s => new 
+                {
+                    Id = s.Id,
+                    FullName = s.FullName,
+                    Email = s.Email,
+                    Type = "Student"
+                })
                 .ToListAsync();
 
             var providerAdmins = await _context.Provider
-                .Where(p => p.RoleId == 3)
-                .Select(p => new { p.Id, p.FullName, p.Email, Type = "Provider" })
+                .Where(p => p.RoleId == 3) 
+                .Select(p => new 
+                {
+                    Id = p.Id,
+                    FullName = p.FullName,
+                    Email = p.Email,
+                    Type = "Provider"
+                })
                 .ToListAsync();
 
             return Ok(studentAdmins.Concat(providerAdmins));
@@ -138,96 +149,125 @@ namespace Server.Controllers
         [HttpGet("users/search")]
         public async Task<ActionResult<IEnumerable<object>>> SearchUsers([FromQuery] string term)
         {
-            if (string.IsNullOrWhiteSpace(term)) return BadRequest("Search term is required");
+            if (string.IsNullOrWhiteSpace(term))
+                return BadRequest("Search term is required");
 
             var studentResults = await _context.Student
                 .Where(s => s.FullName.Contains(term) || s.Email.Contains(term))
-                .Select(s => new { s.Id, s.FullName, s.Email, Type = "Student" })
+                .Select(s => new 
+                {
+                    Id = s.Id,
+                    FullName = s.FullName,
+                    Email = s.Email,
+                    Type = "Student"
+                })
                 .ToListAsync();
 
             var providerResults = await _context.Provider
                 .Where(p => p.FullName.Contains(term) || p.Email.Contains(term))
-                .Select(p => new { p.Id, p.FullName, p.Email, Type = "Provider" })
+                .Select(p => new 
+                {
+                    Id = p.Id,
+                    FullName = p.FullName,
+                    Email = p.Email,
+                    Type = "Provider"
+                })
                 .ToListAsync();
 
             return Ok(studentResults.Concat(providerResults));
         }
 
-        [HttpPut("users/{id}/grant-admin")]
-        public async Task<IActionResult> GrantAdminAccess(int id)
+[HttpPut("users/{id}/grant-admin")]
+public async Task<IActionResult> GrantAdminAccess(int id)
+{
+    var adminRole = await _context.Role.FirstOrDefaultAsync(r => r.Emri == "Admin");
+    if (adminRole == null) return BadRequest("Admin role not found");
+
+    var student = await _context.Student.FindAsync(id);
+    if (student != null)
+    {
+        if (string.IsNullOrWhiteSpace(student.PasswordHash))
+            return BadRequest("Student does not have a valid password set");
+
+        student.RoleId = adminRole.Id;
+
+        if (!await _context.Admin.AnyAsync(a => a.Email == student.Email))
         {
-            var student = await _context.Student.FindAsync(id);
-            if (student != null)
+            var newAdmin = new Admin
             {
-                student.RoleId = 3;
-                _context.AuditLog.Add(new AuditLog
-                {
-                    Action = "Granted Admin Access",
-                    Details = $"To Student: {student.FullName}",
-                    ActionDate = DateTime.UtcNow,
-                    Timestamp = DateTime.UtcNow,
-                    UserId = GetCurrentUserId()
-                });
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-
-            var provider = await _context.Provider.FindAsync(id);
-            if (provider != null)
-            {
-                provider.RoleId = 3;
-                _context.AuditLog.Add(new AuditLog
-                {
-                    Action = "Granted Admin Access",
-                    Details = $"To Provider: {provider.FullName}",
-                    ActionDate = DateTime.UtcNow,
-                    Timestamp = DateTime.UtcNow,
-                    UserId = GetCurrentUserId()
-                });
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-
-            return NotFound();
+                FullName = student.FullName,
+                Email = student.Email,
+                RoleId = adminRole.Id,
+                IsApproved = true,
+                PasswordHash = student.PasswordHash
+            };
+            _context.Admin.Add(newAdmin);
         }
 
-        [HttpPut("users/{id}/revoke-admin")]
-        public async Task<IActionResult> RevokeAdminAccess(int id)
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    var provider = await _context.Provider.FindAsync(id);
+    if (provider != null)
+    {
+        if (string.IsNullOrWhiteSpace(provider.PasswordHash))
+            return BadRequest("Provider does not have a valid password set");
+
+        provider.RoleId = adminRole.Id;
+
+        if (!await _context.Admin.AnyAsync(a => a.Email == provider.Email))
         {
-            var student = await _context.Student.FindAsync(id);
-            if (student != null)
+            var newAdmin = new Admin
             {
-                student.RoleId = 1;
-                _context.AuditLog.Add(new AuditLog
-                {
-                    Action = "Revoked Admin Access",
-                    Details = $"From Student: {student.FullName}",
-                    ActionDate = DateTime.UtcNow,
-                    Timestamp = DateTime.UtcNow,
-                    UserId = GetCurrentUserId()
-                });
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-
-            var provider = await _context.Provider.FindAsync(id);
-            if (provider != null)
-            {
-                provider.RoleId = 2;
-                _context.AuditLog.Add(new AuditLog
-                {
-                    Action = "Revoked Admin Access",
-                    Details = $"From Provider: {provider.FullName}",
-                    ActionDate = DateTime.UtcNow,
-                    Timestamp = DateTime.UtcNow,
-                    UserId = GetCurrentUserId()
-                });
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-
-            return NotFound();
+                FullName = provider.FullName,
+                Email = provider.Email,
+                RoleId = adminRole.Id,
+                IsApproved = true,
+                PasswordHash = provider.PasswordHash
+            };
+            _context.Admin.Add(newAdmin);
         }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    return NotFound();
+}
+
+
+
+       [HttpPut("users/{id}/revoke-admin")]
+public async Task<IActionResult> RevokeAdminAccess(int id)
+{
+    var student = await _context.Student.FindAsync(id);
+    if (student != null)
+    {
+        student.RoleId = 1; 
+        var admin = await _context.Admin.FirstOrDefaultAsync(a => a.Email == student.Email);
+        if (admin != null)
+            _context.Admin.Remove(admin);
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    var provider = await _context.Provider.FindAsync(id);
+    if (provider != null)
+    {
+        provider.RoleId = 2; 
+        var admin = await _context.Admin.FirstOrDefaultAsync(a => a.Email == provider.Email);
+        if (admin != null)
+            _context.Admin.Remove(admin);
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    return NotFound();
+}
+
 
         [HttpGet("logs")]
         public async Task<ActionResult<IEnumerable<AuditLog>>> GetAuditLogs()
