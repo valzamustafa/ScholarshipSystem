@@ -40,6 +40,37 @@ namespace Server.Controllers
         }
 
 
+[HttpGet("all-with-counts")]
+public async Task<ActionResult<IEnumerable<object>>> GetAllWithCounts()
+{
+    var categories = await _context.ScholarshipCategory
+        .Include(c => c.Scholarship)
+        .Select(c => new 
+        {
+            c.Id,
+            c.Name,
+            c.Description,
+            ScholarshipCount = c.Scholarship.Count,
+            CreatedByProvider = c.Scholarship.Any(s => s.ProviderId != null)
+        })
+        .ToListAsync();
+
+    return Ok(categories);
+}
+
+[HttpPut("admin/{id}")]
+public async Task<IActionResult> UpdateByAdmin(int id, [FromBody] ScholarshipCategory updatedCategory)
+{
+    var existing = await _context.ScholarshipCategory.FindAsync(id);
+    if (existing == null)
+        return NotFound();
+
+    existing.Name = updatedCategory.Name;
+    existing.Description = updatedCategory.Description;
+
+    await _context.SaveChangesAsync();
+    return Ok(existing);
+}
         [HttpPost]
         public IActionResult Create([FromBody] ScholarshipCategory category)
         {

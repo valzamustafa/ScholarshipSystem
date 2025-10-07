@@ -30,7 +30,8 @@ import ScholarshipsManagement from "../components/ScholarshipsManagement";
 import ContactMessages from "../components/ContactMessages";
 import FeedbackComponent from "../components/FeedbackComponent";
 import NotificationsPanel from "../components/NotificationsPanel.jsx";
-
+import ScholarshipTypeManager from "../components/ScholarshipTypeManager.jsx";
+import ScholarshipCategoryManager from "../components/ScholarshipCategoryManager.jsx";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function AdminDashboard() {
@@ -633,6 +634,23 @@ async function fetchApplications() {
               <button className={`nav-link text-white btn btn-link text-start ${activePage === "scholarships" ? "fw-bold" : ""}`} onClick={() => setActivePage("scholarships")}> <FiAward className="me-2" /> Scholarships </button>
             </li>
             <li className="nav-item mb-3">
+  <button 
+    className={`nav-link text-white btn btn-link text-start ${activePage === "scholarshipTypes" ? "fw-bold" : ""}`} 
+    onClick={() => setActivePage("scholarshipTypes")}
+  >
+    <FiAward className="me-2" /> Scholarship Types
+  </button>
+</li>
+<li className="nav-item mb-3">
+  <button 
+    className={`nav-link text-white btn btn-link text-start ${activePage === "scholarshipCategories" ? "fw-bold" : ""}`} 
+    onClick={() => setActivePage("scholarshipCategories")}
+  >
+    <FiAward className="me-2" /> Scholarship Categories
+  </button>
+</li>
+
+            <li className="nav-item mb-3">
               <button 
                 className={`nav-link text-white btn btn-link text-start ${activePage === "feedback" ? "fw-bold" : ""}`} 
                 onClick={() => setActivePage("feedback")}
@@ -852,6 +870,9 @@ async function fetchApplications() {
     deleteStudent={deleteStudent}
   />
 )}
+{activePage === "scholarshipTypes" && (
+  <ScholarshipTypeManager />
+)}
           {activePage === "feedback" && (
             <FeedbackComponent 
               feedbacks={feedbacks}
@@ -859,6 +880,9 @@ async function fetchApplications() {
               onToggleFeatured={handleToggleFeatured}
             />
           )}
+          {activePage === "scholarshipCategories" && (
+  <ScholarshipCategoryManager />
+)}
     
 {activePage === "applications" && (
   <div style={{ marginTop: '100px' }}>

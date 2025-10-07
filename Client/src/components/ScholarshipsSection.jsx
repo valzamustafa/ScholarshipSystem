@@ -1,4 +1,3 @@
-import React from "react";
 import { FiPlus, FiEdit, FiTrash2, FiCheck, FiX } from "react-icons/fi";
 import ScholarshipForm from "./ScholarshipForm";
 

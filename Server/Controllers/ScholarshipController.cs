@@ -4,6 +4,7 @@ using Server.Data;
 using Server.Entities;
 using Microsoft.AspNetCore.Hosting; 
 using Microsoft.AspNetCore.Http;
+using Server.DTOs;
 
 namespace Server.Controllers
 {
@@ -19,57 +20,103 @@ namespace Server.Controllers
             _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
-        
- [HttpGet("byprovider/{providerId}")]
-public async Task<IActionResult> GetByProvider(int providerId)
-{
-    var scholarships = await _context.Scholarship
-        .Where(s => s.ProviderId == providerId)
-        .Include(s => s.ScholarshipCategory)
-        .Include(s => s.ScholarshipType)
-        .Select(s => new {
-            s.Id,
-            s.Title,
-            s.Description,
-         s.StudyField,
-            s.Deadline, 
-            s.IsAvailable,
-            s.ImageFile,
-            ScholarshipCategory = s.ScholarshipCategory != null ? new { s.ScholarshipCategory.Id, s.ScholarshipCategory.Name } : null,
-            ScholarshipType = s.ScholarshipType != null ? new { s.ScholarshipType.Id, s.ScholarshipType.Name } : null
-        })
-        .ToListAsync();
 
-    return Ok(scholarships);
-}
-       [HttpGet]
-public async Task<IActionResult> GetAllScholarships()
-{
-    var scholarships = await _context.Scholarship
-        .Include(s => s.Provider)
-        .Include(s => s.ScholarshipCategory)
-        .Include(s => s.ScholarshipType)
-        .Select(s => new ScholarshipDto
+        [HttpGet("byprovider/{providerId}")]
+        public async Task<IActionResult> GetByProvider(int providerId)
         {
-            Id = s.Id,
-            Title = s.Title,
-            Description = s.Description,
-            StudyField = s.StudyField,
-            IsAvailable = s.IsAvailable,
-            Deadline = s.Deadline,
-            ImageFile = s.ImageFile,
-            ProviderId = s.ProviderId,
-            ProviderName = s.Provider != null ? s.Provider.FullName : "Unknown",
-            ProviderEmail = s.Provider != null ? s.Provider.Email : "No email provided",  
-            ScholarshipCategoryId = s.ScholarshipCategoryId,
-            ScholarshipCategoryName = s.ScholarshipCategory.Name,
-            ScholarshipTypeId = s.ScholarshipTypeId,
-            ScholarshipTypeName = s.ScholarshipType.Name
-        })
-        .ToListAsync();
+            var scholarships = await _context.Scholarship
+                .Where(s => s.ProviderId == providerId)
+                .Include(s => s.ScholarshipCategory)
+                .Include(s => s.ScholarshipType)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    s.StudyField,
+                    s.Deadline,
+                    s.IsAvailable,
+                    s.ImageFile,
+                    ScholarshipCategory = s.ScholarshipCategory != null ? new { s.ScholarshipCategory.Id, s.ScholarshipCategory.Name } : null,
+                    ScholarshipType = s.ScholarshipType != null ? new { s.ScholarshipType.Id, s.ScholarshipType.Name } : null
+                })
+                .ToListAsync();
 
-    return Ok(scholarships);
+            return Ok(scholarships);
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllScholarships()
+        {
+            var scholarships = await _context.Scholarship
+                .Include(s => s.Provider)
+                .Include(s => s.ScholarshipCategory)
+                .Include(s => s.ScholarshipType)
+                .Select(s => new ScholarshipDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    Description = s.Description,
+                    StudyField = s.StudyField,
+                    IsAvailable = s.IsAvailable,
+                    Deadline = s.Deadline,
+                    ImageFile = s.ImageFile,
+                    ProviderId = s.ProviderId,
+                    ProviderName = s.Provider != null ? s.Provider.FullName : "Unknown",
+                    ProviderEmail = s.Provider != null ? s.Provider.Email : "No email provided",
+                    ScholarshipCategoryId = s.ScholarshipCategoryId,
+                    ScholarshipCategoryName = s.ScholarshipCategory.Name,
+                    ScholarshipTypeId = s.ScholarshipTypeId,
+                    ScholarshipTypeName = s.ScholarshipType.Name
+                })
+                .ToListAsync();
+
+            return Ok(scholarships);
+        }
+
+
+
+
+
+[HttpPost("category")]
+public async Task<ActionResult<ScholarshipCategory>> CreateCategory([FromBody] CreateCategoryRequest request)
+{
+    var category = new ScholarshipCategory
+    {
+        Name = request.Name,
+        Description = request.Description
+    };
+
+    _context.ScholarshipCategory.Add(category);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(ScholarshipCategoryController.GetById), 
+        "ScholarshipCategory", 
+        new { id = category.Id }, 
+        category);
 }
+
+[HttpPost("type")]
+public async Task<ActionResult<ScholarshipType>> CreateType([FromBody] CreateTypeRequest request)
+{
+    var type = new ScholarshipType
+    {
+        Name = request.Name,
+        Description = request.Description
+    };
+
+    _context.ScholarshipType.Add(type);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(ScholarshipTypeController.GetById), 
+        "ScholarshipType", 
+        new { id = type.Id }, 
+        type);
+}
+
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Scholarship>> GetById(int id)

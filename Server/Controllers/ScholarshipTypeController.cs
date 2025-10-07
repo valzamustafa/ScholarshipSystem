@@ -41,6 +41,37 @@ namespace Server.Controllers
             return CreatedAtAction(nameof(GetById), new { id = type.Id }, type);
         }
 
+[HttpGet("all-with-counts")]
+public async Task<ActionResult<IEnumerable<object>>> GetAllWithCounts()
+{
+    var types = await _context.ScholarshipType
+        .Include(t => t.Scholarship)
+        .Select(t => new 
+        {
+            t.Id,
+            t.Name,
+            t.Description,
+            ScholarshipCount = t.Scholarship.Count,
+            CreatedByProvider = t.Scholarship.Any(s => s.ProviderId != null)
+        })
+        .ToListAsync();
+
+    return Ok(types);
+}
+
+[HttpPut("admin/{id}")]
+public async Task<IActionResult> UpdateByAdmin(int id, [FromBody] ScholarshipType updatedType)
+{
+    var existing = await _context.ScholarshipType.FindAsync(id);
+    if (existing == null)
+        return NotFound();
+
+    existing.Name = updatedType.Name;
+    existing.Description = updatedType.Description;
+
+    await _context.SaveChangesAsync();
+    return Ok(existing);
+}
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ScholarshipType updatedType)
         {
