@@ -6,6 +6,9 @@ function ScholarshipForm({ scholarship, categories, types, providerId, onClose, 
     title: scholarship?.title || '',
     description: scholarship?.description || '',
     studyField: scholarship?.studyField || '',
+     university: scholarship?.university || '',
+  academicYear: scholarship?.academicYear || '',
+  eligibilityCriteria: scholarship?.eligibilityCriteria || '',
     deadline: scholarship?.deadline ? new Date(scholarship.deadline).toISOString().split('T')[0] : '',
     isAvailable: scholarship?.isAvailable ?? true,
     scholarshipCategoryId: scholarship?.scholarshipCategoryId || '',
@@ -45,6 +48,9 @@ function ScholarshipForm({ scholarship, categories, types, providerId, onClose, 
       submitData.append('title', formData.title);
       submitData.append('description', formData.description);
       submitData.append('studyField', formData.studyField);
+          submitData.append('university', formData.university || '');
+    submitData.append('academicYear', formData.academicYear || '');
+    submitData.append('eligibilityCriteria', formData.eligibilityCriteria || '');
       submitData.append('deadline', formData.deadline);
       submitData.append('isAvailable', formData.isAvailable.toString());
       submitData.append('scholarshipCategoryId', formData.scholarshipCategoryId);
@@ -204,6 +210,38 @@ function ScholarshipForm({ scholarship, categories, types, providerId, onClose, 
                 onChange={(e) => setFormData({...formData, studyField: e.target.value})}
               />
             </Form.Group>
+           
+
+<Form.Group className="mb-3">
+  <Form.Label>University</Form.Label>
+  <Form.Control
+    type="text"
+    value={formData.university || ''}
+    onChange={(e) => setFormData({...formData, university: e.target.value})}
+    placeholder="Enter university name"
+  />
+</Form.Group>
+
+<Form.Group className="mb-3">
+  <Form.Label>Academic Year</Form.Label>
+  <Form.Control
+    type="text"
+    value={formData.academicYear || ''}
+    onChange={(e) => setFormData({...formData, academicYear: e.target.value})}
+    placeholder="e.g., 2024-2025"
+  />
+</Form.Group>
+
+<Form.Group className="mb-3">
+  <Form.Label>Eligibility Criteria</Form.Label>
+  <Form.Control
+    as="textarea"
+    rows={3}
+    value={formData.eligibilityCriteria || ''}
+    onChange={(e) => setFormData({...formData, eligibilityCriteria: e.target.value})}
+    placeholder="Enter eligibility criteria"
+  />
+</Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Deadline *</Form.Label>

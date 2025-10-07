@@ -46,6 +46,10 @@ function ScholarshipsSection({
               <tr>
                 <th>Title</th>
                 <th>Description</th>
+               <th>University</th>
+                <th>Academic Year</th>
+                <th>Eligibility Criteria</th>
+
                 <th>Study Field</th>
                 <th>Deadline</th>
                 <th>Available</th>
@@ -64,6 +68,13 @@ function ScholarshipsSection({
                     {scholarship.description.length > 50
                       ? `${scholarship.description.substring(0, 50)}...`
                       : scholarship.description}
+                  </td>
+                    <td>{scholarship.university || 'N/A'}</td>
+                  <td>{scholarship.academicYear || 'N/A'}</td>
+                  <td>
+                    {scholarship.eligibilityCriteria && scholarship.eligibilityCriteria.length > 30
+                      ? `${scholarship.eligibilityCriteria.substring(0, 30)}...`
+                      : scholarship.eligibilityCriteria || 'N/A'}
                   </td>
                   <td>{scholarship.studyField || 'N/A'}</td>
                   <td>
@@ -104,7 +115,11 @@ function ScholarshipsSection({
                             ...scholarship,
                             scholarshipCategoryId: scholarship.scholarshipCategory?.id,
                             scholarshipTypeId: scholarship.scholarshipType?.id,
-                            studyField: scholarship.studyField || ''
+                            studyField: scholarship.studyField || '',
+                               university: scholarship.university || '',
+                            academicYear: scholarship.academicYear || '',
+                            eligibilityCriteria: scholarship.eligibilityCriteria || ''
+                          
                           });
                           onShowForm(true);
                         }}

@@ -34,6 +34,9 @@ namespace Server.Controllers
                     s.Title,
                     s.Description,
                     s.StudyField,
+                  s.University,
+                 s.AcademicYear,
+                s.EligibilityCriteria,
                     s.Deadline,
                     s.IsAvailable,
                     s.ImageFile,
@@ -60,6 +63,9 @@ namespace Server.Controllers
                     Title = s.Title,
                     Description = s.Description,
                     StudyField = s.StudyField,
+                 University = s.University,
+                 AcademicYear = s.AcademicYear,
+                EligibilityCriteria = s.EligibilityCriteria,
                     IsAvailable = s.IsAvailable,
                     Deadline = s.Deadline,
                     ImageFile = s.ImageFile,
@@ -167,6 +173,9 @@ var scholarship = new Scholarship
     Deadline = dto.Deadline,
     ProviderId = dto.ProviderId,
      StudyField = dto.StudyField,
+             University = dto.University,
+        AcademicYear = dto.AcademicYear,
+        EligibilityCriteria = dto.EligibilityCriteria,
     ScholarshipCategoryId = dto.ScholarshipCategoryId,
     ScholarshipTypeId = dto.ScholarshipTypeId
 };
@@ -219,6 +228,9 @@ public async Task<IActionResult> Update(int id, [FromForm] CreateScholarshipDto 
     existing.Title = dto.Title;
     existing.Description = dto.Description;
    existing.StudyField = dto.StudyField;
+   existing.University = dto.University;
+    existing.AcademicYear = dto.AcademicYear;
+    existing.EligibilityCriteria = dto.EligibilityCriteria;
     existing.IsAvailable = dto.IsAvailable;
     existing.Deadline = dto.Deadline;
     

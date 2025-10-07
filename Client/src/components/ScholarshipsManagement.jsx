@@ -160,6 +160,9 @@ useEffect(() => {
     formToSend.append("isAvailable", formData.isAvailable);
      formToSend.append("deadline", formData.deadline || null); 
   formToSend.append("studyField", formData.studyField || "");
+    formToSend.append("university", formData.university || "");
+  formToSend.append("academicYear", formData.academicYear || "");
+  formToSend.append("eligibilityCriteria", formData.eligibilityCriteria || "");
  if (!isAdminScholarship && formData.providerId) {
   formToSend.append("providerId", formData.providerId);
 }
@@ -555,10 +558,14 @@ useEffect(() => {
                 <tr>
                     <th>Title</th>
     <th>Description</th>
+        <th> Academic Year </th>
+    <th> University </th>
+    <th> Egilibility Criteria </th>
     <th>Deadline</th>
     <th>Apply Link</th>
     <th>Available</th>
     <th> Study Field </th>
+
     <th>Provider</th>
     <th>Category</th>
     <th>Type</th>
@@ -580,6 +587,11 @@ useEffect(() => {
                       <td className="text-truncate" style={{ maxWidth: "200px" }}>
                         {scholarship.description}
                       </td>
+                            <td>{scholarship.university || 'N/A'}</td>
+      <td>{scholarship.academicYear || 'N/A'}</td>
+      <td className="text-truncate" style={{ maxWidth: "200px" }}>
+        {scholarship.eligibilityCriteria || 'N/A'}
+      </td>
                     <td>
   {scholarship.deadline ? 
     new Date(scholarship.deadline).toLocaleDateString('en-GB', {

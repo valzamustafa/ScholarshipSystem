@@ -9,6 +9,10 @@ public class ScholarshipDto
          public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
       public DateTime? Deadline { get; set; } 
        public string? StudyField { get; set; }
+    
+    public string? University { get; set; }
+    public string? AcademicYear { get; set; }
+    public string? EligibilityCriteria { get; set; }
          public bool IsApproved { get; set; } 
     public int? ProviderId { get; set; }
     public string ProviderName { get; set; } = string.Empty;  
