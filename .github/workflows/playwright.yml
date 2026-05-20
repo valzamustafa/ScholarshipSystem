@@ -48,8 +48,8 @@ jobs:
         run: npm ci
         working-directory: ./Client
 
-      - name: Build frontend
-        run: npm run build
+      - name: Start frontend (dev mode)
+        run: npm run dev -- --port 3000 &
         working-directory: ./Client
 
       - name: Install Playwright Chromium
