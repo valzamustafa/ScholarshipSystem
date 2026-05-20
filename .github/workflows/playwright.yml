@@ -78,7 +78,7 @@ jobs:
           done
 
       - name: Run Playwright tests
-        run: npx playwright test --reporter=htm
+        run: npx playwright test --reporter=html
         working-directory: ./Client
         env:
           CI: true
