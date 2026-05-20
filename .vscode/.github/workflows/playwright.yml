@@ -16,27 +16,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET 9
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-
-      - name: Restore .NET dependencies
-        run: dotnet restore
-        working-directory: ./Server
-
-      - name: Build backend
-        run: dotnet build --no-restore
-        working-directory: ./Server
-
-      - name: Start backend (ASP.NET Core – HTTPS port 7255)
-        run: dotnet run --no-build &
-        working-directory: ./Server
-        env:
-          ASPNETCORE_URLS: https://localhost:7255
-          ASPNETCORE_ENVIRONMENT: Development
-          DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP3SUPPORT: 0
-
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -48,37 +27,27 @@ jobs:
         run: npm ci
         working-directory: ./Client
 
-      - name: Build frontend
-        run: npm run build
-        working-directory: ./Client
-
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
         working-directory: ./Client
 
-      - name: Wait for backend to be ready
-        run: |
-          echo "Waiting for backend on https://localhost:7255..."
-          for i in {1..30}; do
-            curl -sk https://localhost:7255/api/scholarship && echo "Backend ready!" && break
-            echo "Attempt $i - waiting..."
-            sleep 2
-          done
-
-      - name: Start frontend preview (port 3000)
-        run: npm run preview -- --port 3000 &
+      - name: Start frontend dev server (port 3000)
+        run: npm run dev -- --port 3000 &
         working-directory: ./Client
+        env:
+          VITE_API_URL: https://localhost:3000
 
       - name: Wait for frontend to be ready
         run: |
-          echo "Waiting for frontend on https://localhost:3000..."
-          for i in {1..15}; do
-            curl -s https://localhost:3000 && echo "Frontend ready!" && break
-            sleep 2
+          echo "Waiting for frontend..."
+          for i in {1..20}; do
+            curl -s https://localhost:3000 > /dev/null && echo "Frontend ready!" && break
+            echo "Attempt $i..."
+            sleep 3
           done
 
       - name: Run Playwright tests
-        run: npx playwright test --reporter=htm
+        run: npx playwright test --reporter=html
         working-directory: ./Client
         env:
           CI: true
@@ -90,11 +59,3 @@ jobs:
           name: playwright-report-${{ github.run_number }}
           path: Client/playwright-report/
           retention-days: 30
-
-      - name: Upload failed test screenshots
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: test-results-${{ github.run_number }}
-          path: Client/test-results/
-          retention-days: 7
