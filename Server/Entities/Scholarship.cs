@@ -25,7 +25,7 @@ public class Scholarship
   
     public string? University { get; set; }
     public string? AcademicYear { get; set; }
-    public string? EligibilityCriteria { get; set; }
+    public string? EligibilityCriteria { get; set; } 
 
    
 

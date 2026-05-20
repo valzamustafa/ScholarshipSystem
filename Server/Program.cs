@@ -137,6 +137,30 @@ builder.Services.AddScoped<IAboutUsService, AboutUsService>();
 
             await context.Database.MigrateAsync();
 
+            // ===== FIX FOR UNIVERSITY TABLE =====
+            // Ensure University table exists
+            var connection = context.Database.GetDbConnection();
+            await connection.OpenAsync();
+            
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS ""University"" (
+                        ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_University"" PRIMARY KEY AUTOINCREMENT,
+                        ""Name"" TEXT NOT NULL,
+                        ""Location"" TEXT NULL,
+                        ""Website"" TEXT NULL
+                    );
+                    
+                    INSERT OR IGNORE INTO ""__EFMigrationsHistory"" (""MigrationId"", ""ProductVersion"")
+                    VALUES ('20260518204153_AddUniversityTable', '9.0.2');
+                ";
+                await command.ExecuteNonQueryAsync();
+            }
+            
+            Console.WriteLine("✓ University table verified/created successfully!");
+            // ===== END OF FIX =====
+
             var adminPasswordHasher = services.GetRequiredService<IPasswordHasher<Admin>>();
             await DbInitializer.SeedAdminAsync(context, adminPasswordHasher);
         }

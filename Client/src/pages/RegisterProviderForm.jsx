@@ -21,65 +21,67 @@ export default function RegisterProviderForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
 
-  // Validations
-  if (formData.password.length < 6) {
-    setError('Password must be at least 6 characters');
-    return;
-  }
-
-  if (formData.password !== formData.confirmPassword) {
-    setError('Passwords do not match');
-    return;
-  }
-
-  try {
-    setLoading(true);
-    
-    const payload = {
-      FullName: formData.fullName,
-      Email: formData.email,
-      PhoneNumber: formData.phoneNumber || null,
-      Password: formData.password,
-      ConfirmPassword: formData.confirmPassword,
-      OrganizationName: formData.organizationName,
-      Description: formData.description
-    };
-
-    console.log('Sending payload:', payload); 
-
-    const response = await fetch('https://localhost:7255/api/auth/register/provider', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Registration failed');
+    // Validations
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
     }
 
-    const data = await response.json();
-    alert(data.message || 'Your request has been sent. Please wait for admin approval.');
-    navigate('/login');
-    
-  } catch (err) {
-    setError(err.message || 'An error occurred during registration');
-    console.error('Registration error:', err);
-  } finally {
-    setLoading(false);
-  }
-};
-return (
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Përdorni PascalCase për property names (siç pritet nga C# backend)
+      const payload = {
+        FullName: formData.fullName,
+        Email: formData.email,
+        PhoneNumber: formData.phoneNumber || null,
+        Password: formData.password,
+        ConfirmPassword: formData.confirmPassword,
+        OrganizationName: formData.organizationName,
+        Description: formData.description
+      };
+
+      console.log('Sending payload:', payload);
+
+      const response = await fetch('https://localhost:7255/api/auth/register/provider', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseData = await response.json();
+      console.log('Server response:', responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.message || responseData.title || 'Registration failed');
+      }
+
+      alert(responseData.message || 'Your request has been sent. Please wait for admin approval.');
+      navigate('/login');
+      
+    } catch (err) {
+      setError(err.message || 'An error occurred during registration');
+      console.error('Registration error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
     <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light m-0 p-0 vw-100 overflow-x-hidden mt-5">
       <div className="row shadow-lg" style={{ maxWidth: '900px', width: '100%', borderRadius: '15px', overflow: 'hidden' }}>
         
-      
         <div className="col-md-6 text-white d-flex flex-column justify-content-center align-items-center p-4" style={{ backgroundColor: '#004D7C' }}>
           <div className="text-center">
             <h2 className="fw-bold mb-3">Welcome!</h2>
@@ -88,7 +90,6 @@ return (
           </div>
         </div>
 
-        
         <div className="col-md-6 bg-white p-5">
           <h3 className="text-center fw-bold" style={{ color: '#004D7C' }}>Register as Provider</h3>
           <p className="text-center text-muted mb-4">Fill in the details to join ScholarshipHub</p>
@@ -178,15 +179,16 @@ return (
                 onChange={handleChange}
                 rows="3"
                 required
-              ></textarea>
+              />
             </div>
 
             <div className="d-grid mt-3">
-              <button className="btn rounded-pill" type="submit"  disabled={loading}
-                 style={{ backgroundColor: '#004D7C', color: 'white' }}
-                 >
-
-                
+              <button 
+                className="btn rounded-pill" 
+                type="submit" 
+                disabled={loading}
+                style={{ backgroundColor: '#004D7C', color: 'white' }}
+              >
                 {loading ? 'Registering...' : 'Register'}
               </button>
             </div>
