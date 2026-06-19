@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "scripts": {
+    "test:e2e": "npm --prefix Client run test:e2e --"
+  }
+}
